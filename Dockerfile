@@ -25,8 +25,8 @@ COPY . .
 
 # Instalar dependencias sin las de desarrollo
 RUN composer install --no-dev --optimize-autoloader \
-    && cp .env.example .env \
     && chmod -R 775 storage bootstrap/cache \
-    && php artisan migrate --seed --force
+    && php artisan migrate:status \
+    && php artisan migrate:fresh --seed --force
 
 CMD ["php-fpm"]
