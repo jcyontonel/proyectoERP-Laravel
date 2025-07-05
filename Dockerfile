@@ -24,11 +24,10 @@ WORKDIR /app
 COPY . .
 
 # Instalar dependencias sin las de desarrollo
-RUN composer install --no-dev --optimize-autoloader
-
-# Generar key y correr migraciones
-RUN php artisan key:generate \
-    && php artisan config:clear \
-    && php artisan migrate:fresh --seed --force
+RUN composer install --no-dev --optimize-autoloader \
+    && cp .env.example .env \
+    && chmod -R 775 storage bootstrap/cache \
+    && php artisan key:generate \
+    && php artisan migrate --seed --force
 
 CMD ["php-fpm"]
