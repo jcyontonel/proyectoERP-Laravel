@@ -27,7 +27,6 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader \
     && cp .env.example .env \
     && chmod -R 775 storage bootstrap/cache \
-    && php artisan key:generate \
     && php artisan migrate --seed --force
 
 CMD ["php-fpm"]
