@@ -1,27 +1,34 @@
-# Imagen base con PHP y extensiones necesarias
-FROM php:8.2-cli
+FROM php:8.2-fpm
 
-# Instalar dependencias del sistema
+# Instalar extensiones requeridas
 RUN apt-get update && apt-get install -y \
-    unzip \
-    git \
-    curl \
-    libpq-dev \
-    libzip-dev \
+    build-essential \
+    libpng-dev \
+    libjpeg-dev \
+    libonig-dev \
+    libxml2-dev \
     zip \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    unzip \
+    curl \
+    git \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip mbstring exif pcntl bcmath
 
 # Instalar Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Establecer directorio de trabajo
+# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos del proyecto
+# Copiar todo el proyecto
 COPY . .
 
-# Instalar dependencias de Laravel (modo producción)
+# Instalar dependencias sin las de desarrollo
 RUN composer install --no-dev --optimize-autoloader
 
-# Generar la clave de app, correr migraciones y luego iniciar servidor
-CMD php artisan key:generate && php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=${PORT}
+# Generar key y correr migraciones
+RUN php artisan key:generate \
+    && php artisan config:clear \
+    && php artisan migrate:fresh --seed --force
+
+CMD ["php-fpm"]
