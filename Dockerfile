@@ -5,48 +5,48 @@ FROM composer:2.7 AS build
 
 WORKDIR /app
 
-# Copiamos los archivos de configuración de Composer
+# Copiamos archivos de composer
 COPY composer.json composer.lock ./
 
-# Instalamos dependencias sin autoloader de desarrollo
+# Instalamos dependencias sin dev
 RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader
 
-# Copiamos el resto del proyecto Laravel
+# Copiamos todo el código del proyecto
 COPY . .
 
-# Ejecutamos scripts de post-instalación (si los hay)
-RUN composer dump-autoload --optimize
-
 # --------------------------------------------
-# 🚀 Etapa 2: Imagen final con PHP y Apache
+# 🚀 Etapa 2: Imagen final PHP + Apache
 # --------------------------------------------
 FROM php:8.2-apache
 
-# Instalamos extensiones necesarias para Laravel y base de datos
+# Instalar extensiones necesarias para Laravel + PostgreSQL
 RUN apt-get update && apt-get install -y \
     git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql gd zip opcache \
+    && docker-php-ext-install pdo pdo_pgsql gd zip opcache \
     && a2enmod rewrite
 
-# Copiamos archivos desde la etapa build
+# Copiamos el código de la etapa anterior
 COPY --from=build /app /var/www/html
 
-# Definimos el directorio de trabajo
+# Configuramos el directorio de trabajo
 WORKDIR /var/www/html
 
 # Permisos correctos para Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Exponemos el puerto que Render usa
+# Exponemos el puerto estándar de Render
 EXPOSE 10000
 
-# Variables de entorno por defecto
+# Variables de entorno predeterminadas
 ENV APP_ENV=production
 ENV APP_DEBUG=false
-ENV APP_URL=https://ventas-laravel.onrender.com
 ENV PORT=10000
 
-# Comando de inicio del servidor Laravel
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
+# Comando al iniciar el contenedor
+# (genera clave si falta, limpia caché, ejecuta migraciones y seeders)
+CMD php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan migrate --force --seed && \
+    php artisan serve --host=0.0.0.0 --port=$PORT
