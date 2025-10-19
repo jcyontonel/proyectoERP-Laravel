@@ -2,74 +2,145 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Producto;
+use App\Models\Empresa;
+use App\Models\Categoria;
+use App\Models\TipoUnidad;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class ProductoController extends Controller
 {
-    public function index(): JsonResponse
+    /**
+     * Mostrar lista de productos.
+     */
+    public function index()
     {
-        $empresaIdDelUsuario = auth()->user()->empresa_id;
-        $productos = Producto::where('empresa_id', $empresaIdDelUsuario)
-            ->with(['categoria', 'tipoUnidad', 'impuesto']) // si usas relaciones
+        $empresaIds = Auth::user()->empresas->pluck('id');
+        $productos = Producto::with('categoria')
+            ->whereIn('empresa_id', $empresaIds)
+            ->orderBy('nombre', 'asc')
             ->get();
 
-        return response()->json($productos);
+        $categorias = Categoria::whereIn('empresa_id', $empresaIds)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('productos.index', compact('productos', 'categorias'));
     }
 
-    public function store(StoreProductoRequest $request): JsonResponse
+    /**
+     * Mostrar formulario de creación.
+     */
+    public function create()
     {
-        $empresaIdDelUsuario = auth()->user()->empresa_id;
+        $empresaIds = Auth::user()->empresas->pluck('id');
+
+        $categorias = Categoria::whereIn('empresa_id', $empresaIds)
+            ->orderBy('nombre')
+            ->get();
+
+        $tiposUnidad = TipoUnidad::orderBy('codigo')->get();
+
+        // Puedes obtener una empresa específica si el usuario solo tiene una
+        $empresa = Auth::user()->empresas->first();
+
+        return view('productos.create', compact('categorias', 'tiposUnidad', 'empresa'));
+    }
+
+    /**
+     * Guardar un nuevo producto.
+     */
+    public function store(StoreProductoRequest $request)
+    {
+        $empresa = Auth::user()->empresas->first();
 
         $data = $request->validated();
-        $data['empresa_id'] = $empresaIdDelUsuario;
+        $data['empresa_id'] = $empresa->id;
+        $data['es_servicio'] = $request->has('es_servicio');
+        $data['activo'] = $request->has('activo');
 
-        $producto = Producto::create($data);
+        Producto::create($data);
 
-        return response()->json([
-            'message' => 'Producto creado correctamente.',
-            'data' => $producto
-        ], 201);
+        return redirect()->route('productos.index')
+            ->with('success', '✅ Producto registrado correctamente.');
     }
 
-    public function show(Producto $producto): JsonResponse
+    /**
+     * Mostrar detalle de un producto.
+     */
+    public function show(Producto $producto)
     {
-        $empresaIdDelUsuario = auth()->user()->empresa_id;
+         // Asegurar que el usuario tenga permiso de ver el producto (misma empresa)
+        $this->authorizeEmpresa($producto);
 
-        if ($producto->empresa_id !== $empresaIdDelUsuario) {
-            return response()->json(['message' => 'No autorizado para ver este producto.'], 403);
-        }
-        return response()->json($producto);
+        // Cargar las relaciones necesarias
+        $producto->load(['empresa', 'categoria', 'tipoUnidad']);
+
+        // Retornar la vista con el producto cargado
+        return view('productos.show', compact('producto'));
     }
 
-    public function update(UpdateProductoRequest $request, Producto $producto): JsonResponse
+    /**
+     * Mostrar formulario de edición.
+     */
+    public function edit(Producto $producto)
     {
-        $empresaIdDelUsuario = auth()->user()->empresa_id;
+        $this->authorizeEmpresa($producto);
 
-        if ($producto->empresa_id !== $empresaIdDelUsuario) {
-            return response()->json(['message' => 'No autorizado para actualizar este producto.'], 403);
-        }
+        $empresaIds = Auth::user()->empresas->pluck('id');
 
-        $datos = $request->validated();
-        $producto->update($datos);
+        $categorias = Categoria::whereIn('empresa_id', $empresaIds)
+            ->orderBy('nombre')
+            ->get();
 
-        return response()->json(['message' => 'Producto actualizado correctamente', 'producto' => $producto]);
+        // Puedes obtener una empresa específica si el usuario solo tiene una
+        $empresa = Auth::user()->empresas->first();
+
+        $tiposUnidad = TipoUnidad::orderBy('codigo')->get();
+        return view('productos.edit', compact('producto', 'categorias', 'tiposUnidad', 'empresa'));
     }
 
-    public function destroy(Producto $producto): JsonResponse
+    /**
+     * Actualizar un producto.
+     */
+    public function update(UpdateProductoRequest $request, Producto $producto)
     {
-        $empresaIdDelUsuario = auth()->user()->empresa_id;
+        $this->authorizeEmpresa($producto);
+        $data = $request->validated();
+        $data['es_servicio'] = $request->has('es_servicio');
+        $data['activo'] = $request->has('activo');
 
-        if ($producto->empresa_id !== $empresaIdDelUsuario) {
-            return response()->json(['message' => 'No autorizado para eliminar este producto.'], 403);
+        $producto->update($data);
+
+        return redirect()->route('productos.index')
+            ->with('success', '✅ Producto actualizado correctamente.');
+    }
+
+    /**
+     * Eliminar un producto (soft delete).
+     */
+    public function destroy(Producto $producto)
+    {
+        $this->authorizeEmpresa($producto);
+
+        $producto->delete();
+
+        return redirect()->route('productos.index')
+            ->with('success', '🗑️ Producto eliminado correctamente.');
+    }
+
+    /**
+     * Verificar que el producto pertenezca a una empresa del usuario autenticado.
+     */
+    private function authorizeEmpresa(Producto $producto)
+    {
+        $empresaIds = Auth::user()->empresas->pluck('id');
+
+        if (! $empresaIds->contains($producto->empresa_id)) {
+            abort(403, 'No tienes permiso para acceder a este producto.');
         }
-
-        $producto->delete(); // Soft delete
-
-        return response()->json(['message' => 'Producto eliminado correctamente (soft delete).']);
     }
 }

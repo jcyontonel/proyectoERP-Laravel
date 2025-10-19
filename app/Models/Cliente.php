@@ -20,4 +20,19 @@ class Cliente extends Model
         'direccion',
         'empresa_id', // <- agrega esta línea
     ];
+
+    public function empresas()
+    {
+        return $this->belongsToMany(Empresa::class, 'cliente_empresa')->withTimestamps();;
+    }
+     
+    public function tipoDocumento()
+    {
+        return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');
+    }
+    public function ventas()
+    {
+        return $this->hasMany(Venta::class);
+    }
+    
 }

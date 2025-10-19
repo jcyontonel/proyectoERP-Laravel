@@ -1,9 +1,0 @@
-# archivo: nixpacks.toml
-[phases.setup]
-nixPkgs = ["php83", "php83Packages.composer"]
-
-[phases.build]
-cmds = ["composer install --no-dev --optimize-autoloader"]
-
-[phases.start]
-cmds = ["php artisan migrate:fresh --seed --force", "php artisan serve --host=0.0.0.0 --port=3000"]

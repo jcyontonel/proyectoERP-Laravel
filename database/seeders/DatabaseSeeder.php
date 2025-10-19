@@ -20,13 +20,13 @@ class DatabaseSeeder extends Seeder
             TipoDocumentoSeeder::class,
             CorrelativoSeeder::class,
             ClienteSeeder::class,
-            ImpuestoSeeder::class,
             TipoUnidadSeeder::class,
             CategoriaSeeder::class,
             ProductoSeeder::class,
-            MonedaSeeder::class,
-            FacturaSeeder::class,
-            DetalleFacturaSeeder::class,
+            VentaSeeder::class,
+            DetalleVentaSeeder::class,
+            ProveedorSeeder::class,
+            RicoPetSeeder::class,
         ]);
     }
 }

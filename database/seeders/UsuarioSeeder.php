@@ -23,21 +23,15 @@ class UsuarioSeeder extends Seeder
 
         foreach ($empresas as $empresa) {
             foreach ($roles as $rol) {
-                User::create([
-                    'empresa_id' => $empresa->id,
+                $user = User::create([
                     'name' => $rol->nombre . ' ' . $faker->firstName,
                     'email' => strtolower($rol->name) . $empresa->id . '@erp.com',
                     'password' => Hash::make('password'),
-                ])->assignRole($rol->name);
+                ]);
             }
+            $user->assignRole($rol->name);
+            // Relación muchos a muchos con empresa
+            $user->empresas()->attach($empresa->id);
         }
-
-        // Usuario Admin general
-        User::create([
-            'empresa_id' => $empresas->first()->id,
-            'name' => 'Admin General',
-            'email' => 'admin@erp.com',
-            'password' => Hash::make('admin123'),
-        ])->assignRole('Administrador');
     }
 }

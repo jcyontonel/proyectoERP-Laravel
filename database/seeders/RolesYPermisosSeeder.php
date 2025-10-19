@@ -21,10 +21,10 @@ class RolesYPermisosSeeder extends Seeder
 
         // Crear permisos
         $permisos = [
-            'ver_facturas',
-            'emitir-facturas',
-            'editar_facturas',
-            'eliminar_facturas',
+            'ver_ventas',
+            'emitir-ventas',
+            'editar_ventas',
+            'eliminar_ventas',
             'ver_usuarios',
             'crear_usuarios',
             'gestionar-clientes',
@@ -47,13 +47,13 @@ class RolesYPermisosSeeder extends Seeder
         // Asignar permisos por rol
         $admin->givePermissionTo(Permission::all());
         $vendedor->givePermissionTo([
-            'ver_facturas',
+            'ver_ventas',
             'gestionar-clientes', 
-            'emitir-facturas'
+            'emitir-ventas'
         ]);
         $contador->givePermissionTo([
-            'ver_facturas', 
-            'emitir-facturas', 
+            'ver_ventas', 
+            'emitir-ventas', 
             'configurar-correlativos', 
             'configurar-impuestos'
         ]);

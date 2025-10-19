@@ -18,20 +18,18 @@ class ClienteSeeder extends Seeder
     {
         $faker = Faker::create();
         $empresas = Empresa::all();
-        $tipoDoc = TipoDocumento::inRandomOrder()->first();
+        $tipoDocs = TipoDocumento::all();
+
+        // Validar que existan empresas y tipos de documentos
+        if ($empresas->isEmpty() || $tipoDocs->isEmpty()) {
+            $this->command->warn('⚠️ No hay empresas o tipos de documentos registrados. Ejecuta primero sus seeders.');
+            return;
+        }
 
         foreach ($empresas as $empresa) {
-            for ($i = 0; $i < 5; $i++) {
-                Cliente::create([
-                    'empresa_id' => $empresa->id,
-                    'tipo_documento_id' => $tipoDoc->id,
-                    'numero_documento' => $faker->numerify('########'),
-                    'nombre' => $faker->name,
-                    'correo' => $faker->safeEmail,
-                    'telefono' => $faker->phoneNumber,
-                    'direccion' => $faker->address,
-                ]);
-            }
+            Cliente::factory()->count(5)
+                        ->create()
+                        ->each(fn($cliente) => $cliente->empresas()->attach($empresa->id));
         }
     }
 }

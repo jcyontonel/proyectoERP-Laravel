@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Correlativo extends Model
 {
+    protected $table = 'correlativos';
     protected $fillable = ['empresa_id', 'tipo', 'serie', 'numero'];
 
     public function empresa(): BelongsTo
