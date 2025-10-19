@@ -1,52 +1,35 @@
-# --------------------------------------------
-# 🐘 Etapa 1: Construcción de dependencias con Composer
-# --------------------------------------------
-FROM composer:2.7 AS build
-
+# Etapa 1: instalar dependencias
+FROM composer:2.7 AS vendor
 WORKDIR /app
-
-# Copiamos archivos de composer
 COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --optimize-autoloader
 
-# Instalamos dependencias sin dev
-RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader
-
-# Copiamos todo el código del proyecto
-COPY . .
-
-# --------------------------------------------
-# 🚀 Etapa 2: Imagen final PHP + Apache
-# --------------------------------------------
-FROM php:8.2-apache
-
-# Instalar extensiones necesarias para Laravel + PostgreSQL
-RUN apt-get update && apt-get install -y \
-    git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_pgsql gd zip opcache \
-    && a2enmod rewrite
-
-# Copiamos el código de la etapa anterior
-COPY --from=build /app /var/www/html
-
-# Configuramos el directorio de trabajo
+# Etapa 2: PHP + Apache
+FROM php:8.3-apache
 WORKDIR /var/www/html
 
-# Permisos correctos para Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+# Instalar extensiones necesarias
+RUN apt-get update && apt-get install -y \
+    libpq-dev zip unzip git && \
+    docker-php-ext-install pdo pdo_pgsql && \
+    a2enmod rewrite
 
-# Exponemos el puerto estándar de Render
-EXPOSE 10000
+# Copiar dependencias y proyecto
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
 
-# Variables de entorno predeterminadas
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-ENV PORT=10000
+# Crear .env si no existe (a partir del .env.example)
+RUN if [ ! -f ".env" ]; then cp .env.render .env; fi
 
-# Comando al iniciar el contenedor
-# (genera clave si falta, limpia caché, ejecuta migraciones y seeders)
-CMD php artisan key:generate --force && \
-    php artisan config:cache && \
-    php artisan migrate --force --seed && \
-    php artisan serve --host=0.0.0.0 --port=$PORT
+# Asignar permisos correctos
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Generar APP_KEY solo si no está definida
+RUN php artisan config:clear && \
+    if [ -z "$(grep APP_KEY .env | cut -d '=' -f2)" ]; then php artisan key:generate --force; fi
+
+# Exponer el puerto 80
+EXPOSE 80
+
+# Migrar y servir la app
+CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground
