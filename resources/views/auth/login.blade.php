@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-blue-100 min-h-screen flex items-center justify-center">
     <div class="w-full max-w-sm mx-auto">
         <div class="flex justify-center mt-8 mb-6">
-            <img src="/favicon.ico" alt="Logo" class="w-20 h-20 rounded-full shadow-lg">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-20 h-20 rounded-full shadow-lg">
         </div>
         <h2 class="text-4xl font-bold text-center mb-10 text-gray-800">Iniciar Sesión</h2>
 
@@ -30,8 +30,6 @@
             </div>
             <button type="submit" class="w-full py-4 bg-blue-600 text-white text-2xl font-bold rounded-xl hover:bg-blue-700 transition">Ingresar</button>
         </form>
-
-        <p class="mt-10 text-center text-gray-700 text-xl">¿No tienes cuenta? <a href="{{ route('register') }}" class="text-blue-600 font-semibold hover:underline">Registrarse</a></p>
     </div>
 </body>
 </html>

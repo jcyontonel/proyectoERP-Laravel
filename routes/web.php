@@ -5,9 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CompraController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dashboard');
 });
 
 Route::middleware('guest')->group(function () {
@@ -27,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::resource('ventas', VentaController::class);
-    Route::resource('compras', CategoriaController::class);
+    Route::resource('compras', CompraController::class);
     Route::resource('productos', ProductoController::class);
     Route::resource('categorias', CategoriaController::class);
 
