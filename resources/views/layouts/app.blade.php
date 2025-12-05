@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>@yield('title', 'Mi App')</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <script src="{{ asset('js/app.js') }}"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="flex flex-col min-h-screen bg-blue-100">
 
