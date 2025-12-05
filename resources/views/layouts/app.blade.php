@@ -5,7 +5,7 @@
     <title>@yield('title', 'Mi App')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="flex flex-col min-h-screen bg-blue-100">
 
     <!-- Encabezado -->
     <header class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
@@ -18,7 +18,7 @@
     </main>
 
     <!-- Footer tipo barra de navegación inferior -->
-    <footer class="bg-white border-t shadow-inner p-6 fixed bottom-0 left-0 w-full flex justify-around">
+    <footer class="bg-blue-400 border-t shadow-inner p-6 fixed bottom-0 left-0 w-full flex justify-around">
         <a href="{{ url('/dashboard') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
             🏠 <span>Inicio</span>
         </a>
