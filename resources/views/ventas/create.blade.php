@@ -38,7 +38,7 @@
 
         <!-- Cliente Autocompletar -->
         <div class="relative mb-4">
-            <label for="cliente-input" class="block mb-4 text-4xl font-bold text-gray-900">Cliente</label>
+            <label for="cliente-input" class="block mb-4 text-4xl font-bold text-gray-900">Clientes registrados</label>
             <div class="relative">
                 <input id="cliente-input" type="text" autocomplete="off"
                     placeholder="Buscar por nombre o DNI..."
