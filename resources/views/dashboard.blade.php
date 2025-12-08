@@ -15,11 +15,11 @@
             <h2> 🛒 Nueva Venta </h2>
         </a>
 
-        <!-- Card Compras -->
-        <a href="{{ url('/compras') }}" class="btn-dashboard bg-green-400">
+        <!-- Card Compras 
+        <a href="{{ url('/compras/create') }}" class="btn-dashboard bg-green-400">
             <h2> 📦 Nueva Compras </h2>
         </a>
-
+        -->
         <!-- Card Productos -->
         <a href="{{ url('/productos') }}" class="btn-dashboard bg-red-400">
             <h2> 📋 Productos </h2>

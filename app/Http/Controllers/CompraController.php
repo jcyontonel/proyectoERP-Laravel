@@ -49,8 +49,10 @@ class CompraController extends Controller
     public function store(StoreCompraRequest $request)
     {
         DB::beginTransaction();
+
         try {
-            $empresaId = auth()->user()->empresa_id ?? auth()->user()->empresas->first()->id;
+            $empresaId = auth()->user()->empresa_id 
+                        ?? auth()->user()->empresas->first()->id;
 
             // Crear compra
             $compra = Compra::create([
@@ -69,8 +71,17 @@ class CompraController extends Controller
                 'observacion' => $request->observacion,
             ]);
 
-            // Guardar detalles
+            if (!is_array($request->detalles) || count($request->detalles) === 0) {
+                throw new \Exception("La compra debe tener al menos un ítem.");
+            }
+
+            // Guardar detalles y actualizar stock/Kardex
             foreach ($request->detalles as $detalle) {
+
+                if (!isset($detalle['producto_id'], $detalle['cantidad'], $detalle['precio_unitario'])) {
+                    throw new \Exception("Uno de los ítems está incompleto.");
+                }
+
                 $producto = Producto::findOrFail($detalle['producto_id']);
 
                 $detalleCompra = DetalleCompra::create([
@@ -101,15 +112,27 @@ class CompraController extends Controller
                     'cantidad' => $detalleCompra->cantidad,
                     'costo_unitario' => $detalleCompra->precio_unitario,
                     'observacion' => "Ingreso por compra {$compra->serie}-{$compra->numero}",
+                    // Detalles de Kardex
+                    'detalles' => [
+                        [
+                            'cantidad'         => $detalle->cantidad,
+                            'costo_unitario'   => $detalle->precio_unitario,
+                            'lote'             => $item['lote'] ?? null,
+                            'fecha_vencimiento'=> $item['fecha_vencimiento'] ?? null,
+                        ]
+                    ]
                 ]);
             }
 
             DB::commit();
 
-            return redirect()->route('compras.index')->with('success', 'Compra registrada correctamente.');
+            return redirect()->route('compras.index')
+                            ->with('success', 'Compra registrada correctamente.');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return back()->with('error', 'Error al registrar la compra: ' . $th->getMessage());
+            return back()
+                    ->withInput()
+                    ->with('error', 'Error al registrar la compra: ' . $th->getMessage());
         }
     }
 

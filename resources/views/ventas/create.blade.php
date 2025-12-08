@@ -37,14 +37,14 @@
         <input type="hidden" name="serie" id="serie" value="{{ $empresa->correlativos ? $empresa->correlativos[0]->serie : '' }}">
 
         <!-- Cliente Autocompletar -->
+        <!--
         <div class="relative mb-4">
             <label for="cliente-input" class="block mb-4 text-4xl font-bold text-gray-900">Clientes registrados</label>
             <div class="relative">
                 <input id="cliente-input" type="text" autocomplete="off"
                     placeholder="Buscar por nombre o DNI..."
                     class="bg-gray-50 border border-gray-400 text-gray-900 text-4xl rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-6 h-32 pr-16">
-
-                <!-- Botón X -->
+                    
                 <button type="button" id="clear-cliente" class="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-600 text-4xl font-bold hidden"
                     style="top:43px; right:30px;">✕
                 </button>
@@ -53,6 +53,7 @@
             <ul id="cliente-list" class="absolute z-10 w-full bg-white border border-gray-300 rounded-2xl mt-2 max-h-80 overflow-y-auto shadow-xl hidden"></ul>
             <label id="dni-label" class="block text-3xl font-semibold text-blue-700"></label>
         </div>
+        -->
 
         <!-- Formulario para agregar/editar producto -->
         <div id="producto-form" class="mb-8">
