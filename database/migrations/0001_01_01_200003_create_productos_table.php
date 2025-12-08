@@ -25,9 +25,6 @@ return new class extends Migration
             $table->boolean('activo')->default(true);
             $table->timestamps();
             $table->softDeletes();
-
-            $table->unique(['empresa_id', 'nombre']);
-            $table->unique(['empresa_id', 'codigo']);
         });
     }
 

@@ -28,6 +28,11 @@
                 <label class="block text-xl font-medium text-gray-700 mb-3">Contraseña</label>
                 <input type="password" name="password" required class="w-full px-5 py-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xl bg-white bg-opacity-80" placeholder="Contraseña">
             </div>
+            <div class="flex items-center">
+                <input id="remember" type="checkbox" name="remember" checked class="h-5 w-5 text-blue-600">
+                <label for="remember" class="ml-2 text-lg text-gray-700">Recordar sesión</label>
+            </div>
+
             <button type="submit" class="w-full py-4 bg-blue-600 text-white text-2xl font-bold rounded-xl hover:bg-blue-700 transition">Ingresar</button>
         </form>
     </div>

@@ -25,12 +25,14 @@
         <a href="{{ url('/ventas') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
             🛒 <span>Ventas</span>
         </a>
-        <a href="{{ url('/productos') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
+        <!--
+        <a href="{{ url('/compras') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
             📦 <span>Compras</span>
         </a>
         <a href="{{ url('/usuarios') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
             👤 <span>Usuarios</span>
         </a>
+        -->
     </footer>
 
 </body>
