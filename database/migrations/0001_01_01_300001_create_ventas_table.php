@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('numero')->nullable();
             $table->dateTime('fecha_emision');
             $table->string('tipo')->default('factura');
+            $table->enum('metodo_pago', ['efectivo', 'yape', 'plin', 'transferencia', 'tarjeta', 'mixto'])->default('efectivo');
             $table->string('estado')->default('registrada');
             $table->decimal('subtotal', 12, 2)->default(0);
             $table->decimal('total_impuestos', 12, 2)->default(0);

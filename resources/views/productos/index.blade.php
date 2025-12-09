@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cuerpo = document.getElementById('cuerpoTabla');
     const paginador = document.getElementById('paginador');
 
-    const filasPorPagina = 10;
+    const filasPorPagina = 25;
     let paginaActual = 1;
 
     [input, filtroActivo, filtroCategoria].forEach(e => {

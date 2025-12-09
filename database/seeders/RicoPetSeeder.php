@@ -150,12 +150,12 @@ class RicoPetSeeder extends Seeder
         ]);
 
         // Lista de productos base
-        $productos = include database_path('seeders/data/productos.php');
-
-        foreach ($productos as $i => $producto) {
-            $productos[$i]['empresa_id'] = $empresa->id;
-        }
-
-        Producto::insert($productos);
+        //$productos = include database_path('seeders/data/productos.php');
+        //
+        //foreach ($productos as $i => $producto) {
+        //    $productos[$i]['empresa_id'] = $empresa->id;
+        //}
+        //
+        //Producto::insert($productos);
     }
 }

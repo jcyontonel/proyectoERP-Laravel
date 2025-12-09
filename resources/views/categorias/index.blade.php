@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const pagination = document.getElementById('pagination');
     const clearFilter = document.getElementById('clearFilter');
-    const rowsPerPage = 5;
+    const rowsPerPage = 25;
     let currentPage = 1;
     let filteredRows = [...rows];
 

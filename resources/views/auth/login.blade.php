@@ -7,12 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-blue-100 min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-sm mx-auto">
+
+    <div class="w-full mx-auto">
+
         <div class="flex justify-center mt-8 mb-6">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-20 h-20 rounded-full shadow-lg">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo rounded-full shadow-lg">
         </div>
-        <h2 class="text-4xl font-bold text-center mb-10 text-gray-800">Iniciar Sesión</h2>
+        <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Iniciar Sesión</h2>
 
         @if(session('error'))
             <p class="text-red-500 text-center mb-4">{{ session('error') }}</p>
@@ -35,6 +38,17 @@
 
             <button type="submit" class="w-full py-4 bg-blue-600 text-white text-2xl font-bold rounded-xl hover:bg-blue-700 transition">Ingresar</button>
         </form>
+
     </div>
+
+    <style>
+        .logo {
+            width: 150px;
+            height: 150px;
+        }
+        form{
+            padding: 10px 40px 10px 40px;
+        }
+    </style>
 </body>
 </html>
