@@ -121,6 +121,7 @@ class VentaController extends Controller
             'subtotal' => $data['subtotal'] ?? 0,
             'total_impuestos' => $data['total_impuestos'] ?? 0,
             'total' => $data['total'],
+            'metodo_pago' => $data['metodo_pago'] ?? 'efectivo',
             'observaciones' => $data['observaciones'] ?? null,
         ]);
 

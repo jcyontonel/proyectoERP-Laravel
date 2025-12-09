@@ -20,6 +20,7 @@ class Venta extends Model
         'subtotal',
         'total_impuestos',
         'total',
+        'metodo_pago',
         'observaciones',
     ];
 

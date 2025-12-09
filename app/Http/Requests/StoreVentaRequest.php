@@ -36,6 +36,7 @@ class StoreVentaRequest extends FormRequest
             'productos.*.cantidad'  => 'required|numeric|min:1',
             'productos.*.precio'    => 'required|numeric|min:0',
             'productos.*.subtotal'  => 'required|numeric|min:0',
+            'metodo_pago'     => 'nullable|string|max:30',
         ];
     }
 
@@ -71,6 +72,7 @@ class StoreVentaRequest extends FormRequest
             'productos.*.subtotal.required' => 'El subtotal es obligatorio.',
             'productos.*.subtotal.numeric' => 'El subtotal debe ser un número.',
             'productos.*.subtotal.min' => 'El subtotal no puede ser negativo.',
+            'metodo_pago.max' => 'El método de pago no puede tener más de 30 caracteres.',
         ];
     }
 }
