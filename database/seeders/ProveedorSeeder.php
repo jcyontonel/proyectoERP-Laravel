@@ -2,17 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Empresa;
 use App\Models\Proveedor;
+use Illuminate\Database\Seeder;
 
 class ProveedorSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Genera 20 proveedores distribuidos entre las empresas existentes
-        Proveedor::factory()->count(20)->create();
+        $empresa = Empresa::where('ruc', '20000000001')->firstOrFail();
+
+        Proveedor::factory()->count(10)->create(['empresa_id' => $empresa->id]);
     }
 }

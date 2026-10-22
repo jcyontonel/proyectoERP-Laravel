@@ -2,39 +2,57 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Producto;
+use App\Models\Almacen;
+use App\Models\AlmacenProducto;
 use App\Models\Empresa;
-use App\Models\Categoria;
-use App\Models\TipoUnidad;
+use App\Models\Producto;
+use App\Services\InventarioService;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ProductoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    private const STOCK_INICIAL = 5;
+    private const STOCK_MINIMO  = 5;
+
+    public function run(InventarioService $inventario): void
     {
-        $empresas = Empresa::all();
-        $unidad = TipoUnidad::inRandomOrder()->first();
+        DB::transaction(function () use ($inventario) {
+            $empresa = Empresa::where('ruc', '20000000001')->firstOrFail();
 
-        foreach ($empresas as $empresa) {
-            $categoria = Categoria::where('empresa_id', $empresa->id)->first();
+            $almacen = Almacen::where('empresa_id', $empresa->id)
+                ->where('codigo', 'ALM-01')
+                ->firstOrFail();
 
-            if (!$categoria) {
-                $this->command->warn("⚠️ No se encontró categoría para la empresa ID {$empresa->id}, se omite.");
-                continue;
-            }
+            $usuarioId = $empresa->usuarios()->orderBy('users.id')->value('users.id');
 
-            Producto::factory()
-                ->count(5)
-                ->state([
+            $productosData = require database_path('seeders/data/productos.php');
+
+            foreach ($productosData as $data) {
+                // Costo de referencia (sin IGV) si el dato no lo trae: ~60 % del precio, para que los reportes de utilidad tengan sentido
+                $data['costo_unitario'] ??= round($data['precio_unitario'] / 1.18 * 0.72, 2);
+
+                $producto = Producto::create($data + ['empresa_id' => $empresa->id]);
+
+                if ($producto->es_servicio) {
+                    continue;
+                }
+
+                // El stock inicial pasa por InventarioService: queda en almacen_producto Y en kardex
+                $inventario->ingreso($producto, $almacen->id, self::STOCK_INICIAL, [
                     'empresa_id' => $empresa->id,
-                    'categoria_id' => $categoria->id,
-                    'tipo_unidad_id' => $unidad->id,
-                ])
-                ->create();
-        }
+                    'user_id'    => $usuarioId,
+                    'ref'        => ['tipo' => 'stock_inicial'],
+                    'costo'      => $producto->costo_unitario,
+                    'fecha'      => Carbon::now(),
+                    'obs'        => 'Stock inicial (seeder)',
+                ]);
 
+                AlmacenProducto::where('almacen_id', $almacen->id)
+                    ->where('producto_id', $producto->id)
+                    ->update(['stock_minimo' => self::STOCK_MINIMO]);
+            }
+        });
     }
 }

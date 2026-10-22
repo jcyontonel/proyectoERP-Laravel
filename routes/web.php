@@ -1,40 +1,52 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\VentaController;
-use App\Http\Controllers\ProductoController;
-use App\Http\Controllers\CategoriaController;
-use App\Http\Controllers\CompraController;
+use App\Http\Controllers\EmpresaActualController;
+use App\Http\Controllers\InicioController;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\ProntoController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+/*
+|--------------------------------------------------------------------------
+| Rutas web
+|--------------------------------------------------------------------------
+| Cada módulo del ERP vive en routes/erp/*.php y se carga dentro del grupo "auth".
+| Convenciones (ver ErpServiceProvider):
+|  - Route::resource con verbos en español: /productos/crear, /productos/{producto}/editar
+|  - {producto}, {cliente}, {venta}… solo aceptan números (Route::pattern)
+|  - El binding de modelos con empresa_id se limita a la empresa actual (EsDeEmpresa): otra empresa = 404
+|  - El permiso de cada grupo se exige con el middleware "can:permiso"
+*/
 
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::middleware('guest')->controller(AuthController::class)->group(function () {
+    Route::get('login', 'showLogin')->name('login');
+    Route::post('login', 'login')->name('login.post');
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/', InicioController::class)->name('inicio');
+    Route::post('empresa-actual', EmpresaActualController::class)->name('empresa.cambiar');
 
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // Mi cuenta (cualquier usuario)
+    Route::controller(PerfilController::class)->prefix('mi-cuenta')->name('perfil.')->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::put('contrasena', 'password')->name('password');
+        Route::get('preferencias', 'preferencias')->name('preferencias');
+        Route::put('preferencias', 'guardarPreferencias')->name('preferencias.guardar');
+    });
 
-    Route::resource('ventas', VentaController::class);
-    Route::resource('compras', CompraController::class);
-    Route::resource('productos', ProductoController::class);
-    Route::resource('categorias', CategoriaController::class);
+    // Opciones del menú cuyo módulo aún no existe (config/menu.php)
+    Route::get('modulos/{modulo}', ProntoController::class)->name('pronto');
 
-    //Route::get('/ventas/create', [VentaController::class, 'create'])->name('ventas.create');
-    //Route::post('/ventas/store', [VentaController::class, 'store'])->name('ventas.store');
-    //Route::post('/ventas', function () {
-    //    return view('dashboard');
-    //})->name('ventas.store');
+    require __DIR__ . '/erp/ventas.php';
+    require __DIR__ . '/erp/caja.php';
+    require __DIR__ . '/erp/compras.php';
+    require __DIR__ . '/erp/finanzas.php';
+    require __DIR__ . '/erp/inventario.php';
+    require __DIR__ . '/erp/reportes.php';
+    require __DIR__ . '/erp/configuracion.php';
 });

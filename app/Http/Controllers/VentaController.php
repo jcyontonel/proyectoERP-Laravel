@@ -2,167 +2,270 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Http\Controllers\Controller;
-use App\Models\Cliente;
-use App\Models\Venta;
-use App\Models\Producto;
-use App\Models\Correlativo;
+use App\Http\Controllers\Concerns\ResuelveEmpresa;
+use App\Http\Requests\FiltrarVentasRequest;
 use App\Http\Requests\StoreVentaRequest;
-use App\Http\Requests\IndexVentaRequest;
-use Illuminate\Http\JsonResponse;
-
+use App\Models\AlmacenProducto;
+use App\Models\Cliente;
+use App\Models\Correlativo;
+use App\Models\Empresa;
+use App\Models\Producto;
+use App\Models\UnidadConversion;
+use App\Models\Venta;
+use App\Services\CajaService;
+use App\Services\VentaExportService;
+use App\Services\VentaService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class VentaController extends Controller
 {
-    public function index(IndexVentaRequest $request)
+    use ResuelveEmpresa;
+
+    /** Listado con filtros (q, tipo, estado, desde, hasta) y paginación */
+    public function index(FiltrarVentasRequest $request)
     {
-         $query = Venta::with([
-                        'cliente:id,nombre',
-                        'user:id,name,apellido'
-                    ])->whereHas('empresa', function ($q) {
-                        $q->whereIn('id', auth()->user()->empresas->pluck('id'));
-                    });
+        $metodos = config('ventas.metodos_pago');
 
-        // Filtro de fecha (solo un día, dentro de los últimos 7)
-        $fecha = $request->filled('fecha') 
-            ? Carbon::parse($request->fecha)->startOfDay() 
-            : now()->startOfDay();
-
-        // Asegurar que esté dentro de los últimos 7 días
-        if ($fecha->lt(now()->subDays(7))) {
-            $fecha = now()->subDays(7)->startOfDay();
-        } elseif ($fecha->gt(now())) {
-            $fecha = now()->startOfDay();
-        }
-
-        $query->whereBetween('fecha_emision', [$fecha, $fecha->copy()->endOfDay()]);
-
-        // Filtro de estado (por defecto “Registrada”)
-        $estado = $request->estado ?? 'Registrada';
-        $query->where('estado', $estado);
-
-        $ventas = $query
-                    ->orderBy('fecha_emision', 'desc')
-                    ->get(['id', 'cliente_id', 'user_id', 'fecha_emision', 'total']);
+        $ventas = Venta::query()
+            ->deEmpresa($this->empresaId($request))
+            ->with('cliente.tipoDocumento')
+            ->filtrar($request->validated())
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString()
+            // La vista recibe objetos listos para pintar
+            ->through(fn (Venta $v) => (object) [
+                'id'             => $v->id,
+                'numero'         => $v->numero_completo,
+                'fecha'          => $v->fecha_emision,
+                'cliente_nombre' => $v->cliente?->nombre_completo ?: 'Público general',
+                'cliente_doc'    => $v->cliente?->documento_etiqueta ?? '—',
+                'tipo'           => $v->tipo_etiqueta,
+                'metodo'         => $v->metodo_pago,
+                'metodo_label'   => $metodos[$v->metodo_pago] ?? Str::headline((string) $v->metodo_pago),
+                'total'          => $v->total,
+                'estado'         => $v->estado,
+            ]);
 
         return view('ventas.index', compact('ventas'));
     }
 
-    public function create()
+    /** Formulario de nueva venta */
+    public function create(Request $request)
     {
-        $empresa = auth()->user()
-            ->empresas()
-            ->with(['correlativos' => function ($query) {
-                $query->select('id', 'empresa_id', 'serie')
-                        ->limit(1); 
-            }])
-            ->select('empresas.id', 'empresas.razon_social')
-            ->first();
-
-        // Verificar que el usuario tenga una empresa asociada
-        if (!$empresa)
-           return redirect()->route('dashboard');
-
-        $clientes = Cliente::get(['clientes.id', 'clientes.nombre', 'clientes.numero_documento']);
-        $productos = Producto::where('empresa_id', $empresa->id)
-                            ->get(['id', 'nombre', 'codigo', 'precio_unitario', 'stock']);
-
-        return view('ventas.create', compact('empresa','clientes', 'productos'));
+        return view('ventas.create', $this->datosFormulario($this->empresaId($request)));
     }
 
-    public function store(StoreVentaRequest $request)
+    /** Registra la venta o guarda el borrador */
+    public function store(StoreVentaRequest $request, VentaService $ventas)
     {
-        $data = $request->validated();
-        $productos = $request->input('productos', []);
-        $user = auth()->user();
-        $empresa_id = $request->input('empresa_id');
-        $serie = $request->input('serie');
-        $cliente = null;
+        $venta = $ventas->crear(
+            $request->validated(),
+            $request->user()->id,
+            $this->empresaId($request),
+        );
 
-        // Verificar que la empresa pertenece al usuario
-        if (!$user->empresas->pluck('id')->contains($empresa_id)) {
-            return redirect()->back()->with('error', 'La empresa seleccionada no pertenece al usuario.');
+        $mensaje = $venta->esBorrador()
+            ? "Borrador {$venta->numero_completo} guardado. No afectó stock ni correlativos."
+            : "Venta {$venta->numero_completo} registrada correctamente.";
+
+        return redirect()->route('ventas.show', $venta)->with('status', $mensaje)
+            // Preferencias → imprimir el ticket apenas se registra
+            ->with('imprimir_ticket', ! $venta->esBorrador() && $request->user()->preferencias()->imprimir_al_vender);
+    }
+
+    /** Detalle de una venta */
+    public function show(Request $request, Venta $venta)
+    {
+        $this->propia($request, $venta);
+
+        $venta->load(['empresa', 'almacen', 'usuario', 'cliente.tipoDocumento', 'detalles.producto', 'detalles.tipoUnidad', 'pagos.usuario:id,name']);
+
+        return view('ventas.show', compact('venta'));
+    }
+
+    /** Edición de un borrador (mismo formulario de nueva venta, con los datos cargados) */
+    public function edit(Request $request, Venta $venta)
+    {
+        $this->propia($request, $venta);
+
+        if (! $venta->esEditable()) {
+            return redirect()->route('ventas.show', $venta)->with('error', 'Solo se pueden editar los borradores.');
         }
-        
-        // Verificar que el cliente pertenece a la empresa
-        if(isset($data['cliente_id'])) {
-            $cliente = Cliente::whereHas('empresas', function ($query) use ($empresa_id) {
-                $query->where('empresa_id', $empresa_id);
-            })->where('id', $data['cliente_id'])->first();
-            if (!$cliente) {
-                // Asociar el cliente con la empresa si no existe
-                $cliente = Cliente::find($data['cliente_id']);
-                $cliente->empresas()->attach($empresa_id);
-            }
+
+        $venta->load('detalles');
+
+        return view('ventas.create', $this->datosFormulario($venta->empresa_id) + ['venta' => $venta]);
+    }
+
+    /** Guarda los cambios de un borrador (o lo registra) */
+    public function update(StoreVentaRequest $request, Venta $venta, VentaService $ventas)
+    {
+        $empresaId = $this->empresaId($request);
+        $this->propia($request, $venta);
+
+        if (! $venta->esEditable()) {
+            return redirect()->route('ventas.show', $venta)->with('error', 'Solo se pueden editar los borradores.');
         }
 
-        // Verificar que el correlativo pertenece a la empresa
-        $correlativo = Correlativo::where('empresa_id', $empresa_id)
-            ->where('serie', $serie)
-            ->first();
-        if (!$correlativo) {
-            return redirect()->back()->with('error', 'La serie seleccionada no pertenece a la empresa.');
-        }
+        $venta = $ventas->actualizar($venta, $request->validated(), $request->user()->id, $empresaId);
 
-        // Usar el número actual y luego incrementarlo
-        $nuevoNumero = $correlativo->numero + 1;
+        $mensaje = $venta->esBorrador()
+            ? "Borrador {$venta->numero_completo} actualizado."
+            : "Venta {$venta->numero_completo} registrada correctamente.";
 
-        // Guardar la venta principal
-        $venta = Venta::create([
-            'cliente_id' => $cliente->id ?? null,
-            'empresa_id' => $empresa_id,
-            'user_id' => $user->id,
-            'serie' => $serie,
-            'numero' => $nuevoNumero,
-            'fecha_emision' => $data['fecha_emision'] ?? now(),
-            'tipo' => $correlativo->tipo,
-            'estado' => 'registrada',
-            'subtotal' => $data['subtotal'] ?? 0,
-            'total_impuestos' => $data['total_impuestos'] ?? 0,
-            'total' => $data['total'],
-            'metodo_pago' => $data['metodo_pago'] ?? 'efectivo',
-            'observaciones' => $data['observaciones'] ?? null,
-        ]);
+        return redirect()->route('ventas.show', $venta)->with('status', $mensaje);
+    }
 
-        // Actualizar el número en el correlativo
-        $correlativo->numero = $nuevoNumero;
-        $correlativo->save();
-        // Guardar los detalles de la venta
-        foreach ($productos as $detalle) {
-            $venta->detalles()->create([
-                'producto_id'     => $detalle['id'] ?? null,
-                'tipo_unidad_id'  => $detalle['tipo_unidad_id'] ?? null,
-                'descripcion'     => $detalle['descripcion'] ?? 'Producto sin descripción',
-                'cantidad'        => $detalle['cantidad'],
-                'precio_unitario' => $detalle['precio'],
-                'subtotal'        => $detalle['subtotal'],
-                'total_impuestos' => $detalle['total_impuestos'] ?? 0,
-                'total'           => $detalle['subtotal'] + ($productos['total_impuestos'] ?? 0),
+    /** Ticket imprimible (80 mm) */
+    public function ticket(Request $request, Venta $venta)
+    {
+        $this->propia($request, $venta);
+
+        $venta->load(['empresa', 'usuario', 'cliente.tipoDocumento', 'detalles.tipoUnidad']);
+
+        return view('ventas.ticket', compact('venta'));
+    }
+
+    /** Exporta con los mismos filtros del listado: formato=xlsx (CSV para Excel) | pdf (vista para imprimir) */
+    public function export(FiltrarVentasRequest $request, VentaExportService $exportador)
+    {
+        $empresaId = $this->empresaId($request);
+        $filtros   = $request->validated();
+
+        $query = Venta::query()
+            ->deEmpresa($empresaId)
+            ->filtrar($filtros)
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id');
+
+        if (($filtros['formato'] ?? 'xlsx') === 'pdf') {
+            $ventas = $query->with(['cliente.tipoDocumento', 'usuario'])
+                ->limit((int) config('ventas.export_max', 10000))
+                ->get();
+
+            return view('ventas.export', [
+                'ventas'  => $ventas,
+                'empresa' => Empresa::find($empresaId),
+                'filtros' => $filtros,
             ]);
         }
 
-        return redirect()->route('ventas.show', $venta->id);
-        //return view('ventas.resultado', [
-        //    'venta' => $venta->load('cliente', 'empresa', 'detalles.producto')
-        //]);
+        return $exportador->csv($query);
     }
 
-    public function show(Venta $venta) {
-        return view('ventas.show', [
-            'venta' => $venta->load('cliente', 'empresa', 'user', 'detalles')
-        ]);
-    }
-
-    public function update(UpdateVentaRequest $request, Venta $Venta): JsonResponse
+    /** Anula una venta completada y repone el stock */
+    public function anular(Request $request, Venta $venta, VentaService $ventas)
     {
-        $Venta->update($request->validated());
-        return response()->json($Venta);
+        $this->propia($request, $venta);
+
+        try {
+            $ventas->anular($venta, $request->user()->id);
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->first());
+        }
+
+        return back()->with('status', "El comprobante {$venta->numero_completo} fue anulado y el stock repuesto.");
     }
 
-    public function destroy(Venta $Venta): JsonResponse
+    /* ───────────────────────── Privado ───────────────────────── */
+
+    /** La venta debe pertenecer a la empresa actual del usuario */
+    private function propia(Request $request, Venta $venta): void
     {
-        $Venta->delete();
-        return response()->json(null, 204);
+        abort_unless($venta->empresa_id === $this->empresaId($request), 404);
+    }
+
+    /** Catálogos del formulario de venta (nueva o edición de borrador) */
+    private function datosFormulario(int $empresaId): array
+    {
+        $empresa = Empresa::findOrFail($empresaId);
+
+        // Comprobantes disponibles (tipo + serie). numero = último emitido → el siguiente es +1
+        $correlativos = $empresa->correlativos()->activo()->where('modulo', Correlativo::MODULO_VENTA)
+            ->orderBy('tipo')->orderBy('serie')
+            ->get()
+            ->map(fn (Correlativo $c) => [
+                'id'           => $c->id,
+                'tipo'         => $c->tipo,
+                'destipo'      => $c->destipo,
+                'serie'        => $c->serie,
+                'numero'       => $c->numero,
+                'siguiente'    => $c->siguiente(),
+                'requiere_ruc' => $c->requiereRuc(),
+            ])->values();
+
+        $almacenes = $empresa->almacenes()->activo()
+            ->orderByDesc('es_principal')->orderBy('nombre')
+            ->get(['id', 'nombre', 'es_principal']);
+
+        // Clientes de la empresa (cliente_empresa) con su tipo de documento
+        $clientes = $empresa->clientes()
+            ->where('clientes.activo', true)
+            ->with('tipoDocumento:id,codigo,descripcion')
+            ->orderBy('clientes.nombre')
+            ->get()
+            ->map(fn (Cliente $c) => [
+                'id'                    => $c->id,
+                'nombre'                => $c->nombre_completo,
+                'numero_documento'      => $c->numero_documento,
+                'email'                 => $c->correo,
+                'telefono'              => $c->telefono,
+                'tipo_documento_codigo' => $c->tipoDocumento?->codigo,
+                'tipo_documento'        => $c->tipoDocumento?->descripcion,
+            ])->values();
+
+        // Productos con el stock de cada almacén (los servicios no llevan stock)
+        $stocks = AlmacenProducto::query()
+            ->whereIn('almacen_id', $almacenes->pluck('id'))
+            ->get(['almacen_id', 'producto_id', 'stock'])
+            ->groupBy('producto_id');
+
+        // Lo que se puede obtener partiendo el stock de origen (ej. kilos de los sacos): [destino][almacen] => cantidad
+        $porFraccionar = [];
+        if (config('inventario.fraccionar_al_vender')) {
+            $reglas = UnidadConversion::query()->where('empresa_id', $empresaId)->fraccionamientos()->activo()->get(['producto_id', 'producto_destino_id', 'factor']);
+            foreach ($reglas as $r) {
+                foreach ($stocks[$r->producto_id] ?? [] as $s) {
+                    $porFraccionar[$r->producto_destino_id][$s->almacen_id] = round(($porFraccionar[$r->producto_destino_id][$s->almacen_id] ?? 0) + floor((float) $s->stock) * $r->factor, 4);
+                }
+            }
+        }
+
+        $productos = $empresa->productos()->activo()
+            ->with('tipoUnidad:id,codigo,descripcion')
+            ->orderBy('nombre')
+            ->get(['id', 'codigo', 'nombre', 'precio_unitario', 'es_servicio', 'tipo_unidad_id'])
+            ->map(fn (Producto $p) => [
+                'id'              => $p->id,
+                'codigo'          => $p->codigo,
+                'nombre'          => $p->nombre,
+                'precio_unitario' => $p->precio_unitario,
+                'es_servicio'     => $p->es_servicio,
+                'unidad'          => $p->tipoUnidad?->descripcion,
+                'decimal'         => $p->seVendeFraccionado(),   // kilos, litros…: admite 0.5, 2.25
+                'stocks'          => ($stocks[$p->id] ?? collect())
+                    ->mapWithKeys(fn ($s) => [$s->almacen_id => $s->stock])->all(),
+                'fraccionable'    => $porFraccionar[$p->id] ?? [],
+            ])->values();
+
+        return [
+            'empresa'      => $empresa,
+            'correlativos' => $correlativos,
+            'almacenes'    => $almacenes,
+            'clientes'     => $clientes,
+            'productos'    => $productos,
+            'metodosPago'  => config('ventas.metodos_pago'),
+            // Reglas de la empresa (tabla empresas)
+            'igv'                => (float) $empresa->igv,
+            'preciosIncluyenIgv' => (bool) $empresa->precios_incluyen_igv,
+            'controlarStock'     => (bool) $empresa->controlar_stock,
+            // Turno de caja del vendedor: sin él solo se pueden guardar borradores (config/caja.php)
+            'cajaAbierta'        => app(CajaService::class)->sesionAbierta($empresaId, (int) auth()->id()),
+            'exigeCaja'          => (bool) config('caja.exigir_para_vender'),
+        ];
     }
 }

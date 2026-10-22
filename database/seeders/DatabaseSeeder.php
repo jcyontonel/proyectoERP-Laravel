@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,19 +12,32 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolesYPermisosSeeder::class,
-            //EmpresaSeeder::class,
-            //UsuarioSeeder::class,
+            // 1) Catálogos globales (SUNAT / ISO)
+            MonedaSeeder::class,
             TipoDocumentoSeeder::class,
-            //CorrelativoSeeder::class,
-            //ClienteSeeder::class,
-            //TipoUnidadSeeder::class,
-            //CategoriaSeeder::class,
-            //ProductoSeeder::class,
-            //VentaSeeder::class,
-            //DetalleVentaSeeder::class,
-            //ProveedorSeeder::class,
+            TipoUnidadSeeder::class,
+            ImpuestoSeeder::class,
+
+            // 2) Roles y permisos globales (se asignan por empresa)
+            RolesYPermisosSeeder::class,
+
+            // 3) Empresas y usuarios
             RicoPetSeeder::class,
+            //EmpresaSeeder::class,   // empresas demo para probar multiempresa
+            //UsuarioSeeder::class,   // un usuario por rol en cada empresa demo
+
+            // 4) Configuración de cada empresa (recorren todas las empresas)
+            AlmacenSeeder::class,
+            CorrelativoSeeder::class,
+            CajaSeeder::class,
+            MotivoAjusteSeeder::class,
+
+            // 5) Datos de RicoPet
+            CategoriaSeeder::class,
+            ClienteSeeder::class,
+            ProveedorSeeder::class,
+            ProductoSeeder::class,
+            UnidadesConversionSeeder::class,   // presentaciones y reglas de fraccionamiento (saco → kilos)
         ]);
     }
 }

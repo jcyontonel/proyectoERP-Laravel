@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
 
+        // Roles y permisos según la empresa actual (Spatie teams)
+        $middleware->web(append: [\App\Http\Middleware\EstablecerEmpresaActual::class]);
+
         // aliases para usar en rutas ->middleware('role:admin') etc.
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
@@ -30,5 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Claves que nunca vuelven al formulario (ni a la sesión) tras un error de validación
+        $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'password_actual', 'sunat_clave_sol', 'certificado_clave']);
     })->create();

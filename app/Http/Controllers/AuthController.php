@@ -13,7 +13,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (auth()->check()) {
-            return redirect()->route('dashboard');
+            return redirect('/');
         }
 
         return view('auth.login');
@@ -29,7 +29,8 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->has('remember');
 
-        if (!Auth::attempt($credentials, $remember)) {
+        // Un usuario desactivado no puede iniciar sesión
+        if (!Auth::attempt($credentials + ['activo' => true], $remember)) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Credenciales incorrectas'], 401);
             }
@@ -49,7 +50,7 @@ class AuthController extends Controller
         }
 
         // Para web: redirigir al dashboard
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended('/');
     }
 
     public function user(Request $request)

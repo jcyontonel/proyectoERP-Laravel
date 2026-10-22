@@ -2,37 +2,46 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DetalleVenta extends Model
 {
-    /** @use HasFactory<\Database\Factories\DetalleFacturaFactory> */
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
+
+    protected $table = 'detalle_ventas';
 
     protected $fillable = [
-        'venta_id',
-        'producto_id',
-        'tipo_unidad_id',
-        'descripcion',
-        'cantidad',
-        'precio_unitario',
-        'subtotal',
-        'total_impuestos',
-        'total',
+        'venta_id', 'producto_id', 'lote_id', 'tipo_unidad_id', 'descripcion', 'cantidad',
+        'precio_unitario', 'costo_unitario', 'descuento', 'subtotal', 'total_impuestos', 'total',
     ];
-    public function venta()
+
+    protected function casts(): array
+    {
+        return [
+            'cantidad'        => 'float',
+            'precio_unitario' => 'float',
+            'costo_unitario'  => 'float',
+            'descuento'       => 'float',
+            'subtotal'        => 'float',
+            'total_impuestos' => 'float',
+            'total'           => 'float',
+        ];
+    }
+
+    public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);
     }
 
-    public function producto()
+    /** withTrashed: una venta antigua debe poder leer productos ya eliminados */
+    public function producto(): BelongsTo
     {
-        return $this->belongsTo(Producto::class);
+        return $this->belongsTo(Producto::class)->withTrashed();
     }
 
-    public function tipoUnidad()
+    public function tipoUnidad(): BelongsTo
     {
         return $this->belongsTo(TipoUnidad::class, 'tipo_unidad_id');
     }

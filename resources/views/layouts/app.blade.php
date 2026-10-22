@@ -1,39 +1,53 @@
+{{--
+    Layout principal. LayoutComposer (ErpServiceProvider) entrega:
+      $usuario, $rolActual, $empresaActual, $empresas, $menu (config/menu.php), $alertas, $cajaAbierta
+    Secciones: title, content, shortcuts (pie de página) · Pilas: head, scripts
+--}}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
-    <title>@yield('title', 'Mi App')</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Inicio') · {{ $empresaActual?->nombre_comercial ?? config('app.name', 'Ricopet') }}</title>
+
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet">
+
+    {{-- Aplica la barra lateral colapsada antes de pintar (evita el parpadeo) --}}
+    <script>
+        try { if (localStorage.getItem('sidebar') === 'mini') document.documentElement.classList.add('sidebar-mini'); } catch (e) {}
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
 </head>
-<body class="flex flex-col min-h-screen bg-blue-100">
 
-    <!-- Encabezado -->
-    <header class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
-        <h1 class="font-bold">📊 Mi Sistema</h1>
-    </header>
+<body class="min-h-dvh bg-canvas font-sans text-ink antialiased">
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow">Saltar al contenido</a>
 
-    <!-- Contenido principal -->
-    <main class="flex-1 p-4" style="padding-bottom: 10rem;">
-        @yield('content')
-    </main>
+    @include('layouts.partials.sidebar')
 
-    <!-- Footer tipo barra de navegación inferior -->
-    <footer class="bg-blue-400 border-t shadow-inner p-6 fixed bottom-0 left-0 w-full flex justify-around">
-        <a href="{{ url('/dashboard') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
-            🏠 <span>Inicio</span>
-        </a>
-        <a href="{{ url('/ventas') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
-            🛒 <span>Ventas</span>
-        </a>
-        <!--
-        <a href="{{ url('/compras') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
-            📦 <span>Compras</span>
-        </a>
-        <a href="{{ url('/usuarios') }}" class="flex flex-col items-center text-gray-700 hover:text-blue-600">
-            👤 <span>Usuarios</span>
-        </a>
-        -->
-    </footer>
+    <div class="flex min-h-dvh flex-col transition-[padding] lg:pl-64 lg:mini:pl-[4.5rem]">
+        @include('layouts.partials.topbar')
 
+        <main id="contenido" class="mx-auto w-full max-w-7xl flex-1 px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+            @if (! $empresaActual)
+                <x-alert tone="warning" class="mb-5">Tu usuario no tiene una empresa asignada. Pide a un administrador que te dé acceso.</x-alert>
+            @endif
+
+            @yield('content')
+        </main>
+
+        <footer class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 pb-6 text-xs text-slate-500 sm:px-6 lg:px-8">
+            <span>
+                {{ $empresaActual?->razon_social ?? config('app.name') }}
+                @if ($empresaActual) · RUC {{ $empresaActual->ruc }} @endif
+            </span>
+            <span>@yield('shortcuts', 'Importes en ' . ($empresaActual?->moneda ?? 'PEN') . ($empresaActual?->precios_incluyen_igv ?? true ? ' · Precios incluyen IGV' : ' · Precios sin IGV'))</span>
+        </footer>
+    </div>
+
+    @stack('scripts')
 </body>
 </html>

@@ -2,17 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Empresa;
 use Illuminate\Database\Seeder;
 
+/** Empresas demo para probar el aislamiento multiempresa */
 class EmpresaSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Empresa::factory()->count(3)->create();
+        Empresa::factory()->count(2)->create();
     }
 }

@@ -1,239 +1,205 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResuelveEmpresa;
+use App\Http\Requests\FiltrarComprasRequest;
+use App\Http\Requests\StoreCompraRequest;
+use App\Http\Requests\StorePagoCompraRequest;
+use App\Models\AlmacenProducto;
 use App\Models\Compra;
 use App\Models\DetalleCompra;
-use App\Models\Proveedor;
+use App\Models\Empresa;
 use App\Models\Producto;
-use App\Traits\RegistraKardex;
+use App\Models\Proveedor;
+use App\Models\TipoDocumento;
+use App\Services\CompraExportService;
+use App\Services\CajaService;
+use App\Services\CompraService;
 use Illuminate\Http\Request;
-use App\Http\Requests\StoreCompraRequest;
-use App\Http\Requests\UpdateCompraRequest;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CompraController extends Controller
 {
-    use RegistraKardex;
+    use ResuelveEmpresa;
 
-    /**
-     * Listado de compras
-     */
-    public function index(Request $request)
+    /** Listado con filtros (q, estado, pago, proveedor_id, desde, hasta) */
+    public function index(FiltrarComprasRequest $request)
     {
-        $empresaId = auth()->user()->empresa_id ?? auth()->user()->empresas->first()->id;
+        $empresaId = $this->empresaId($request);
 
-        $compras = Compra::with(['proveedor', 'usuario'])
-            ->where('empresa_id', $empresaId)
-            ->latest()
-            ->paginate(10);
+        $compras = Compra::query()
+            ->deEmpresa($empresaId)
+            ->with(['proveedor.tipoDocumento', 'almacen'])
+            ->withSum(['pagos as pagado' => fn ($q) => $q->where('estado', 'registrado')], 'monto')
+            ->filtrar($request->validated())
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('compras.index', compact('compras'));
+        // Totales de lo filtrado (solo compras registradas)
+        $pendiente = Compra::query()->deEmpresa($empresaId)->filtrar($request->validated())
+            ->where('estado', Compra::REGISTRADA)
+            ->withSum(['pagos as pagado' => fn ($q) => $q->where('estado', 'registrado')], 'monto')
+            ->get()
+            ->sum(fn (Compra $c) => $c->saldo());
+
+        $proveedores = Proveedor::query()->deEmpresa($empresaId)->orderBy('razon_social')->get(['id', 'razon_social', 'nombre_comercial']);
+
+        return view('compras.index', compact('compras', 'pendiente', 'proveedores'));
     }
 
-    /**
-     * Mostrar formulario de creación
-     */
-    public function create()
+    /** Formulario de nueva compra */
+    public function create(Request $request)
     {
-        $empresaId = auth()->user()->empresa_id ?? auth()->user()->empresas->first()->id;
+        $empresaId = $this->empresaId($request);
 
-        $proveedores = Proveedor::where('empresa_id', $empresaId)->where('activo', true)->get();
-        $productos = Producto::where('empresa_id', $empresaId)->where('activo', true)->get();
-
-        return view('compras.create', compact('proveedores', 'productos'));
+        return view('compras.create', $this->datosFormulario($empresaId) + [
+            'cajaAbierta' => app(CajaService::class)->sesionAbierta($empresaId, $request->user()->id),
+        ]);
     }
 
-    /**
-     * Guardar nueva compra
-     */
-    public function store(StoreCompraRequest $request)
+    /** Registra la compra: detalle, stock, kardex, costo y pago */
+    public function store(StoreCompraRequest $request, CompraService $compras)
     {
-        DB::beginTransaction();
+        $compra = $compras->crear($request->validated(), $request->user()->id, $this->empresaId($request));
 
-        try {
-            $empresaId = auth()->user()->empresa_id 
-                        ?? auth()->user()->empresas->first()->id;
+        $precios = count($compras->preciosActualizados);
 
-            // Crear compra
-            $compra = Compra::create([
-                'empresa_id' => $empresaId,
-                'proveedor_id' => $request->proveedor_id,
-                'user_id' => auth()->id(),
-                'serie' => $request->serie,
-                'numero' => $request->numero,
-                'fecha_emision' => $request->fecha_emision,
-                'tipo_comprobante' => $request->tipo_comprobante,
-                'moneda' => $request->moneda,
-                'subtotal' => $request->subtotal,
-                'total_impuestos' => $request->total_impuestos,
-                'total' => $request->total,
-                'estado' => 'registrada',
-                'observacion' => $request->observacion,
-            ]);
-
-            if (!is_array($request->detalles) || count($request->detalles) === 0) {
-                throw new \Exception("La compra debe tener al menos un ítem.");
-            }
-
-            // Guardar detalles y actualizar stock/Kardex
-            foreach ($request->detalles as $detalle) {
-
-                if (!isset($detalle['producto_id'], $detalle['cantidad'], $detalle['precio_unitario'])) {
-                    throw new \Exception("Uno de los ítems está incompleto.");
-                }
-
-                $producto = Producto::findOrFail($detalle['producto_id']);
-
-                $detalleCompra = DetalleCompra::create([
-                    'compra_id' => $compra->id,
-                    'producto_id' => $producto->id,
-                    'descripcion' => $detalle['descripcion'] ?? $producto->nombre,
-                    'cantidad' => $detalle['cantidad'],
-                    'precio_unitario' => $detalle['precio_unitario'],
-                    'subtotal' => $detalle['subtotal'],
-                    'impuesto' => $detalle['impuesto'] ?? 0,
-                    'total' => $detalle['total'],
-                ]);
-
-                // Actualizar stock del producto
-                $producto->stock = ($producto->stock ?? 0) + $detalleCompra->cantidad;
-                $producto->save();
-
-                // Registrar movimiento en Kardex
-                $this->registrarMovimientoKardex([
-                    'empresa_id' => $empresaId,
-                    'producto_id' => $producto->id,
-                    'tipo_movimiento' => 'ingreso',
-                    'motivo' => 'Compra',
-                    'referencia_tipo' => 'compra',
-                    'referencia_id' => $compra->id,
-                    'referencia_serie' => $compra->serie,
-                    'referencia_numero' => $compra->numero,
-                    'cantidad' => $detalleCompra->cantidad,
-                    'costo_unitario' => $detalleCompra->precio_unitario,
-                    'observacion' => "Ingreso por compra {$compra->serie}-{$compra->numero}",
-                    // Detalles de Kardex
-                    'detalles' => [
-                        [
-                            'cantidad'         => $detalle->cantidad,
-                            'costo_unitario'   => $detalle->precio_unitario,
-                            'lote'             => $item['lote'] ?? null,
-                            'fecha_vencimiento'=> $item['fecha_vencimiento'] ?? null,
-                        ]
-                    ]
-                ]);
-            }
-
-            DB::commit();
-
-            return redirect()->route('compras.index')
-                            ->with('success', 'Compra registrada correctamente.');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return back()
-                    ->withInput()
-                    ->with('error', 'Error al registrar la compra: ' . $th->getMessage());
-        }
+        return redirect()->route('compras.show', $compra)
+            ->with('status', "Compra {$compra->numero_completo} registrada. El stock y el kardex fueron actualizados"
+                . ($precios ? " y se actualizó el precio de venta de {$precios} " . str('producto')->plural($precios) . '.' : '.'));
     }
 
-    /**
-     * Mostrar una compra
-     */
-    public function show(Compra $compra)
+    public function show(Request $request, Compra $compra)
     {
-        $compra->load(['proveedor', 'usuario', 'detalles.producto']);
+        $this->propia($request, $compra);
+
+        $compra->load([
+            'empresa', 'almacen', 'usuario', 'proveedor.tipoDocumento',
+            'detalles.producto', 'detalles.lote', 'detalles.tipoUnidad',
+            'pagos.usuario',
+        ]);
+
         return view('compras.show', compact('compra'));
     }
 
-    /**
-     * Mostrar formulario de edición
-     */
-    public function edit(Compra $compra)
+    /** Anula la compra, devuelve el stock ingresado y anula sus pagos */
+    public function anular(Request $request, Compra $compra, CompraService $compras)
     {
-        $empresaId = $compra->empresa_id;
-        $proveedores = Proveedor::where('empresa_id', $empresaId)->where('activo', true)->get();
-        $productos = Producto::where('empresa_id', $empresaId)->where('activo', true)->get();
+        $this->propia($request, $compra);
 
-        $compra->load('detalles');
+        try {
+            $compras->anular($compra, $request->user()->id);
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->first());
+        }
 
-        return view('compras.edit', compact('compra', 'proveedores', 'productos'));
+        return back()->with('status', "La compra {$compra->numero_completo} fue anulada y el stock revertido.");
     }
 
-    /**
-     * Actualizar compra
-     */
-    public function update(UpdateCompraRequest $request, Compra $compra)
+    /** Pago (total o parcial) de una compra a crédito */
+    public function storePago(StorePagoCompraRequest $request, Compra $compra, CompraService $compras)
     {
-        DB::beginTransaction();
-        try {
-            $compra->update([
-                'proveedor_id' => $request->proveedor_id,
-                'serie' => $request->serie,
-                'numero' => $request->numero,
-                'fecha_emision' => $request->fecha_emision,
-                'tipo_comprobante' => $request->tipo_comprobante,
-                'moneda' => $request->moneda,
-                'subtotal' => $request->subtotal,
-                'total_impuestos' => $request->total_impuestos,
-                'total' => $request->total,
-                'observacion' => $request->observacion,
-            ]);
+        $this->propia($request, $compra);
 
-            // Eliminar detalles anteriores y recalcular stock
-            foreach ($compra->detalles as $detalleAntiguo) {
-                $producto = $detalleAntiguo->producto;
-                $producto->stock = max(0, ($producto->stock ?? 0) - $detalleAntiguo->cantidad);
-                $producto->save();
-                $detalleAntiguo->delete();
-            }
+        $compras->registrarPago($compra, $request->validated(), $request->user()->id);
 
-            // Crear nuevos detalles
-            foreach ($request->detalles as $detalle) {
-                $producto = Producto::findOrFail($detalle['producto_id']);
-                $detalleCompra = DetalleCompra::create([
-                    'compra_id' => $compra->id,
-                    'producto_id' => $producto->id,
-                    'descripcion' => $detalle['descripcion'] ?? $producto->nombre,
-                    'cantidad' => $detalle['cantidad'],
-                    'precio_unitario' => $detalle['precio_unitario'],
-                    'subtotal' => $detalle['subtotal'],
-                    'impuesto' => $detalle['impuesto'] ?? 0,
-                    'total' => $detalle['total'],
-                ]);
-
-                $producto->stock = ($producto->stock ?? 0) + $detalleCompra->cantidad;
-                $producto->save();
-            }
-
-            DB::commit();
-
-            return redirect()->route('compras.index')->with('success', 'Compra actualizada correctamente.');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return back()->with('error', 'Error al actualizar la compra: ' . $th->getMessage());
-        }
+        return back()->with('status', 'Pago registrado correctamente.');
     }
 
-    /**
-     * Eliminar compra
-     */
-    public function destroy(Compra $compra)
+    /** CSV para Excel con los mismos filtros del listado */
+    public function export(FiltrarComprasRequest $request, CompraExportService $exportador)
     {
-        DB::beginTransaction();
-        try {
-            foreach ($compra->detalles as $detalle) {
-                $producto = $detalle->producto;
-                $producto->stock = max(0, ($producto->stock ?? 0) - $detalle->cantidad);
-                $producto->save();
-            }
+        $query = Compra::query()
+            ->deEmpresa($this->empresaId($request))
+            ->filtrar($request->validated())
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id');
 
-            $compra->delete();
-            DB::commit();
+        return $exportador->csv($query);
+    }
 
-            return redirect()->route('compras.index')->with('success', 'Compra eliminada correctamente.');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return back()->with('error', 'Error al eliminar la compra: ' . $th->getMessage());
-        }
+    /* ───────────────────────── Privado ───────────────────────── */
+
+    private function propia(Request $request, Compra $compra): void
+    {
+        abort_unless($compra->empresa_id === $this->empresaId($request), 404);
+    }
+
+    /** Catálogos del formulario de compra */
+    private function datosFormulario(int $empresaId): array
+    {
+        $empresa = Empresa::findOrFail($empresaId);
+
+        $proveedores = $empresa->proveedores()->activo()
+            ->with('tipoDocumento:id,codigo,descripcion')
+            ->orderBy('razon_social')
+            ->get()
+            ->map(fn (Proveedor $p) => [
+                'id'       => $p->id,
+                'nombre'   => $p->nombre,
+                'doc'      => (string) $p->numero_documento,
+                'tipo_doc' => $p->tipo_doc_etiqueta,
+                'contacto' => $p->contacto_nombre,
+                'telefono' => $p->telefono ?: $p->celular,
+                'email'    => $p->email,
+            ])->values();
+
+        $almacenes = $empresa->almacenes()->activo()
+            ->orderByDesc('es_principal')->orderBy('nombre')
+            ->get(['id', 'nombre', 'es_principal']);
+
+        // Stock actual por almacén (informativo en el buscador)
+        $stocks = AlmacenProducto::query()
+            ->whereIn('almacen_id', $almacenes->pluck('id'))
+            ->get(['almacen_id', 'producto_id', 'stock'])
+            ->groupBy('producto_id');
+
+        // Última compra registrada de cada producto: costo, fecha y proveedor (para comparar al registrar)
+        $ultimas = DetalleCompra::query()
+            ->whereIn('id', DetalleCompra::query()->selectRaw('MAX(detalle_compras.id)')
+                ->join('compras', 'compras.id', '=', 'detalle_compras.compra_id')
+                ->where('compras.empresa_id', $empresaId)->where('compras.estado', Compra::REGISTRADA)
+                ->groupBy('detalle_compras.producto_id'))
+            ->with('compra.proveedor:id,razon_social,nombre_comercial')
+            ->get()
+            ->keyBy('producto_id');
+
+        $productos = $empresa->productos()->activo()
+            ->with('tipoUnidad:id,descripcion')
+            ->orderBy('nombre')
+            ->get(['id', 'codigo', 'nombre', 'costo_unitario', 'precio_unitario', 'es_servicio', 'maneja_lotes', 'tipo_unidad_id'])
+            ->map(fn (Producto $p) => [
+                'id'          => $p->id,
+                'codigo'      => $p->codigo,
+                'nombre'      => $p->nombre,
+                'costo'       => $p->costo_unitario,
+                'precio'      => $p->precio_unitario,
+                'unidad'      => $p->tipoUnidad?->descripcion,
+                'lotes'       => $p->maneja_lotes,
+                'ultima'      => isset($ultimas[$p->id]) ? [
+                    'costo'     => (float) $ultimas[$p->id]->precio_unitario,
+                    'fecha'     => $ultimas[$p->id]->compra?->fecha_emision?->format('d/m/Y'),
+                    'proveedor' => $ultimas[$p->id]->compra?->proveedor?->nombre,
+                ] : null,
+                'es_servicio' => $p->es_servicio,
+                'stocks'      => ($stocks[$p->id] ?? collect())->mapWithKeys(fn ($s) => [$s->almacen_id => $s->stock])->all(),
+            ])->values();
+
+        return [
+            'empresa'            => $empresa,
+            'proveedores'        => $proveedores,
+            'almacenes'          => $almacenes,
+            'productos'          => $productos,
+            'tiposDocumento'     => TipoDocumento::orderBy('descripcion')->get(['id', 'codigo', 'descripcion']),
+            'tiposComprobante'   => config('compras.tipos_comprobante'),
+            'monedas'            => config('compras.monedas'),
+            'metodosPago'        => config('compras.metodos_pago'),
+            'igv'                => (float) $empresa->igv,
+            'preciosIncluyenIgv' => (bool) $empresa->precios_incluyen_igv,
+            'controlarStock'     => (bool) $empresa->controlar_stock,
+        ];
     }
 }

@@ -2,22 +2,25 @@
 
 namespace Database\Factories;
 
+use App\Models\Impuesto;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Impuesto>
+ * @extends Factory<Impuesto>
  */
 class ImpuestoFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Impuesto::class;
+
     public function definition(): array
     {
         return [
-            //
+            'codigo' => fake()->unique()->lexify('IMP???'),
+            'nombre' => 'IGV',
+            'tipo_afectacion' => '10',
+            'codigo_tributo' => '1000',
+            'porcentaje' => 18,
+            'activo' => true,
         ];
     }
 }

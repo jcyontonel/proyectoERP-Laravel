@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    // Consulta de DNI (RENIEC) y RUC (SUNAT). El token NUNCA se envía al navegador.
+    'apiperu' => [
+        'url'     => env('APIPERU_URL', 'https://api.apiperu.dev'),
+        'token'   => env('APIPERU_TOKEN'),
+        'timeout' => (int) env('APIPERU_TIMEOUT', 8),
+        // Días que se guarda en caché cada consulta (ahorra cuota del plan)
+        'cache_dias' => (int) env('APIPERU_CACHE_DIAS', 30),
+        // Certificados raíz para HTTPS cuando PHP no los trae actualizados (XAMPP en Windows: error SSL 60)
+        'ca_bundle' => env('APIPERU_CA_BUNDLE'),
+    ],
+
 ];

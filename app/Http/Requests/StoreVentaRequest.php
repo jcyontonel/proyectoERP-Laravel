@@ -2,77 +2,63 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Almacen;
+use App\Models\Correlativo;
+use App\Models\Producto;
+use App\Support\EmpresaActual;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreVentaRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return EmpresaActual::id($this->user()) !== null;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
+        $empresa = EmpresaActual::id($this->user());
+
+        $deLaEmpresa = fn (bool $conActivo = true) => fn ($q) => $q
+            ->where('empresa_id', $empresa)
+            ->when($conActivo, fn ($q) => $q->where('activo', true))
+            ->whereNull('deleted_at');
+
         return [
-            'cliente_id' => 'nullable|exists:clientes,id',
-            'empresa_id'      => 'required|exists:empresas,id',
-            'serie'           => 'required|string|max:10',
-            'fecha_emision'   => 'nullable|date',
-            'estado'          => 'nullable|string|max:30',
-            'subtotal'        => 'nullable|numeric|min:0',
-            'total_impuestos' => 'nullable|numeric|min:0',
-            'total'           => 'required|numeric|min:0',
-            'observaciones'   => 'nullable|string|max:255',
-            'productos'       => 'required|array|min:1',
-            'productos.*.id'        => 'required|exists:productos,id',
-            'productos.*.cantidad'  => 'required|numeric|min:1',
-            'productos.*.precio'    => 'required|numeric|min:0',
-            'productos.*.subtotal'  => 'required|numeric|min:0',
-            'metodo_pago'     => 'nullable|string|max:30',
+            'accion'         => ['required', 'in:registrar,borrador'],
+            'correlativo_id' => ['required', Rule::exists(Correlativo::class, 'id')->where($deLaEmpresa())],
+            'almacen_id'     => ['required', Rule::exists(Almacen::class, 'id')->where($deLaEmpresa())],
+            'cliente_id'     => ['nullable', Rule::exists('cliente_empresa', 'cliente_id')->where('empresa_id', $empresa)],
+            'fecha_emision'  => ['required', 'date'],
+            'metodo_pago'    => ['required', Rule::in(array_keys(config('ventas.metodos_pago')))],
+            // Crédito: queda en Cuentas por cobrar (exige cliente; el adelanto es opcional)
+            'condicion_pago'    => ['nullable', 'in:contado,credito'],
+            'fecha_vencimiento' => ['nullable', 'required_if:condicion_pago,credito', 'date', 'after_or_equal:fecha_emision'],
+            'adelanto'          => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'observaciones'  => ['nullable', 'string', 'max:1000'],
+            'descuento'      => ['nullable', 'numeric', 'between:0,100'],
+
+            'productos'            => ['required', 'array', 'min:1'],
+            'productos.*.id'       => ['required', Rule::exists(Producto::class, 'id')->where($deLaEmpresa())],
+            'productos.*.cantidad' => ['required', 'numeric', 'min:0.01'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'cliente_id.exists' => 'El cliente seleccionado no es válido.',
-            'empresa_id.required' => 'La empresa es obligatoria.',
-            'empresa_id.exists' => 'La empresa seleccionada no es válida.',
-            'serie.required' => 'La serie es obligatoria.',
-            'serie.max' => 'La serie no puede tener más de 10 caracteres.',
-            'fecha_emision.date' => 'La fecha de emisión no es válida.',
-            'estado.max' => 'El estado no puede tener más de 30 caracteres.',
-            'subtotal.numeric' => 'El subtotal debe ser un número.',
-            'subtotal.min' => 'El subtotal no puede ser negativo.',
-            'total_impuestos.numeric' => 'El total de impuestos debe ser un número.',
-            'total_impuestos.min' => 'El total de impuestos no puede ser negativo.',
-            'total.required' => 'El total de la venta es obligatorio.',
-            'total.numeric' => 'El total de la venta debe ser un número.',
-            'total.min' => 'El total de la venta no puede ser negativo.',
-            'observaciones.max' => 'Las observaciones no pueden tener más de 255 caracteres.',
-            'productos.required' => 'Debes agregar al menos un producto.',
-            'productos.array' => 'El formato de productos no es válido.',
-            'productos.min' => 'Debes agregar al menos un producto.',
-            'productos.*.id.required' => 'El producto es obligatorio.',
-            'productos.*.id.exists' => 'El producto seleccionado no es válido.',
-            'productos.*.cantidad.required' => 'La cantidad es obligatoria.',
-            'productos.*.cantidad.numeric' => 'La cantidad debe ser un número.',
-            'productos.*.cantidad.min' => 'La cantidad debe ser al menos 1.',
-            'productos.*.precio.required' => 'El precio es obligatorio.',
-            'productos.*.precio.numeric' => 'El precio debe ser un número.',
-            'productos.*.precio.min' => 'El precio no puede ser negativo.',
-            'productos.*.subtotal.required' => 'El subtotal es obligatorio.',
-            'productos.*.subtotal.numeric' => 'El subtotal debe ser un número.',
-            'productos.*.subtotal.min' => 'El subtotal no puede ser negativo.',
-            'metodo_pago.max' => 'El método de pago no puede tener más de 30 caracteres.',
+            'correlativo_id.required' => 'Selecciona el comprobante a emitir.',
+            'correlativo_id.exists'   => 'El comprobante seleccionado no está disponible.',
+            'almacen_id.required'     => 'Selecciona el almacén de donde sale la mercadería.',
+            'almacen_id.exists'       => 'El almacén seleccionado no está disponible.',
+            'cliente_id.exists'       => 'El cliente seleccionado no pertenece a tu empresa.',
+            'metodo_pago.in'          => 'El método de pago no es válido.',
+            'productos.required'      => 'Agrega al menos un producto.',
+            'productos.min'           => 'Agrega al menos un producto.',
+            'productos.*.id.exists'   => 'Uno de los productos ya no está disponible.',
+            'fecha_vencimiento.required_if' => 'Indica hasta cuándo tiene plazo para pagar.',
+            'fecha_vencimiento.after_or_equal' => 'El vencimiento no puede ser anterior a la emisión.',
         ];
     }
 }

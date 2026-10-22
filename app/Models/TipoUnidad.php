@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TipoUnidad extends Model
 {
-    /** @use HasFactory<\Database\Factories\TipoUnidadFactory> */
-    use HasFactory;
+    use Auditable, HasFactory;
+
     protected $table = 'tipo_unidades';
+
+    protected $fillable = ['codigo', 'codigo_sunat', 'descripcion'];
 }
