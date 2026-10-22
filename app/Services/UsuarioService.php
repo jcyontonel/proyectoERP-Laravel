@@ -34,6 +34,8 @@ class UsuarioService
     /** Crea el usuario o, si el correo ya existe, le da acceso a la empresa */
     public function crear(Empresa $empresa, array $d): array
     {
+        app(SuscripcionService::class)->exigir($empresa->id, 'usuarios');
+
         return DB::transaction(function () use ($empresa, $d) {
             $rol = $this->rol($empresa->id, (int) $d['rol_id']);
             $user = User::query()->where('email', $d['email'])->first();
@@ -139,7 +141,7 @@ class UsuarioService
     }
 
     /** La empresa no puede quedarse sin un Administrador activo */
-    private function exigirAdministrador(int $empresaId): void
+    public function exigirAdministrador(int $empresaId): void
     {
         $admin = Role::query()->whereNull('empresa_id')->where('name', config('permisos.rol_administrador'))->first();
         if (! $admin) {

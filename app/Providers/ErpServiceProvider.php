@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\AuditoriaService;
 use App\Services\Dashboard\DashboardService;
 use App\Services\NotificacionService;
+use App\Services\SuscripcionService;
 use App\Support\EmpresaActual;
 use App\View\Composers\EmpresaComposer;
 use App\View\Composers\LayoutComposer;
@@ -36,6 +37,7 @@ class ErpServiceProvider extends ServiceProvider
         'venta', 'cliente', 'compra', 'proveedor', 'producto', 'categoria', 'ajuste', 'transferencia',
         'lote', 'sesion', 'movimiento', 'almacen', 'caja', 'motivo', 'regla', 'fraccionamiento', 'pago',
         'usuario', 'rol', 'serie', 'impuesto', 'unidad',
+        'empresa', 'plan', 'oferta', 'suscripcion',
     ];
 
     public function register(): void
@@ -44,6 +46,7 @@ class ErpServiceProvider extends ServiceProvider
         $this->app->scoped(NotificacionService::class);
         $this->app->scoped(DashboardService::class);
         $this->app->scoped(AuditoriaService::class);   // un request_id por petición
+        $this->app->scoped(SuscripcionService::class); // memoriza plan y consumo de la empresa
     }
 
     public function boot(): void

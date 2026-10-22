@@ -22,6 +22,7 @@ class ProductoService
     public function crear(array $d, int $userId, int $empresaId): Producto
     {
         $empresa = Empresa::findOrFail($empresaId);
+        app(SuscripcionService::class)->exigir($empresaId, 'productos');
 
         return DB::transaction(function () use ($d, $userId, $empresa) {
             $p = Producto::create($this->datos($d) + ['empresa_id' => $empresa->id]);

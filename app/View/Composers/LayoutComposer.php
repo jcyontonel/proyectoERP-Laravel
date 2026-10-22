@@ -3,6 +3,7 @@
 namespace App\View\Composers;
 
 use App\Services\NotificacionService;
+use App\Services\SuscripcionService;
 use App\Support\EmpresaActual;
 use App\Support\Menu;
 use Illuminate\View\View;
@@ -32,6 +33,7 @@ class LayoutComposer
             'menu'           => Menu::para($user, $empresaId ? $this->notificaciones->contadores($empresaId, $user) : []),
             'alertas'        => $empresaId ? $this->notificaciones->alertas($empresaId, $user) : collect(),
             'cajaAbierta'    => $empresaId ? $this->notificaciones->cajaAbierta($empresaId, $user) : null,
+            'suscripcion'    => $empresaId ? app(SuscripcionService::class)->resumen($empresaId) : null,
         ]);
     }
 }

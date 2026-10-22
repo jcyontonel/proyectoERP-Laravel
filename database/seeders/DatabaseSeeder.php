@@ -18,8 +18,9 @@ class DatabaseSeeder extends Seeder
             TipoUnidadSeeder::class,
             ImpuestoSeeder::class,
 
-            // 2) Roles y permisos globales (se asignan por empresa)
+            // 2) Roles y permisos globales (se asignan por empresa) y planes de suscripción
             RolesYPermisosSeeder::class,
+            PlanSeeder::class,
 
             // 3) Empresas y usuarios
             RicoPetSeeder::class,

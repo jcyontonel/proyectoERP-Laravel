@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Empresa extends Model
@@ -68,6 +69,17 @@ class Empresa extends Model
     public function clientes(): BelongsToMany
     {
         return $this->belongsToMany(Cliente::class, 'cliente_empresa')->withTimestamps();
+    }
+
+    public function suscripciones(): HasMany
+    {
+        return $this->hasMany(Suscripcion::class);
+    }
+
+    /** Suscripción vigente (la no cancelada más reciente) */
+    public function suscripcion(): HasOne
+    {
+        return $this->hasOne(Suscripcion::class)->where('estado', '!=', Suscripcion::CANCELADA)->latestOfMany();
     }
 
     /** Usuarios con acceso a la empresa (tabla pivote empresa_user; el rol está en model_has_roles por empresa) */

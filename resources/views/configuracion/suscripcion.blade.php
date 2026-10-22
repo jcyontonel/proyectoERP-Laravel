@@ -1,0 +1,118 @@
+{{--
+    Configuracion\SuscripcionController
+      $resumen  SuscripcionService::resumen (plan, suscripcion, estado, dias, limites)
+      $pagos    PagoSuscripcion[] de la empresa   $planes  planes activos con precios
+      $periodicidades  $metodos
+--}}
+@extends('layouts.app')
+
+@section('title', 'Mi suscripción')
+
+@php
+    $s = $resumen['suscripcion'];
+    $estados = [
+        'prueba' => ['info', 'En prueba'], 'activa' => ['success', 'Activa'], 'vencida' => ['warning', 'Vencida (en gracia)'],
+        'suspendida' => ['danger', 'Suspendida'], 'cancelada' => ['neutral', 'Cancelada'], 'sin_plan' => ['neutral', 'Sin plan'],
+    ];
+    [$tono, $etiqueta] = $estados[$resumen['estado']] ?? ['neutral', $resumen['estado']];
+    $tonosPago = ['pagado' => 'success', 'pendiente' => 'warning', 'anulado' => 'neutral'];
+@endphp
+
+@section('content')
+    <x-page-header title="Mi suscripción" :migas="['Configuración' => null, 'Mi suscripción' => null]"
+        subtitle="Tu plan, hasta cuándo está pagado y cuánto has usado de cada límite. Para cambiar de plan o registrar un pago, comunícate con soporte.">
+        <x-slot:badge><x-badge :tone="$tono" dot>{{ $etiqueta }}</x-badge></x-slot:badge>
+    </x-page-header>
+
+    <x-flash />
+
+    <div class="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div class="space-y-5">
+            <x-card title="Consumo del plan" icon="bar-chart" :subtitle="$s ? 'Los comprobantes se cuentan por mes calendario: el contador se reinicia el día 1.' : 'Tu empresa aún no tiene un plan asignado: por ahora no hay límites.'">
+                <div class="space-y-4">
+                    @foreach ($resumen['limites'] as $recurso => $l)
+                        @php $lleno = $l['maximo'] && $l['usado'] >= $l['maximo']; @endphp
+                        <div>
+                            <div class="flex items-baseline justify-between text-sm">
+                                <span class="font-medium">{{ ucfirst($l['etiqueta']) }}</span>
+                                <span @class(['font-semibold', 'text-red-600' => $lleno])>
+                                    {{ number_format($l['usado']) }} <span class="font-normal text-slate-500">/ {{ $l['maximo'] !== null ? number_format($l['maximo']) : 'ilimitado' }}</span>
+                                </span>
+                            </div>
+                            @if ($l['maximo'])
+                                <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow="{{ $l['usado'] }}" aria-valuemax="{{ $l['maximo'] }}" aria-label="{{ $l['etiqueta'] }}">
+                                    <div @class(['h-full rounded-full', 'bg-red-500' => $lleno, 'bg-amber-500' => ! $lleno && $l['fraccion'] >= config('suscripciones.aviso_uso'), 'bg-brand-500' => $l['fraccion'] < config('suscripciones.aviso_uso')])
+                                        style="width: {{ max($l['fraccion'] * 100, 2) }}%"></div>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </x-card>
+
+            <x-card title="Pagos" icon="receipt">
+                @if ($pagos->isEmpty())
+                    <p class="text-sm text-slate-500">Aún no hay pagos registrados.</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="text-left text-xs text-slate-500">
+                                <tr><th class="py-2 pr-3">Periodo</th><th class="px-3 py-2">Plan</th><th class="px-3 py-2 text-right">Monto</th><th class="px-3 py-2">Estado</th><th class="py-2 pl-3">Pagado el</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @foreach ($pagos as $p)
+                                    <tr>
+                                        <td class="py-2 pr-3 whitespace-nowrap">{{ $p->periodo_desde->format('d/m/Y') }} – {{ $p->periodo_hasta->format('d/m/Y') }}</td>
+                                        <td class="px-3 py-2">{{ $p->suscripcion?->plan?->nombre }} <span class="text-xs text-slate-500">{{ $periodicidades[$p->suscripcion?->periodicidad][0] ?? '' }}</span></td>
+                                        <td class="px-3 py-2 text-right">
+                                            <x-money :value="$p->monto" />
+                                            @if ($p->descuento > 0)<p class="text-[11px] text-emerald-700">−<x-money :value="$p->descuento" /> de descuento</p>@endif
+                                        </td>
+                                        <td class="px-3 py-2"><x-badge :tone="$tonosPago[$p->estado] ?? 'neutral'" shape="box">{{ ucfirst($p->estado) }}</x-badge></td>
+                                        <td class="py-2 pl-3 whitespace-nowrap text-slate-600">{{ $p->fecha_pago?->format('d/m/Y') ?? '—' }} @if ($p->metodo)<span class="text-xs text-slate-500">· {{ $metodos[$p->metodo] ?? $p->metodo }}</span>@endif</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </x-card>
+        </div>
+
+        <aside class="space-y-5">
+            <x-card title="Plan actual" icon="sparkles">
+                @if ($s)
+                    <p class="text-2xl font-bold">{{ $s->plan->nombre }}</p>
+                    <p class="text-sm text-slate-500">{{ $periodicidades[$s->periodicidad][0] ?? $s->periodicidad }} · <x-money :value="$s->precio" /></p>
+                    <dl class="mt-4 space-y-2 text-sm">
+                        <div class="flex justify-between"><dt class="text-slate-600">Desde</dt><dd>{{ $s->inicio->format('d/m/Y') }}</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-600">{{ $resumen['estado'] === 'prueba' ? 'Prueba hasta' : 'Pagado hasta' }}</dt><dd class="font-semibold">{{ $s->vence_el->format('d/m/Y') }}</dd></div>
+                        @if ($s->oferta)<div class="flex justify-between"><dt class="text-slate-600">Oferta</dt><dd>{{ $s->oferta->nombre }}</dd></div>@endif
+                    </dl>
+                @else
+                    <p class="text-sm text-slate-500">Sin plan asignado.</p>
+                @endif
+            </x-card>
+
+            <x-card title="Planes disponibles" icon="layers">
+                <ul class="space-y-3">
+                    @foreach ($planes as $plan)
+                        <li @class(['rounded-lg border p-3', 'border-brand-500 bg-brand-50/50' => $s?->plan_id === $plan->id, 'border-slate-200' => $s?->plan_id !== $plan->id])>
+                            <p class="font-semibold">{{ $plan->nombre }} @if ($s?->plan_id === $plan->id)<x-badge tone="info">Tu plan</x-badge>@endif</p>
+                            <p class="mt-0.5 text-xs text-slate-500">
+                                {{ $plan->max_comprobantes_mes ? number_format($plan->max_comprobantes_mes) . ' comprobantes/mes' : 'Comprobantes ilimitados' }} ·
+                                {{ $plan->max_productos ? number_format($plan->max_productos) . ' productos' : 'productos ilimitados' }} ·
+                                {{ $plan->max_usuarios ?? '∞' }} usuarios
+                            </p>
+                            <p class="mt-1.5 text-xs">
+                                @foreach ($plan->precios as $pr)
+                                    <span class="mr-2 whitespace-nowrap"><strong><x-money :value="$pr->precio" /></strong> {{ strtolower($periodicidades[$pr->periodicidad][0] ?? $pr->periodicidad) }}</span>
+                                @endforeach
+                            </p>
+                        </li>
+                    @endforeach
+                </ul>
+            </x-card>
+        </aside>
+    </div>
+@endsection

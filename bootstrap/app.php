@@ -3,7 +3,12 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Env;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+
+// El .env no se copia al entorno del proceso (putenv): con varios proyectos Laravel en el mismo Apache
+// (ERP y admin), los valores de uno se filtrarían al otro (base de datos, caché, APP_KEY).
+Env::disablePutenv();
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(

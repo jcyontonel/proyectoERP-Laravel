@@ -36,6 +36,8 @@
                 <x-alert tone="warning" class="mb-5">Tu usuario no tiene una empresa asignada. Pide a un administrador que te dé acceso.</x-alert>
             @endif
 
+            @include('layouts.partials.aviso-suscripcion')
+
             @yield('content')
         </main>
 

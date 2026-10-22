@@ -111,6 +111,8 @@ return [
             'titulo' => 'Configuración',
             'config' => true, // también se muestra en el menú del engranaje
             'items'  => [
+                ['clave' => 'suscripcion', 'label' => 'Mi suscripción', 'icon' => 'sparkles', 'route' => 'config.suscripcion', 'activo' => ['config.suscripcion'], 'permiso' => 'gestionar-empresas',
+                    'descripcion' => 'Plan contratado, vigencia, consumo de los límites y pagos.'],
                 ['clave' => 'empresa', 'label' => 'Datos de la empresa', 'icon' => 'store', 'route' => 'config.empresa', 'activo' => ['config.empresa*'], 'permiso' => 'gestionar-empresas',
                     'descripcion' => 'RUC, dirección, logo, IGV, precios con IGV y control de stock.'],
                 ['clave' => 'usuarios', 'label' => 'Usuarios y roles', 'icon' => 'shield', 'route' => 'usuarios.index', 'activo' => ['usuarios.*', 'roles.*'], 'permiso' => 'gestionar-usuarios',

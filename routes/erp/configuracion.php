@@ -9,6 +9,7 @@ use App\Http\Controllers\Configuracion\MotivoAjusteController;
 use App\Http\Controllers\Configuracion\RolController;
 use App\Http\Controllers\Configuracion\SerieController;
 use App\Http\Controllers\Configuracion\SunatController;
+use App\Http\Controllers\Configuracion\SuscripcionController;
 use App\Http\Controllers\Configuracion\UnidadController;
 use App\Http\Controllers\Configuracion\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,7 @@ Route::prefix('configuracion')->group(function () {
         Route::get('sunat', [SunatController::class, 'edit'])->name('config.sunat');
         Route::put('sunat', [SunatController::class, 'update'])->name('config.sunat.update');
         Route::get('auditoria', [AuditoriaController::class, 'index'])->name('config.auditoria');
+        Route::get('suscripcion', SuscripcionController::class)->name('config.suscripcion');
         Route::get('auditoria/exportar', [AuditoriaController::class, 'export'])->name('config.auditoria.export');
     });
 

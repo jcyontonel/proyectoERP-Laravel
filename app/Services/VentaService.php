@@ -54,6 +54,11 @@ class VentaService
         $incluyeIgv = (bool) $empresa->precios_incluyen_igv;
         $moverStock = ! $borrador && $empresa->controlar_stock;
 
+        // Plan de suscripción: emitir consume un comprobante del mes (el borrador no)
+        if (! $borrador) {
+            app(SuscripcionService::class)->exigir($empresaId, 'comprobantes');
+        }
+
         return DB::transaction(function () use ($d, $userId, $empresaId, $existente, $borrador, $igvPct, $incluyeIgv, $moverStock) {
             $ahora = now();
 

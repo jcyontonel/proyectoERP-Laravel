@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ResuelveEmpresa;
 use App\Http\Controllers\Controller;
 use App\Models\Almacen;
 use App\Models\AlmacenProducto;
+use App\Services\SuscripcionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -40,6 +41,7 @@ class AlmacenController extends Controller
     public function store(Request $request)
     {
         $empresaId = $this->empresaId($request);
+        app(SuscripcionService::class)->exigir($empresaId, 'almacenes');
         $almacen = DB::transaction(fn () => $this->guardar(new Almacen(['empresa_id' => $empresaId]), $this->validar($request, $empresaId)));
 
         return redirect()->route('almacenes.index')->with('status', "Almacén «{$almacen->nombre}» creado.");

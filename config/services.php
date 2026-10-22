@@ -36,6 +36,11 @@ return [
     ],
 
     // Consulta de DNI (RENIEC) y RUC (SUNAT). El token NUNCA se envía al navegador.
+    // API de administración que usa el proyecto admin (ricopet/admin). Sin token, la API queda cerrada.
+    'admin' => [
+        'token' => env('ERP_ADMIN_TOKEN'),
+    ],
+
     'apiperu' => [
         'url'     => env('APIPERU_URL', 'https://api.apiperu.dev'),
         'token'   => env('APIPERU_TOKEN'),
