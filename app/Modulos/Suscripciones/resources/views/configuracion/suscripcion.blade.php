@@ -111,6 +111,31 @@
                 @endif
             </x-card>
 
+            <x-card title="Página web" icon="globe" :subtitle="$web ? null : 'Tu página con los productos que publiques: catálogo o tienda con carrito.'">
+                @if ($web)
+                    <p class="text-2xl font-bold">{{ $web->plan->nombre }}</p>
+                    <p class="text-sm text-slate-500">{{ $periodicidades[$web->periodicidad][0] ?? $web->periodicidad }} · <x-money :value="$web->precio" /></p>
+                    <dl class="mt-4 space-y-2 text-sm">
+                        <div class="flex justify-between"><dt class="text-slate-600">{{ $web->estadoEfectivo() === 'prueba' ? 'Prueba hasta' : 'Pagado hasta' }}</dt><dd class="font-semibold">{{ $web->vence_el->format('d/m/Y') }}</dd></div>
+                    </dl>
+                @else
+                    <p class="text-sm text-slate-500">No contratada. Para activarla, comunícate con soporte.</p>
+                @endif
+                <ul class="mt-3 space-y-2">
+                    @foreach ($planesWeb as $plan)
+                        <li @class(['rounded-lg border p-3', 'border-brand-500 bg-brand-50/50' => $web?->plan_id === $plan->id, 'border-slate-200' => $web?->plan_id !== $plan->id])>
+                            <p class="font-semibold">{{ $plan->nombre }} @if ($web?->plan_id === $plan->id)<x-badge tone="info">Tu plan</x-badge>@endif</p>
+                            <p class="mt-0.5 text-xs text-slate-500">{{ $plan->descripcion }}</p>
+                            <p class="mt-1.5 text-xs">
+                                @foreach ($plan->precios as $pr)
+                                    <span class="mr-2 whitespace-nowrap"><strong><x-money :value="$pr->precio" /></strong> {{ strtolower($periodicidades[$pr->periodicidad][0] ?? $pr->periodicidad) }}</span>
+                                @endforeach
+                            </p>
+                        </li>
+                    @endforeach
+                </ul>
+            </x-card>
+
             <x-card title="Planes disponibles" icon="layers">
                 <ul class="space-y-3">
                     @foreach ($planes as $plan)
@@ -124,7 +149,8 @@
                             </p>
                             {{-- Módulos: lo que incluye (✓) y lo que no (tachado) --}}
                             <ul class="mt-2 grid gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-2">
-                                @foreach (\App\Modulos\Suscripciones\Support\Modulos::catalogo() as $clave => [$nombreModulo])
+                                @foreach (\App\Modulos\Suscripciones\Support\Modulos::catalogo() as $clave => [$nombreModulo, , , $producto])
+                                    @continue($producto !== 'erp')
                                     <li @class(['flex items-center gap-1', 'text-slate-700' => $plan->incluye($clave), 'text-slate-400 line-through' => ! $plan->incluye($clave)])>
                                         <x-icon :name="$plan->incluye($clave) ? 'check' : 'x'" :class="$plan->incluye($clave) ? 'size-3 text-emerald-600' : 'size-3'" />{{ $nombreModulo }}
                                     </li>

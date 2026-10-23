@@ -36,8 +36,10 @@ class SuscripcionTest extends TestCase
 
     public function test_planes_iniciales(): void
     {
-        // Tres planes en este orden, cada uno con más módulos que el anterior
-        $this->assertSame(['basico', 'pro', 'total'], Plan::where('activo', true)->orderBy('orden')->pluck('codigo')->all());
+        // ERP: tres planes en este orden, cada uno con más módulos que el anterior; Página web: Catálogo y Tienda
+        $this->assertSame(['basico', 'pro', 'total'], Plan::where('activo', true)->whereRelation('producto', 'codigo', 'erp')->orderBy('orden')->pluck('codigo')->all());
+        $this->assertSame(['catalogo', 'tienda'], Plan::where('activo', true)->whereRelation('producto', 'codigo', 'web')->orderBy('orden')->pluck('codigo')->all());
+        $this->assertSame([1, 2, 5], Plan::whereIn('codigo', ['basico', 'pro', 'total'])->orderBy('orden')->pluck('max_empresas')->all());
         $basico = Plan::where('codigo', 'basico')->with('precios')->firstOrFail();
         $this->assertSame(['mensual', 'trimestral', 'anual'], $basico->precios->pluck('periodicidad')->all());
         $this->assertNull(Plan::where('codigo', 'total')->value('max_comprobantes_mes'));

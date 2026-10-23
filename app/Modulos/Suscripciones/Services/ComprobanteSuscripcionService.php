@@ -8,6 +8,7 @@ use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Suscripciones\Models\Titular;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -15,7 +16,7 @@ use Throwable;
  * Comprobante electrónico de cada pago de suscripción al ERP.
  *  - Emisor: la empresa dueña de la plataforma (config suscripciones.facturacion.emisor_empresa_id),
  *    con sus series F900 / B900 (módulo "suscripcion") y su configuración SUNAT.
- *  - Cliente: la empresa que paga (factura a su RUC, o boleta si se pide).
+ *  - Cliente: el titular de la suscripción (factura a su RUC, o boleta si se pide o si es DNI).
  *  - Anular el pago: baja si el comprobante tiene hasta 7 días; si no, nota de crédito (FC01 / BC01).
  * El envío y los reintentos los hace FacturacionElectronicaService (documento en la tabla documentos).
  */
@@ -56,7 +57,8 @@ class ComprobanteSuscripcionService
 
         $reg = $pago->comprobante()->first();
         if (! $reg) {
-            $codigo = $tipo === self::BOLETA ? '03' : '01';
+            $titular = $pago->suscripcion?->titular;
+            $codigo = $tipo === self::BOLETA || ($titular && ! $titular->esRuc()) ? '03' : '01';   // sin RUC no hay factura
             $reg = DB::transaction(function () use ($pago, $codigo) {
                 [$serie, $numero] = $this->numerar('suscripcion', $codigo, fn (Correlativo $c) => true);
 
@@ -152,7 +154,7 @@ class ComprobanteSuscripcionService
 
     private function datos(PagoSuscripcion $pago, Documento $reg): array
     {
-        $pago->loadMissing('empresa', 'suscripcion.plan', 'oferta');
+        $pago->loadMissing('empresa', 'suscripcion.plan.producto', 'suscripcion.titular', 'oferta');
         $emisor = Empresa::findOrFail($reg->empresa_id);
         $periodo = config('suscripciones.periodicidades.' . $pago->suscripcion?->periodicidad . '.0', '');
 
@@ -164,11 +166,11 @@ class ComprobanteSuscripcionService
             'moneda'               => 'PEN',
             'igv_porcentaje'       => (float) ($emisor->igv ?: 18),
             'precios_incluyen_igv' => (bool) config('suscripciones.facturacion.precios_incluyen_igv'),
-            'cliente'              => $this->cliente($pago->empresa),
+            'cliente'              => $this->cliente($pago->suscripcion?->titular ?? Titular::deEmpresa($pago->empresa)),
             'items'                => [[
                 // Mismo código que el servicio en el catálogo de la empresa emisora (SUSC-BASICO-MENSUAL…)
                 'codigo'          => strtoupper('SUSC-' . ($pago->suscripcion?->plan?->codigo ?? $pago->suscripcion?->plan_id) . '-' . $pago->suscripcion?->periodicidad),
-                'descripcion'     => mb_substr(trim(config('suscripciones.facturacion.producto') . ' — Plan ' . ($pago->suscripcion?->plan?->nombre ?? '')
+                'descripcion'     => mb_substr(trim(config('suscripciones.facturacion.producto') . ' ' . ($pago->suscripcion?->plan?->producto?->nombre ?? '') . ' — Plan ' . ($pago->suscripcion?->plan?->nombre ?? '')
                     . ($periodo ? " ({$periodo})" : '') . ($pago->periodo_desde ? ', del ' . $pago->periodo_desde->format('d/m/Y') . ' al ' . $pago->periodo_hasta->format('d/m/Y') : '')
                     . ($pago->oferta ? ' — oferta ' . $pago->oferta->nombre : '')), 0, 500),
                 'unidad'          => 'ZZ',   // servicio
@@ -198,14 +200,15 @@ class ComprobanteSuscripcionService
         ]);
     }
 
-    private function cliente(Empresa $e): array
+    /** El comprobante sale a nombre del titular que paga */
+    private function cliente(Titular $t): array
     {
         return [
-            'tipo_doc'  => strlen((string) $e->ruc) === 11 ? '6' : '1',
-            'numero'    => (string) $e->ruc,
-            'nombre'    => $e->razon_social,
-            'direccion' => $e->direccion,
-            'email'     => filter_var($e->email, FILTER_VALIDATE_EMAIL) ? $e->email : null,
+            'tipo_doc'  => $t->tipo_documento,
+            'numero'    => $t->numero_documento,
+            'nombre'    => $t->nombre,
+            'direccion' => $t->direccion,
+            'email'     => filter_var($t->correo, FILTER_VALIDATE_EMAIL) ? $t->correo : null,
         ];
     }
 }

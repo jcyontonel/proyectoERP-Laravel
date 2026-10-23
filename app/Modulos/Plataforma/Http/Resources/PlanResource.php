@@ -12,6 +12,8 @@ class PlanResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
+            'producto'             => $this->producto?->codigo,
+            'producto_nombre'      => $this->producto?->nombre,
             'codigo'               => $this->codigo,
             'nombre'               => $this->nombre,
             'descripcion'          => $this->descripcion,
@@ -19,6 +21,7 @@ class PlanResource extends JsonResource
             'max_productos'        => $this->max_productos,
             'max_usuarios'         => $this->max_usuarios,
             'max_almacenes'        => $this->max_almacenes,
+            'max_empresas'         => $this->max_empresas,
             'dias_prueba'          => $this->dias_prueba,
             'activo'               => $this->activo,
             'orden'                => $this->orden,

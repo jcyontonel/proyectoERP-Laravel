@@ -8,11 +8,14 @@ use App\Modulos\Nucleo\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Plan contratado por una empresa. `estado` guarda lo que decide el administrador (prueba, activa,
- * suspendida, cancelada); vencida/en gracia se deduce de vence_el con estadoEfectivo().
+ * Plan contratado por un titular para una o más empresas (suscripcion_empresa, hasta plan.max_empresas).
+ * empresa_id es la empresa principal (la que la contrató). Una empresa tiene a lo más una vigente por producto.
+ * `estado` guarda lo que decide el administrador (prueba, activa, suspendida, cancelada); vencida/en gracia
+ * se deduce de vence_el con estadoEfectivo().
  */
 class Suscripcion extends Model
 {
@@ -27,7 +30,7 @@ class Suscripcion extends Model
     protected $table = 'suscripciones';
 
     protected $fillable = [
-        'empresa_id', 'plan_id', 'periodicidad', 'precio', 'oferta_id', 'estado', 'inicio', 'vence_el',
+        'empresa_id', 'titular_id', 'plan_id', 'periodicidad', 'precio', 'oferta_id', 'estado', 'inicio', 'vence_el',
         'renovacion_automatica', 'motivo_suspension', 'cancelada_el', 'notas',
     ];
 
@@ -42,6 +45,17 @@ class Suscripcion extends Model
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function titular(): BelongsTo
+    {
+        return $this->belongsTo(Titular::class);
+    }
+
+    /** Empresas que cubre (incluida la principal) */
+    public function empresas(): BelongsToMany
+    {
+        return $this->belongsToMany(Empresa::class, 'suscripcion_empresa')->withTimestamps();
     }
 
     public function plan(): BelongsTo
@@ -59,10 +73,22 @@ class Suscripcion extends Model
         return $this->hasMany(PagoSuscripcion::class);
     }
 
-    /** No canceladas (la vigente de cada empresa) */
+    /** No canceladas (la vigente de cada empresa y producto) */
     public function scopeVigentes(Builder $q): void
     {
         $q->where('estado', '!=', self::CANCELADA);
+    }
+
+    /** Que cubren a la empresa */
+    public function scopeDeEmpresa(Builder $q, int $empresaId): void
+    {
+        $q->whereHas('empresas', fn (Builder $e) => $e->where('empresas.id', $empresaId));
+    }
+
+    /** De planes del producto (erp, web…) */
+    public function scopeDelProducto(Builder $q, string $producto): void
+    {
+        $q->whereHas('plan.producto', fn (Builder $p) => $p->where('codigo', $producto));
     }
 
     /**

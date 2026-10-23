@@ -7,6 +7,8 @@ use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Suscripciones\Models\Oferta;
 use App\Modulos\Suscripciones\Models\PagoSuscripcion;
 use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\ProductoPlataforma;
+use App\Modulos\Suscripciones\Models\Titular;
 use App\Modulos\Catalogo\Models\Producto;
 use App\Modulos\Suscripciones\Models\Suscripcion;
 use App\Modulos\Erp\Models\Venta;
@@ -16,7 +18,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Suscripciones de las empresas: límites del plan, vigencia y cobros.
+ * Suscripciones: cada empresa tiene a lo más una vigente por producto (ERP, Página web); una suscripción
+ * la paga un titular y puede cubrir varias empresas (plan.max_empresas). Límites del plan por empresa,
+ * vigencia y cobros.
  *  - vence_el es el último día pagado. Registrar un pago lo extiende 1, 3 o 12 meses.
  *  - El estado efectivo se calcula por fechas (Suscripcion::estadoEfectivo): no depende de una tarea programada.
  *  - Sin suscripción: sin límites si config('suscripciones.sin_plan_ilimitado') (empresas anteriores a los planes).
@@ -28,14 +32,16 @@ class SuscripcionService
 
     /* ═════════════════════════════ Consultas ═════════════════════════════ */
 
-    public function vigente(int $empresaId): ?Suscripcion
+    /** La suscripción vigente (no cancelada) que cubre a la empresa en ese producto */
+    public function vigente(int $empresaId, string $producto = ProductoPlataforma::ERP): ?Suscripcion
     {
-        if (! array_key_exists("s.$empresaId", $this->memo)) {
-            $this->memo["s.$empresaId"] = Suscripcion::query()->where('empresa_id', $empresaId)->vigentes()
-                ->with('plan')->latest('id')->first();
+        $clave = "s.$empresaId.$producto";
+        if (! array_key_exists($clave, $this->memo)) {
+            $this->memo[$clave] = Suscripcion::query()->deEmpresa($empresaId)->delProducto($producto)->vigentes()
+                ->with('plan.producto')->latest('id')->first();
         }
 
-        return $this->memo["s.$empresaId"];
+        return $this->memo[$clave];
     }
 
     /** Consumo actual: comprobantes del mes, productos, usuarios y almacenes */
@@ -56,17 +62,17 @@ class SuscripcionService
      * @return array{plan: ?Plan, suscripcion: ?Suscripcion, estado: string, dias: ?int, limites: array}
      */
     /**
-     * Módulos que incluye el plan de la empresa (null = todos). El plan manda aunque la suscripción esté
-     * vencida o suspendida (en ese caso además rige el modo solo lectura). Sin suscripción: todos, si
-     * sin_plan_ilimitado; si no, solo la base.
+     * Módulos que incluye el plan de la empresa en el producto (null = todos). El plan manda aunque la suscripción
+     * esté vencida o suspendida (en ese caso además rige el modo solo lectura). Sin suscripción al ERP: todos, si
+     * sin_plan_ilimitado (empresas anteriores a los planes); los demás productos siempre exigen su suscripción.
      *
      * @return array<int, string>|null
      */
-    public function modulos(int $empresaId): ?array
+    public function modulos(int $empresaId, string $producto = ProductoPlataforma::ERP): ?array
     {
-        $s = $this->vigente($empresaId);
+        $s = $this->vigente($empresaId, $producto);
         if (! $s) {
-            return config('suscripciones.sin_plan_ilimitado') ? null : [];
+            return $producto === ProductoPlataforma::ERP && config('suscripciones.sin_plan_ilimitado') ? null : [];
         }
 
         return $s->plan?->modulos;
@@ -128,12 +134,13 @@ class SuscripcionService
     /* ═════════════════════════════ Operaciones (proyecto admin) ═════════════════════════════ */
 
     /**
-     * Asigna un plan (alta o cambio): cancela la suscripción vigente y crea la nueva desde hoy.
+     * Asigna un plan a la empresa (alta o cambio): cancela su suscripción vigente del mismo producto y crea la
+     * nueva desde hoy, a nombre del titular (titular_id, o la propia empresa como titular).
      *  - prueba: usa los días de prueba del plan, sin cobro.
      *  - pagado: registra el primer pago (activa hasta inicio + meses).
      *  - si no: queda un cobro pendiente y la empresa tiene los días de gracia para pagarlo.
      *
-     * @param  array{periodicidad: string, prueba?: bool, pagado?: bool, oferta?: ?string, metodo?: ?string, referencia?: ?string, renovacion_automatica?: bool, notas?: ?string}  $d
+     * @param  array{periodicidad: string, titular_id?: ?int, prueba?: bool, pagado?: bool, oferta?: ?string, metodo?: ?string, referencia?: ?string, renovacion_automatica?: bool, notas?: ?string}  $d
      */
     public function asignar(Empresa $empresa, Plan $plan, array $d, ?string $registradoPor = null): Suscripcion
     {
@@ -143,8 +150,11 @@ class SuscripcionService
                 ?? throw ValidationException::withMessages(['periodicidad' => "El plan {$plan->nombre} no tiene precio {$periodicidad} activo."]);
             $oferta = filled($d['oferta'] ?? null) ? $this->oferta($d['oferta'], $plan, $periodicidad) : null;
 
-            // La anterior queda cancelada y su cobro pendiente ya no corresponde
-            Suscripcion::query()->where('empresa_id', $empresa->id)->vigentes()->lockForUpdate()->get()
+            $producto = $plan->producto->codigo;
+            $titular = filled($d['titular_id'] ?? null) ? Titular::findOrFail($d['titular_id']) : Titular::deEmpresa($empresa);
+
+            // La anterior del mismo producto queda cancelada y su cobro pendiente ya no corresponde
+            Suscripcion::query()->deEmpresa($empresa->id)->delProducto($producto)->vigentes()->lockForUpdate()->get()
                 ->each(function (Suscripcion $s) use ($plan) {
                     $s->pagos()->where('estado', PagoSuscripcion::PENDIENTE)->update(['estado' => PagoSuscripcion::ANULADO, 'notas' => "Reemplazado por el cambio al plan {$plan->nombre}"]);
                     $s->update(['estado' => Suscripcion::CANCELADA, 'cancelada_el' => now()]);
@@ -155,6 +165,7 @@ class SuscripcionService
 
             $s = Suscripcion::create([
                 'empresa_id'            => $empresa->id,
+                'titular_id'            => $titular->id,
                 'plan_id'               => $plan->id,
                 'periodicidad'          => $periodicidad,
                 'precio'                => $precio->precio,
@@ -166,6 +177,8 @@ class SuscripcionService
                 'renovacion_automatica' => $d['renovacion_automatica'] ?? true,
                 'notas'                 => $d['notas'] ?? null,
             ]);
+
+            $s->empresas()->attach($empresa->id);
 
             if ($oferta) {
                 $oferta->increment('usos');
@@ -286,6 +299,40 @@ class SuscripcionService
         });
     }
 
+    /** Suma una empresa a la suscripción (hasta plan.max_empresas). No puede tener otra vigente del mismo producto */
+    public function agregarEmpresa(Suscripcion $s, Empresa $empresa): void
+    {
+        DB::transaction(function () use ($s, $empresa) {
+            $s = Suscripcion::query()->lockForUpdate()->with('plan.producto')->findOrFail($s->id);
+            if ($s->estado === Suscripcion::CANCELADA) {
+                throw ValidationException::withMessages(['suscripcion' => 'La suscripción está cancelada.']);
+            }
+            if ($s->empresas()->whereKey($empresa->id)->exists()) {
+                return;
+            }
+            $max = $s->plan->max_empresas;
+            if ($max !== null && $s->empresas()->count() >= $max) {
+                throw ValidationException::withMessages(['empresa' => "El plan {$s->plan->nombre} cubre hasta {$max} " . ($max === 1 ? 'empresa' : 'empresas') . '. Para sumar otra, cambia a un plan superior.']);
+            }
+            $otra = $this->vigente($empresa->id, $s->plan->producto->codigo);
+            if ($otra) {
+                throw ValidationException::withMessages(['empresa' => "{$empresa->razon_social} ya tiene su propia suscripción a {$s->plan->producto->nombre} (plan {$otra->plan->nombre}): cancélala primero."]);
+            }
+            $s->empresas()->attach($empresa->id);
+        });
+        $this->olvidar($empresa->id);
+    }
+
+    /** Quita una empresa (la principal no: para eso se cancela o se cambia de plan) */
+    public function quitarEmpresa(Suscripcion $s, Empresa $empresa): void
+    {
+        if ($s->empresa_id === $empresa->id) {
+            throw ValidationException::withMessages(['empresa' => 'La empresa principal no se quita: cancela la suscripción o cambia de plan.']);
+        }
+        $s->empresas()->detach($empresa->id);
+        $this->olvidar($empresa->id);
+    }
+
     public function suspender(Suscripcion $s, string $motivo): void
     {
         $s->update(['estado' => Suscripcion::SUSPENDIDA, 'motivo_suspension' => $motivo]);
@@ -370,6 +417,10 @@ class SuscripcionService
 
     private function olvidar(int $empresaId): void
     {
-        unset($this->memo["s.$empresaId"], $this->memo["u.$empresaId"]);
+        foreach (array_keys($this->memo) as $clave) {
+            if (str_starts_with($clave, "s.$empresaId.") || $clave === "u.$empresaId") {
+                unset($this->memo[$clave]);
+            }
+        }
     }
 }

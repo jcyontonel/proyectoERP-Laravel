@@ -30,7 +30,7 @@ return [
         'emisor_ruc'           => env('SUSCRIPCIONES_EMISOR_RUC'),          // recomendado: no cambia al volver a sembrar
         'emisor_empresa_id'    => env('SUSCRIPCIONES_EMISOR_EMPRESA_ID'),   // alternativa por id
         'precios_incluyen_igv' => (bool) env('SUSCRIPCIONES_PRECIOS_INCLUYEN_IGV', true),
-        'producto'             => env('SUSCRIPCIONES_PRODUCTO', 'Suscripción al ERP RicoPet'),
+        'producto'             => env('SUSCRIPCIONES_PRODUCTO', 'Suscripción RicoPet'),   // + el producto: "Suscripción RicoPet ERP — Plan Pro"
         'dias_para_baja'       => 7,   // después de este plazo, anular un pago emite nota de crédito
     ],
 
@@ -60,6 +60,15 @@ return [
         'lotes'              => ['Lotes y vencimientos', 'Control por lote con fechas de vencimiento y alertas.', ['lotes.*']],
         'fraccionamientos'   => ['Fraccionamientos', 'Parte presentaciones grandes en unidades (sacos en kilos, cajas en tabletas).', ['fraccionamientos.*']],
         'auditoria'          => ['Auditoría', 'Historial de quién hizo qué y cuándo en el sistema.', ['config.auditoria*']],
+    ],
+
+    /*
+    | Módulos de la Página web (producto "web"): mismo formato. Sin suscripción web no hay ninguno, y el
+    | bloque "Página web" del menú del ERP no aparece. Plan Catálogo: web_catalogo; plan Tienda: los dos.
+    */
+    'modulos_web' => [
+        'web_tienda'   => ['Tienda en línea', 'Carrito, pedidos, pago con tarjeta y envíos por zona.', ['web.pedidos.*', 'web.zonas.*']],
+        'web_catalogo' => ['Página web', 'La página de la empresa con sus productos publicados, categorías y datos de contacto.', ['web.*']],
     ],
 
     // Métodos para registrar pagos de suscripción

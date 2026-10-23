@@ -4,6 +4,7 @@ namespace App\Modulos\Plataforma\Http\Controllers\Api;
 
 use App\Modulos\Plataforma\Http\Resources\PlanResource;
 use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\ProductoPlataforma;
 use App\Modulos\Suscripciones\Models\Suscripcion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ class PlanController extends AdminController
     public function index()
     {
         return PlanResource::collection(
-            Plan::query()->with('precios')
+            Plan::query()->with('precios', 'producto')
                 ->withCount(['suscripciones as suscripciones_vigentes_count' => fn ($q) => $q->where('estado', '!=', Suscripcion::CANCELADA)])
                 ->orderBy('orden')->orderBy('id')->get()
         );
@@ -64,8 +65,11 @@ class PlanController extends AdminController
     private function validar(Request $request, ?Plan $plan = null): array
     {
         $periodicidades = array_keys(config('suscripciones.periodicidades'));
+        $producto = $request->input('producto', $plan?->producto?->codigo ?? ProductoPlataforma::ERP);
+        $catalogo = array_keys(config($producto === ProductoPlataforma::WEB ? 'suscripciones.modulos_web' : 'suscripciones.modulos'));
 
         $d = $request->validate([
+            'producto'             => ['nullable', Rule::exists('productos_plataforma', 'codigo')],
             'codigo'               => ['required', 'string', 'max:30', 'alpha_dash', Rule::unique('planes', 'codigo')->ignore($plan?->id)],
             'nombre'               => ['required', 'string', 'max:60'],
             'descripcion'          => ['nullable', 'string', 'max:255'],
@@ -73,6 +77,7 @@ class PlanController extends AdminController
             'max_productos'        => ['nullable', 'integer', 'min:0'],
             'max_usuarios'         => ['nullable', 'integer', 'min:1'],
             'max_almacenes'        => ['nullable', 'integer', 'min:1'],
+            'max_empresas'         => ['nullable', 'integer', 'min:1'],   // por suscripción
             'dias_prueba'          => ['nullable', 'integer', 'min:0', 'max:90'],
             'activo'               => ['boolean'],
             'orden'                => ['nullable', 'integer', 'min:0'],
@@ -80,16 +85,18 @@ class PlanController extends AdminController
             'precios.*.periodicidad' => ['required', Rule::in($periodicidades)],
             'precios.*.precio'     => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'precios.*.activo'     => ['boolean'],
-            // Módulos incluidos (config suscripciones.modulos); la base la tienen todos
+            // Módulos incluidos (config suscripciones.modulos o modulos_web según el producto); la base la tienen todos
             'modulos'              => ['nullable', 'array'],
-            'modulos.*'            => ['string', Rule::in(array_keys(config('suscripciones.modulos')))],
+            'modulos.*'            => ['string', Rule::in($catalogo)],
         ], ['codigo.unique' => 'Ya existe un plan con ese código.', 'modulos.*.in' => 'Uno de los módulos no existe.']);
 
+        $d['producto_id'] = ProductoPlataforma::idDe($producto);
+        unset($d['producto']);
         $d['dias_prueba'] = (int) ($d['dias_prueba'] ?? 0);
         $d['orden'] = (int) ($d['orden'] ?? 0);
         if ($request->has('modulos')) {
             // En el orden del catálogo y sin repetidos
-            $d['modulos'] = array_values(array_intersect(array_keys(config('suscripciones.modulos')), $d['modulos'] ?? []));
+            $d['modulos'] = array_values(array_intersect($catalogo, $d['modulos'] ?? []));
         }
 
         return $d;

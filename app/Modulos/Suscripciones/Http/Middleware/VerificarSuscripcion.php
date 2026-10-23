@@ -42,8 +42,9 @@ class VerificarSuscripcion
 
         // Módulo que el plan no incluye: no se entra ni por el menú ni por un enlace directo
         $modulo = $empresaId ? Modulos::deRuta($request->route()?->getName()) : null;
+        $producto = Modulos::producto($modulo);   // la suscripción que manda en esta ruta (ERP o Página web)
         if ($modulo && ! Modulos::incluido($modulo, $empresaId)) {
-            $plan = $this->suscripciones->vigente($empresaId)?->plan?->nombre;
+            $plan = $this->suscripciones->vigente($empresaId, $producto)?->plan?->nombre;
             $mensaje = '«' . Modulos::nombre($modulo) . '» no está incluido en tu plan' . ($plan ? " {$plan}" : '') . '. Mejora tu plan para usarlo.';
 
             return $this->rechazar($request, $user, $mensaje);
@@ -53,7 +54,7 @@ class VerificarSuscripcion
             return $next($request);
         }
 
-        $s = $this->suscripciones->vigente($empresaId);
+        $s = $this->suscripciones->vigente($empresaId, $producto);
         if (! $s || $s->permiteOperar()) {
             return $next($request);
         }

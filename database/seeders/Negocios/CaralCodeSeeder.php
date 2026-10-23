@@ -32,6 +32,7 @@ class CaralCodeSeeder extends Seeder
 
         $this->categorias([
             'Suscripciones ERP'     => 'Planes del ERP RicoPet: mensual, trimestral y anual.',
+            'Suscripciones web'     => 'Planes de la página web RicoPet: Catálogo y Tienda.',
             'Implementación'        => 'Puesta en marcha del ERP: configuración, migración de datos y facturación electrónica.',
             'Desarrollo de software' => 'Sistemas y módulos a medida, páginas web e integraciones.',
             'Soporte técnico'       => 'Soporte remoto y presencial, mantenimiento y bolsas de horas.',
@@ -93,13 +94,13 @@ class CaralCodeSeeder extends Seeder
     private function suscripcionesComoServicios(): void
     {
         $vigentes = [];
-        foreach (Plan::with('precios')->where('activo', true)->orderBy('orden')->get() as $plan) {
+        foreach (Plan::with('precios', 'producto')->where('activo', true)->orderBy('orden')->get() as $plan) {
             foreach ($plan->precios->where('activo', true)->where('precio', '>', 0) as $precio) {
                 $codigo = self::codigoSuscripcion($plan->codigo, $precio->periodicidad);
                 $periodo = config('suscripciones.periodicidades.' . $precio->periodicidad . '.0');
                 Producto::updateOrCreate(['empresa_id' => $this->empresa->id, 'codigo' => $codigo], [
-                    'categoria_id' => $this->categorias['Suscripciones ERP'], 'tipo_unidad_id' => TipoUnidad::where('codigo', 'SRV')->value('id'),
-                    'nombre' => "Suscripción ERP RicoPet — Plan {$plan->nombre} ({$periodo})", 'descripcion' => $plan->descripcion,
+                    'categoria_id' => $this->categorias[$plan->producto->codigo === 'web' ? 'Suscripciones web' : 'Suscripciones ERP'], 'tipo_unidad_id' => TipoUnidad::where('codigo', 'SRV')->value('id'),
+                    'nombre' => "Suscripción RicoPet {$plan->producto->nombre} — Plan {$plan->nombre} ({$periodo})", 'descripcion' => $plan->descripcion,
                     'precio_unitario' => (float) $precio->precio, 'costo_unitario' => 0, 'es_servicio' => true, 'maneja_lotes' => false, 'activo' => true,
                 ]);
                 $vigentes[] = $codigo;

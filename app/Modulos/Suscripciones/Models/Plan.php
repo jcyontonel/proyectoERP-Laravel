@@ -5,9 +5,10 @@ namespace App\Modulos\Suscripciones\Models;
 use App\Modulos\Nucleo\Models\Concerns\Auditable;
 use App\Modulos\Nucleo\Models\Concerns\EsActivable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Plan de suscripción con sus límites (NULL = ilimitado) */
+/** Plan de suscripción de un producto (ERP, Página web) con sus límites (NULL = ilimitado) */
 class Plan extends Model
 {
     use Auditable, EsActivable;
@@ -23,7 +24,7 @@ class Plan extends Model
     ];
 
     protected $fillable = [
-        'codigo', 'nombre', 'descripcion', 'max_comprobantes_mes', 'max_productos', 'max_usuarios', 'max_almacenes',
+        'producto_id', 'codigo', 'nombre', 'descripcion', 'max_comprobantes_mes', 'max_productos', 'max_usuarios', 'max_almacenes', 'max_empresas',
         'dias_prueba', 'activo', 'orden', 'modulos',
     ];
 
@@ -31,7 +32,7 @@ class Plan extends Model
     {
         return [
             'max_comprobantes_mes' => 'integer', 'max_productos' => 'integer', 'max_usuarios' => 'integer',
-            'max_almacenes' => 'integer', 'dias_prueba' => 'integer', 'activo' => 'boolean', 'orden' => 'integer',
+            'max_almacenes' => 'integer', 'max_empresas' => 'integer', 'dias_prueba' => 'integer', 'activo' => 'boolean', 'orden' => 'integer',
             'modulos' => 'array',   // claves de config suscripciones.modulos; null = todos
         ];
     }
@@ -40,6 +41,11 @@ class Plan extends Model
     public function incluye(string $modulo): bool
     {
         return $this->modulos === null || in_array($modulo, $this->modulos, true);
+    }
+
+    public function producto(): BelongsTo
+    {
+        return $this->belongsTo(ProductoPlataforma::class, 'producto_id');
     }
 
     public function precios(): HasMany

@@ -116,8 +116,12 @@ class AdminApiTest extends TestCase
 
     public function test_planes_y_ofertas(): void
     {
-        $this->api('get', 'planes')->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('data.0.codigo', 'basico')->assertJsonPath('data.1.codigo', 'pro')->assertJsonPath('data.2.codigo', 'total')
-            ->assertJsonPath('data.0.modulos', ['notas', 'cuentas_cobrar', 'reportes_basicos']);
+        $this->api('get', 'planes')->assertOk()->assertJsonCount(5, 'data')->assertJsonPath('data.0.codigo', 'basico')->assertJsonPath('data.1.codigo', 'pro')->assertJsonPath('data.2.codigo', 'total')
+            ->assertJsonPath('data.0.modulos', ['notas', 'cuentas_cobrar', 'reportes_basicos'])->assertJsonPath('data.0.producto', 'erp')
+            ->assertJsonPath('data.3.codigo', 'catalogo')->assertJsonPath('data.4.producto', 'web')->assertJsonPath('data.4.modulos', ['web_catalogo', 'web_tienda']);
+
+        // Un plan web solo admite módulos web
+        $this->api('post', 'planes', ['producto' => 'web', 'codigo' => 'web-x', 'nombre' => 'X', 'modulos' => ['compras']])->assertJsonValidationErrors('modulos.0');
 
         $plan = $this->api('post', 'planes', [
             'codigo' => 'empresarial', 'nombre' => 'Empresarial', 'max_comprobantes_mes' => null, 'max_usuarios' => 50, 'activo' => true, 'orden' => 4,

@@ -5,7 +5,7 @@
     $incluye = (bool) config('suscripciones.facturacion.precios_incluyen_igv');
     $igvPct = (float) ($emisor->igv ?: 18);
     [$base, $igv, $total] = \App\Modulos\Erp\Support\Montos::desglosar((float) $pago->monto, $igvPct, $incluye);
-    $cli = $pago->empresa;
+    $cli = $pago->suscripcion?->titular;   // quien paga (a su nombre sale el comprobante)
     $periodo = config('suscripciones.periodicidades.' . $pago->suscripcion?->periodicidad . '.0', '');
 @endphp
 <!DOCTYPE html>
@@ -52,11 +52,11 @@
     </div>
 
     <div class="bloque">
-        <div><span class="muted">Cliente:</span> {{ $cli->razon_social }}</div>
+        <div><span class="muted">Cliente:</span> {{ $cli?->nombre ?? $pago->empresa->razon_social }}</div>
         <div><span class="muted">Fecha de emisión:</span> {{ $c->created_at->format('d/m/Y') }}</div>
-        <div><span class="muted">RUC:</span> {{ $cli->ruc }}</div>
+        <div><span class="muted">{{ $cli && ! $cli->esRuc() ? 'DNI' : 'RUC' }}:</span> {{ $cli?->numero_documento ?? $pago->empresa->ruc }}</div>
         <div><span class="muted">Moneda:</span> Soles (PEN) · Contado</div>
-        <div><span class="muted">Dirección:</span> {{ $cli->direccion ?: '—' }}</div>
+        <div><span class="muted">Dirección:</span> {{ ($cli ? $cli->direccion : $pago->empresa->direccion) ?: '—' }}</div>
         <div><span class="muted">Forma de pago:</span> {{ config('suscripciones.metodos_pago.' . $pago->metodo) ?? $pago->metodo }}{{ $pago->referencia ? ' · ' . $pago->referencia : '' }}</div>
     </div>
 
@@ -65,7 +65,7 @@
         <tbody>
             <tr>
                 <td>1</td><td>Servicio</td>
-                <td>{{ config('suscripciones.facturacion.producto') }} — Plan {{ $pago->suscripcion?->plan?->nombre }}{{ $periodo ? " ({$periodo})" : '' }}
+                <td>{{ config('suscripciones.facturacion.producto') }} {{ $pago->suscripcion?->plan?->producto?->nombre }} — Plan {{ $pago->suscripcion?->plan?->nombre }}{{ $periodo ? " ({$periodo})" : '' }}
                     @if ($pago->periodo_desde)<br><span class="muted">Del {{ $pago->periodo_desde->format('d/m/Y') }} al {{ $pago->periodo_hasta->format('d/m/Y') }}</span>@endif
                     @if ($pago->oferta)<br><span class="muted">Oferta: {{ $pago->oferta->nombre }} (− S/ {{ number_format($pago->descuento, 2) }})</span>@endif
                 </td>

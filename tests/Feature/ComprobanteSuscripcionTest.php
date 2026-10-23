@@ -6,6 +6,7 @@ use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Suscripciones\Models\PagoSuscripcion;
 use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\Titular;
 use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,6 +117,19 @@ class ComprobanteSuscripcionTest extends TestCase
         $this->assertSame('20111111111-07-FC01-1', $nota['nombre']);
         $this->assertStringContainsString("<cbc:ID>{$factura->numeroCompleto()}</cbc:ID>", $nota['xml']);
         $this->assertStringContainsString('ANULACION DE LA OPERACION', $nota['xml']);
+    }
+
+    public function test_el_comprobante_sale_a_nombre_del_titular_y_con_dni_es_boleta(): void
+    {
+        $titular = Titular::create(['tipo_documento' => '1', 'numero_documento' => '44556677', 'nombre' => 'ANA TORRES GIL', 'direccion' => 'JR. UNO 1']);
+        $otra = $this->crearEmpresa(['ruc' => '20605555551']);
+        app(SuscripcionService::class)->asignar($otra, Plan::where('codigo', 'basico')->firstOrFail(), ['periodicidad' => 'mensual', 'titular_id' => $titular->id]);
+
+        $this->api('post', "empresas/{$otra->id}/pagos", ['metodo' => 'yape'])->assertCreated()->assertJsonPath('data.comprobante.numero', 'B900-1');
+        $xml = end($this->sunat->llamadas)['xml'];
+        $this->assertStringContainsString('<cbc:ID schemeID="1">44556677</cbc:ID>', $xml);
+        $this->assertStringContainsString('ANA TORRES GIL', $xml);
+        $this->assertStringContainsString('Suscripción RicoPet ERP — Plan Básico', $xml);
     }
 
     public function test_sin_emisor_configurado_no_se_emite(): void
