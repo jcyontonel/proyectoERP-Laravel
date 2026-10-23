@@ -9,6 +9,7 @@ use App\Models\Pago;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\Modulos;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -64,19 +65,19 @@ class NotificacionService
                 route('productos.index', ['stock' => 'bajo'])));
         }
 
-        if ($c['por_vencer'] > 0 && $user->can('gestionar-inventario')) {
+        if ($c['por_vencer'] > 0 && $user->can('gestionar-inventario') && Modulos::incluido('lotes', $empresaId)) {
             $alertas->push($this->alerta('warning', 'calendar-clock', 'Lotes por vencer',
                 "{$c['por_vencer']} " . str('lote')->plural($c['por_vencer']) . ' con stock vencen en los próximos ' . self::DIAS_POR_VENCER . ' días.',
                 route('lotes.index', ['vencimiento' => 'por_vencer'])));
         }
 
-        if ($c['por_cobrar_vencidas'] > 0 && $user->can('registrar-pagos')) {
+        if ($c['por_cobrar_vencidas'] > 0 && $user->can('registrar-pagos') && Modulos::incluido('cuentas_cobrar', $empresaId)) {
             $alertas->push($this->alerta('danger', 'coins', 'Cobranzas vencidas',
                 "{$c['por_cobrar_vencidas']} " . str('venta')->plural($c['por_cobrar_vencidas']) . ' al crédito pasaron su fecha de pago.',
                 route('cuentas-cobrar.index', ['estado' => 'vencidas'])));
         }
 
-        if ($c['por_pagar_vencidas'] > 0 && $user->can('cuentas-por-pagar')) {
+        if ($c['por_pagar_vencidas'] > 0 && $user->can('cuentas-por-pagar') && Modulos::incluido('cuentas_pagar', $empresaId)) {
             $alertas->push($this->alerta('danger', 'landmark', 'Pagos a proveedores vencidos',
                 "{$c['por_pagar_vencidas']} " . str('compra')->plural($c['por_pagar_vencidas']) . ' al crédito pasaron su fecha de pago.',
                 route('cuentas-pagar.index', ['estado' => 'vencidas'])));

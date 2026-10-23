@@ -62,7 +62,7 @@
                 @include('inicio.partials.caja')
             @endif
             @include('inicio.partials.alertas-stock')
-            @if ($widgets['inventario'])
+            @if ($widgets['lotes'])
                 @include('inicio.partials.por-vencer')
             @endif
             @if ($widgets['finanzas'])

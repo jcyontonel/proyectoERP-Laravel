@@ -50,7 +50,7 @@
         <span>producto-almacén bajo el mínimo</span>
     </x-stat-card>
 
-    @if ($widgets['inventario'] && ! $widgets['ventas'])
+    @if ($widgets['lotes'] && ! $widgets['ventas'])
         <x-stat-card title="Lotes por vencer" icon="calendar-clock" tone="amber" :value="number_format($porVencer->count())">
             <span>en los próximos {{ \App\Services\NotificacionService::DIAS_POR_VENCER }} días</span>
         </x-stat-card>

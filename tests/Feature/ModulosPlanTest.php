@@ -55,6 +55,11 @@ class ModulosPlanTest extends TestCase
         $this->actingAs($this->admin)->get(route('reportes.index'))->assertOk()
             ->assertSee('Ventas por período')->assertDontSee('Utilidad por categoría');
 
+        // Inicio: sin accesos ni bloques de módulos fuera del plan
+        $this->actingAs($this->admin)->get(route('inicio'))->assertOk()
+            ->assertSee(route('ventas.create'))->assertDontSee(route('compras.create'))->assertDontSee(route('reportes.utilidad'))
+            ->assertDontSee(route('cuentas-pagar.index'));
+
         // Mi suscripción muestra qué incluye cada plan
         $this->actingAs($this->admin)->get(route('config.suscripcion'))->assertOk()->assertSee('Pro')->assertSee('Lotes y vencimientos');
     }
@@ -103,6 +108,7 @@ class ModulosPlanTest extends TestCase
         $this->assertNotContains('nueva-venta', $menu);                       // su formulario está bloqueado
         $this->assertContains('ventas', $menu);                               // consultar sí
         $this->actingAs($this->admin)->get(route('ventas.create'))->assertRedirect(route('config.suscripcion'));
+        $this->actingAs($this->admin)->get(route('inicio'))->assertOk()->assertDontSee(route('ventas.create'))->assertDontSee(route('compras.create'));
 
         app(SuscripcionService::class)->reactivar($s->refresh());
         $this->app->forgetScopedInstances();

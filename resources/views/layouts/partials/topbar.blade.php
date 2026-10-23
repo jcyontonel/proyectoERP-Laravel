@@ -28,7 +28,9 @@
 
         <div class="ml-auto flex items-center gap-1 sm:gap-2">
             @can('emitir-ventas')
-                <a href="{{ route('ventas.create') }}" class="btn btn-primary h-9 px-3"><x-icon name="plus" /><span class="hidden md:inline">Nueva venta</span></a>
+                @ruta('ventas.create')
+                    <a href="{{ route('ventas.create') }}" class="btn btn-primary h-9 px-3"><x-icon name="plus" /><span class="hidden md:inline">Nueva venta</span></a>
+                @endruta
             @endcan
 
             {{-- Estado de caja --}}

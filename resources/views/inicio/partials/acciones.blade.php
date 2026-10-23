@@ -1,19 +1,27 @@
-{{-- Accesos rápidos según permisos --}}
+{{-- Accesos rápidos según permisos, módulos del plan y estado de la suscripción (@ruta) --}}
 <div class="mt-5 flex flex-wrap items-center gap-3">
     @can('emitir-ventas')
-        <a href="{{ route('ventas.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nueva venta</a>
+        @ruta('ventas.create')
+            <a href="{{ route('ventas.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nueva venta</a>
+        @endruta
     @endcan
     @can('gestionar-caja')
         <a href="{{ route('caja.index') }}" class="btn btn-secondary"><x-icon name="wallet" class="text-brand-600" /> {{ ($caja['abierta'] ?? false) ? 'Cerrar caja' : 'Abrir caja' }}</a>
     @endcan
     @can('create', App\Models\Cliente::class)
-        <a href="{{ route('clientes.create') }}" class="btn btn-secondary"><x-icon name="user" class="text-brand-600" /> Registrar cliente</a>
+        @ruta('clientes.create')
+            <a href="{{ route('clientes.create') }}" class="btn btn-secondary"><x-icon name="user" class="text-brand-600" /> Registrar cliente</a>
+        @endruta
     @endcan
     @can('gestionar-compras')
-        <a href="{{ route('compras.create') }}" class="btn btn-secondary"><x-icon name="truck" class="text-brand-600" /> Registrar compra</a>
+        @ruta('compras.create')
+            <a href="{{ route('compras.create') }}" class="btn btn-secondary"><x-icon name="truck" class="text-brand-600" /> Registrar compra</a>
+        @endruta
     @endcan
     @can('create', App\Models\Producto::class)
-        <a href="{{ route('productos.create') }}" class="btn btn-secondary"><x-icon name="package" class="text-brand-600" /> Nuevo producto</a>
+        @ruta('productos.create')
+            <a href="{{ route('productos.create') }}" class="btn btn-secondary"><x-icon name="package" class="text-brand-600" /> Nuevo producto</a>
+        @endruta
     @else
         <a href="{{ route('productos.index') }}" class="btn btn-secondary"><x-icon name="search" class="text-brand-600" /> Consultar stock</a>
     @endcan

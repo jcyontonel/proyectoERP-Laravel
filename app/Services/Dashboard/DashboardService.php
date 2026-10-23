@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\NotificacionService;
+use App\Support\Modulos;
 use App\Support\Sql;
 use App\Support\Unidades;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +40,7 @@ class DashboardService
 
     public function para(User $user, int $empresaId, Carbon $fecha, string $semana = 'actual'): array
     {
-        $w = $this->widgets($user);
+        $w = $this->widgets($user, $empresaId);
         $propio = ! $user->can('ver-reportes');
 
         $datos = [
@@ -88,17 +89,22 @@ class DashboardService
     }
 
     /** @return array<string, bool> */
-    public function widgets(User $user): array
+    /** Qué bloques ve el usuario: por su permiso y por los módulos del plan de la empresa */
+    public function widgets(User $user, ?int $empresaId = null): array
     {
+        $plan = fn (string $modulo) => Modulos::incluido($modulo, $empresaId);
+
         return [
-            'ventas'     => $user->can('ver_ventas'),
-            'caja'       => $user->can('gestionar-caja'),
-            'inventario' => $user->can('gestionar-inventario') || $user->can('gestionar-productos'),
+            'ventas'        => $user->can('ver_ventas'),
+            'caja'          => $user->can('gestionar-caja'),
+            'inventario'    => $user->can('gestionar-inventario') || $user->can('gestionar-productos'),
+            'lotes'         => $user->can('gestionar-inventario') && $plan('lotes'),
             // El vendedor cobra (registrar-pagos) pero no ve los saldos de toda la empresa
-            'finanzas'   => $user->can('registrar-pagos') && $user->can('ver-reportes'),
-            'utilidad'   => $user->can('ver-reportes'),
-            'compras'    => $user->can('gestionar-compras'),
-            'sunat'      => $user->can('emitir-notas'),
+            'finanzas'      => $user->can('registrar-pagos') && $user->can('ver-reportes') && $plan('cuentas_cobrar'),
+            'cuentas_pagar' => $plan('cuentas_pagar'),
+            'utilidad'      => $user->can('ver-reportes') && $plan('reportes_avanzados'),
+            'compras'       => $user->can('gestionar-compras') && $plan('compras'),
+            'sunat'         => $user->can('emitir-notas'),
         ];
     }
 

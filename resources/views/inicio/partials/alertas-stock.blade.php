@@ -18,7 +18,9 @@
                         </p>
                     </div>
                     @can('gestionar-compras')
-                        <a href="{{ route('compras.create') }}" class="shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-700">Reabastecer</a>
+                        @ruta('compras.create')
+                            <a href="{{ route('compras.create') }}" class="shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-700">Reabastecer</a>
+                        @endruta
                     @endcan
                 </li>
             @endforeach

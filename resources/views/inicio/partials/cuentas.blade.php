@@ -1,7 +1,7 @@
 {{-- $cuentas: cobrar / pagar [saldo, documentos, vencidas] --}}
 <x-card title="Cuentas pendientes" icon="coins">
-    <div class="grid grid-cols-2 gap-3">
-        @foreach (['cobrar' => ['Por cobrar', 'cuentas-cobrar', 'text-emerald-700'], 'pagar' => ['Por pagar', 'cuentas-pagar', 'text-red-600']] as $clave => [$titulo, $modulo, $color])
+    <div @class(["grid gap-3", "grid-cols-2" => $widgets["cuentas_pagar"]])>
+        @foreach (array_filter(['cobrar' => ['Por cobrar', 'cuentas-cobrar', 'text-emerald-700'], 'pagar' => $widgets['cuentas_pagar'] ? ['Por pagar', 'cuentas-pagar', 'text-red-600'] : null]) as $clave => [$titulo, $modulo, $color])
             @php $c = $cuentas[$clave]; @endphp
             <a href="{{ route($modulo . '.index') }}" class="rounded-lg border border-slate-200 p-3 hover:border-brand-200 hover:bg-slate-50">
                 <p class="text-xs text-slate-500">{{ $titulo }}</p>
