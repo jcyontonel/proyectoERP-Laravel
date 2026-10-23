@@ -47,7 +47,8 @@ class SuscripcionTest extends TestCase
         [$pro, $total] = [Plan::where('codigo', 'pro')->first(), Plan::where('codigo', 'total')->first()];
         $this->assertTrue($basico->incluye('notas') && ! $basico->incluye('compras') && ! $basico->incluye('cotizaciones'));
         $this->assertTrue($pro->incluye('compras') && $pro->incluye('cotizaciones') && ! $pro->incluye('lotes'));
-        $this->assertTrue(collect(array_keys(config('suscripciones.modulos')))->every(fn ($m) => $total->incluye($m)));
+        $this->assertTrue(collect(Plan::todasDe('erp'))->every(fn ($m) => $total->incluye($m)));   // Total: todo el ERP
+        $this->assertTrue($basico->incluye('ventas') && $basico->incluye('caja') && $basico->incluye('facturacion'));   // base del ERP
     }
 
     public function test_limite_de_comprobantes_al_mes(): void
@@ -244,9 +245,12 @@ class SuscripcionTest extends TestCase
         $admin = $this->usuarioCon('Administrador', $this->empresa);
         $this->vender($admin)->assertSessionHasNoErrors();
 
+        // Sin ningún plan y sin la excepción para empresas antiguas: no tiene funcionalidades (ni ventas)
         config(['suscripciones.sin_plan_ilimitado' => false]);
         $this->app->forgetScopedInstances();
-        $this->vender($admin)->assertSessionHasErrors('suscripcion');
+        $antes = Venta::count();
+        $this->vender($admin)->assertRedirect()->assertSessionHas('error');
+        $this->assertSame($antes, Venta::count());
     }
 
     /* ───────────────────────── Auxiliares ───────────────────────── */

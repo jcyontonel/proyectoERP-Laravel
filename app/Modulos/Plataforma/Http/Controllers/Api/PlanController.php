@@ -66,7 +66,7 @@ class PlanController extends AdminController
     {
         $periodicidades = array_keys(config('suscripciones.periodicidades'));
         $producto = $request->input('producto', $plan?->producto?->codigo ?? ProductoPlataforma::ERP);
-        $catalogo = array_keys(config($producto === ProductoPlataforma::WEB ? 'suscripciones.modulos_web' : 'suscripciones.modulos'));
+        $catalogo = Plan::opcionalesDe($producto);
 
         $d = $request->validate([
             'producto'             => ['nullable', Rule::exists('productos_plataforma', 'codigo')],
@@ -85,7 +85,7 @@ class PlanController extends AdminController
             'precios.*.periodicidad' => ['required', Rule::in($periodicidades)],
             'precios.*.precio'     => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'precios.*.activo'     => ['boolean'],
-            // Módulos incluidos (config suscripciones.modulos o modulos_web según el producto); la base la tienen todos
+            // Funcionalidades opcionales que elige el plan (config suscripciones.productos); las base las tienen todos
             'modulos'              => ['nullable', 'array'],
             'modulos.*'            => ['string', Rule::in($catalogo)],
         ], ['codigo.unique' => 'Ya existe un plan con ese código.', 'modulos.*.in' => 'Uno de los módulos no existe.']);

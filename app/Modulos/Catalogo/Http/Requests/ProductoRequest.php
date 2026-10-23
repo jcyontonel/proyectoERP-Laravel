@@ -70,6 +70,7 @@ class ProductoRequest extends FormRequest
             'almacenes.*.id'            => ['required', Rule::exists(Almacen::class, 'id')->where(fn ($q) => $q->where('empresa_id', $empresa)->whereNull('deleted_at'))],
             'almacenes.*.stock_minimo'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'almacenes.*.stock_inicial' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'almacenes.*.stock'         => ['nullable', 'numeric', 'min:0', 'max:99999999'],   // solo sin control de inventario
         ];
     }
 

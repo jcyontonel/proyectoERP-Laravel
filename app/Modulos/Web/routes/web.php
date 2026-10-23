@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 | Página web en el ERP (bloque "Página web" del menú). Sin suscripción web no se entra (módulo web_catalogo);
-| pedidos y zonas de envío son del plan Tienda (módulo web_tienda). Ver config suscripciones.modulos_web.
+| pedidos y zonas de envío son del plan Tienda (módulo web_tienda). Ver config suscripciones.funcionalidades.
 */
 // Atajo: /web lleva al bloque Página web (si la empresa no tiene plan web, el aviso lo da VerificarSuscripcion)
 Route::get('web', fn () => redirect()->route('web.tienda.edit'))->name('web.entrada');

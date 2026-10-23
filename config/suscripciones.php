@@ -35,18 +35,30 @@ return [
     ],
 
     /*
-    | Módulos que se reparten entre los planes (planes.modulos). Lo que no está aquí es la base y
-    | lo tienen todos: inicio, ventas de productos y servicios, clientes, caja, productos, categorías,
-    | unidades, facturación electrónica y configuración.
-    | Cada módulo: [nombre, descripción, rutas (patrones de nombre de ruta)]. Si el plan no lo incluye,
-    | sus ítems del menú no aparecen y sus rutas responden "tu plan no incluye…".
+    | Funcionalidades de la plataforma: [nombre, descripción, rutas (patrones de nombre de ruta)].
+    | Cada sistema (producto) tiene funcionalidades BASE (las incluyen todos sus planes) y OPCIONALES (cada plan
+    | elige cuáles, en planes.modulos). Una funcionalidad puede ser de varios sistemas (ventas, clientes, productos,
+    | facturación…): la empresa tiene la UNIÓN de lo que le dan sus suscripciones vigentes (ERP + WEB = todo junto).
+    | Una ruta que no está en ninguna funcionalidad es del núcleo (inicio, perfil, usuarios, series, empresa…).
+    | El orden importa: la primera que coincide gana (por eso ventas.notas.* va antes que ventas.*).
     */
-    'modulos' => [
+    'funcionalidades' => [
+        // Compartidas por ERP y WEB
         'notas'              => ['Notas de crédito y débito', 'Corrige, devuelve o anula comprobantes ya emitidos.', ['notas.*', 'ventas.notas.*']],
+        'ventas'             => ['Ventas y comprobantes', 'Nueva venta y comprobantes: factura, boleta y ticket.', ['ventas.*']],
+        'clientes'           => ['Clientes', 'Cartera de clientes con su historial de compras.', ['clientes.*']],
+        'productos'          => ['Productos y categorías', 'Catálogo de productos y servicios, categorías y unidades.', ['productos.*', 'categorias.*', 'unidades.*']],
+        'facturacion'        => ['Facturación electrónica', 'Envío de comprobantes a SUNAT, bajas y conexión SUNAT de la empresa.', ['sunat.*', 'config.sunat*']],
         'cuentas_cobrar'     => ['Ventas al crédito y cobranzas', 'Cuentas por cobrar, cobros parciales y estado de cuenta de clientes.', ['cuentas-cobrar.*', 'finanzas.movimientos.*']],
         'reportes_basicos'   => ['Reportes básicos', 'Ventas por período, cobros por método de pago, más vendidos y arqueos de caja.',
             ['reportes.index', 'reportes.ventas', 'reportes.ventas.exportar', 'reportes.metodos-pago', 'reportes.metodos-pago.exportar',
                 'reportes.productos-vendidos', 'reportes.productos-vendidos.exportar', 'reportes.caja', 'reportes.caja.exportar']],
+        'roles'              => ['Roles personalizados', 'Crea tipos de usuario propios con los permisos de tu negocio.', ['roles.*']],
+        'auditoria'          => ['Auditoría', 'Historial de quién hizo qué y cuándo en el sistema.', ['config.auditoria*']],
+
+        // ERP
+        'caja'               => ['Caja', 'Apertura y cierre de turno, ingresos, egresos y arqueo; cajas registradoras.', ['caja.*', 'cajas.*']],
+        'almacenes'          => ['Almacenes', 'Sedes y depósitos donde se guarda el stock.', ['almacenes.*']],
         'cotizaciones'       => ['Cotizaciones', 'Proformas de productos y servicios que se convierten en venta.', ['cotizaciones.*']],
         'compras'            => ['Compras y proveedores', 'Registro de compras con ingreso al stock y gestión de proveedores.', ['compras.*', 'proveedores.*']],
         'cuentas_pagar'      => ['Cuentas por pagar', 'Compras al crédito y pagos a proveedores.', ['cuentas-pagar.*']],
@@ -54,21 +66,31 @@ return [
         'reportes_avanzados' => ['Reportes avanzados', 'Utilidad, inventario valorizado, reposición, rotación, compras por proveedor, vendedores y registro de ventas.',
             ['reportes.ventas-vendedor*', 'reportes.utilidad*', 'reportes.inventario*', 'reportes.reposicion*', 'reportes.sin-rotacion*',
                 'reportes.compras-proveedor*', 'reportes.registro-ventas*']],
-        'roles'              => ['Roles personalizados', 'Crea tipos de usuario propios con los permisos de tu negocio.', ['roles.*']],
         'ordenes_compra'     => ['Órdenes de compra', 'Pedidos a proveedores con recepción parcial o total.', ['ordenes.*']],
         'multialmacen'       => ['Transferencias entre almacenes', 'Mueve mercadería entre locales o almacenes.', ['transferencias.*']],
         'lotes'              => ['Lotes y vencimientos', 'Control por lote con fechas de vencimiento y alertas.', ['lotes.*']],
         'fraccionamientos'   => ['Fraccionamientos', 'Parte presentaciones grandes en unidades (sacos en kilos, cajas en tabletas).', ['fraccionamientos.*']],
-        'auditoria'          => ['Auditoría', 'Historial de quién hizo qué y cuándo en el sistema.', ['config.auditoria*']],
+
+        // WEB
+        'web_tienda'         => ['Tienda en línea', 'Carrito, pedidos, pago con tarjeta y envíos por zona.', ['web.pedidos.*', 'web.zonas.*']],
+        'web_catalogo'       => ['Página web', 'La página de la empresa con sus productos publicados, categorías y datos de contacto.', ['web.*']],
     ],
 
     /*
-    | Módulos de la Página web (producto "web"): mismo formato. Sin suscripción web no hay ninguno, y el
-    | bloque "Página web" del menú del ERP no aparece. Plan Catálogo: web_catalogo; plan Tienda: los dos.
+    | Qué funcionalidades tiene cada sistema. base: todos sus planes; opcionales: las que elige cada plan.
+    | Sin ninguna suscripción vigente (empresas anteriores a los planes, sin_plan_ilimitado): todo el ERP.
+    | WEB sin "inventario": el stock se edita directamente en el producto.
     */
-    'modulos_web' => [
-        'web_tienda'   => ['Tienda en línea', 'Carrito, pedidos, pago con tarjeta y envíos por zona.', ['web.pedidos.*', 'web.zonas.*']],
-        'web_catalogo' => ['Página web', 'La página de la empresa con sus productos publicados, categorías y datos de contacto.', ['web.*']],
+    'productos' => [
+        'erp' => [
+            'base'       => ['ventas', 'clientes', 'productos', 'facturacion', 'caja', 'almacenes'],
+            'opcionales' => ['notas', 'cuentas_cobrar', 'reportes_basicos', 'cotizaciones', 'compras', 'cuentas_pagar', 'inventario',
+                'reportes_avanzados', 'roles', 'ordenes_compra', 'multialmacen', 'lotes', 'fraccionamientos', 'auditoria'],
+        ],
+        'web' => [
+            'base'       => ['web_catalogo', 'ventas', 'clientes', 'productos', 'facturacion'],
+            'opcionales' => ['web_tienda', 'reportes_basicos', 'notas', 'cuentas_cobrar', 'roles', 'auditoria'],
+        ],
     ],
 
     // Métodos para registrar pagos de suscripción

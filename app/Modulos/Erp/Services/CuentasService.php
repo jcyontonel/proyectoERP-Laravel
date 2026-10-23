@@ -198,7 +198,7 @@ class CuentasService
     {
         $sesion = $this->cajas->sesionAbierta($empresaId, $user->id);
 
-        if ($metodo === 'efectivo' && $esCobro && ! $sesion && config('caja.exigir_para_vender')) {
+        if ($metodo === 'efectivo' && $esCobro && ! $sesion && $this->cajas->exigeTurno($empresaId)) {
             throw ValidationException::withMessages(['metodo_pago' => 'Para recibir efectivo abre tu turno de caja (o registra el cobro con otro método).']);
         }
 

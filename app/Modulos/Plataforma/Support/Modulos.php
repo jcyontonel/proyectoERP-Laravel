@@ -3,39 +3,28 @@
 namespace App\Modulos\Plataforma\Support;
 
 use App\Modulos\Plataforma\Http\Middleware\VerificarSuscripcion;
-use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Models\Suscripcion;
 use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Support\Str;
 
 /**
- * Módulos del sistema que se reparten entre los planes de cada producto (config suscripciones.modulos para
- * el ERP y suscripciones.modulos_web para la Página web). Una ruta que no pertenece a ningún módulo es de la
- * base del ERP: la tienen todos los planes.
+ * Funcionalidades de la plataforma por ruta (config suscripciones.funcionalidades). Una empresa tiene la UNIÓN de
+ * las funcionalidades de sus suscripciones vigentes (ERP, WEB…); una ruta que no pertenece a ninguna es del núcleo.
  */
 class Modulos
 {
-    /** @return array<string, array{0: string, 1: string, 2: array<int, string>, 3: string}>  clave => [nombre, descripción, rutas, producto] */
+    /** @return array<string, array{0: string, 1: string, 2: array<int, string>}>  clave => [nombre, descripción, rutas] */
     public static function catalogo(): array
     {
-        $tag = fn (array $modulos, string $producto) => array_map(fn (array $m) => [$m[0], $m[1], $m[2], $producto], $modulos);
-
-        // Los de la web primero: sus patrones son más específicos (web.pedidos.* antes que web.*)
-        return $tag(config('suscripciones.modulos_web', []), ProductoPlataforma::WEB)
-            + $tag(config('suscripciones.modulos', []), ProductoPlataforma::ERP);
+        return config('suscripciones.funcionalidades', []);
     }
 
-    public static function nombre(string $modulo): string
+    public static function nombre(string $funcionalidad): string
     {
-        return self::catalogo()[$modulo][0] ?? $modulo;
+        return self::catalogo()[$funcionalidad][0] ?? $funcionalidad;
     }
 
-    /** Producto al que pertenece el módulo (la base es del ERP) */
-    public static function producto(?string $modulo): string
-    {
-        return $modulo ? (self::catalogo()[$modulo][3] ?? ProductoPlataforma::ERP) : ProductoPlataforma::ERP;
-    }
-
-    /** Módulo al que pertenece una ruta (null = base) */
+    /** Funcionalidad a la que pertenece una ruta (null = núcleo) */
     public static function deRuta(?string $ruta): ?string
     {
         if (! $ruta) {
@@ -50,15 +39,14 @@ class Modulos
         return null;
     }
 
-    /** El plan de la empresa en el producto del módulo lo incluye (los de la base siempre) */
-    public static function incluido(?string $modulo, ?int $empresaId): bool
+    /** Alguna suscripción vigente de la empresa da la funcionalidad (las del núcleo siempre) */
+    public static function incluido(?string $funcionalidad, ?int $empresaId): bool
     {
-        if (! $modulo || ! $empresaId) {
+        if (! $funcionalidad || ! $empresaId) {
             return true;
         }
-        $modulos = app(SuscripcionService::class)->modulos($empresaId, self::producto($modulo));
 
-        return $modulos === null || in_array($modulo, $modulos, true);
+        return in_array($funcionalidad, app(SuscripcionService::class)->funcionalidades($empresaId), true);
     }
 
     public static function rutaIncluida(?string $ruta, ?int $empresaId): bool
@@ -67,21 +55,31 @@ class Modulos
     }
 
     /**
-     * La ruta se puede abrir ahora: su módulo está en el plan y, si la suscripción de su producto está
-     * suspendida, no es una de las páginas bloqueadas (formularios de alta y edición). Lo usan el menú
+     * La suscripción que deja la funcionalidad en solo lectura: todas las que la dan están suspendidas o canceladas
+     * (devuelve una de ellas). Null = se puede operar (alguna está al día, o la empresa no tiene planes).
+     */
+    public static function bloqueante(?string $funcionalidad, ?int $empresaId): ?Suscripcion
+    {
+        if (! $empresaId) {
+            return null;
+        }
+        $otorgan = app(SuscripcionService::class)->otorgan($empresaId, $funcionalidad);
+
+        return $otorgan->contains(fn (Suscripcion $s) => $s->permiteOperar()) ? null : $otorgan->first();
+    }
+
+    /**
+     * La ruta se puede abrir ahora: su funcionalidad está en algún plan y, si es una página bloqueada en modo solo
+     * lectura (formularios de alta y edición), alguna de las suscripciones que la dan está al día. Lo usan el menú
      * lateral y la directiva @ruta('…') de las vistas.
      */
     public static function rutaDisponible(string $ruta, ?int $empresaId): bool
     {
-        if (! self::rutaIncluida($ruta, $empresaId)) {
+        $funcionalidad = self::deRuta($ruta);
+        if (! self::incluido($funcionalidad, $empresaId)) {
             return false;
         }
-        if ($empresaId && VerificarSuscripcion::bloqueadaSuspendida($ruta)) {
-            $s = app(SuscripcionService::class)->vigente($empresaId, self::producto(self::deRuta($ruta)));
 
-            return ! $s || $s->permiteOperar();
-        }
-
-        return true;
+        return ! ($empresaId && VerificarSuscripcion::bloqueadaSuspendida($ruta) && self::bloqueante($funcionalidad, $empresaId));
     }
 }

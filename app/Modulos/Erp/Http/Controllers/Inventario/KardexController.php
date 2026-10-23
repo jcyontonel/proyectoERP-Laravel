@@ -72,6 +72,7 @@ class KardexController extends Controller
             'transferencia'    => 'Transferencias',
             'fraccionamiento'  => 'Fraccionamientos',
             'stock_inicial'    => 'Stock inicial',
+            'ajuste_producto'  => 'Ajuste en el producto',
             'anulacion_venta'  => 'Anulaciones de venta',
             'anulacion_compra' => 'Anulaciones de compra',
             'nota_credito'     => 'Notas de crédito (devoluciones)',

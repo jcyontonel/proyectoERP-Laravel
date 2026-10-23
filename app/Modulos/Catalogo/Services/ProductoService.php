@@ -4,6 +4,7 @@ namespace App\Modulos\Catalogo\Services;
 
 use App\Modulos\Erp\Services\InventarioService;
 use App\Modulos\Plataforma\Services\SuscripcionService;
+use App\Modulos\Plataforma\Support\Modulos;
 
 use App\Modulos\Erp\Models\AlmacenProducto;
 use App\Modulos\Nucleo\Models\Empresa;
@@ -40,7 +41,11 @@ class ProductoService
         });
     }
 
-    /** Actualiza datos, presentaciones y stock mínimo. El stock NO se edita aquí: se mueve con compras, ventas y ajustes. */
+    /**
+     * Actualiza datos, presentaciones y stock mínimo. Con "Control de inventario" (ERP) el stock NO se edita aquí: se
+     * mueve con compras, ventas y ajustes. Sin él (solo la suscripción WEB) se edita en el producto y la diferencia
+     * queda en el kardex como ajuste.
+     */
     public function actualizar(Producto $producto, array $d, int $userId, int $empresaId): Producto
     {
         $empresa = Empresa::findOrFail($empresaId);
@@ -138,6 +143,12 @@ class ProductoService
         $p->conversiones()->whereNotIn('id', $conservar)->delete();
     }
 
+    /** Sin "Control de inventario" (kardex y ajustes) el stock se edita directamente en el producto */
+    public static function stockDirecto(int $empresaId): bool
+    {
+        return ! Modulos::incluido('inventario', $empresaId);
+    }
+
     private function sincronizarAlmacenes(Producto $p, array $filas, int $userId, Empresa $empresa, bool $esAlta): void
     {
         foreach ($filas as $f) {
@@ -148,6 +159,21 @@ class ProductoService
             }
             $fila->stock_minimo = (float) ($f['stock_minimo'] ?? 0);
             $fila->save();
+
+            // Stock editado en el producto (sin control de inventario): la diferencia entra o sale por InventarioService
+            if (! $esAlta && isset($f['stock']) && $empresa->controlar_stock && ! $p->maneja_lotes && self::stockDirecto($empresa->id)) {
+                $diferencia = round((float) $f['stock'] - $this->inventario->stock($p->id, (int) $f['id']), 4);
+                if ($diferencia != 0) {
+                    $this->inventario->{$diferencia > 0 ? 'ingreso' : 'egreso'}($p, (int) $f['id'], abs($diferencia), [
+                        'empresa_id' => $p->empresa_id,
+                        'user_id'    => $userId,
+                        'ref'        => ['tipo' => 'ajuste_producto', 'id' => $p->id, 'serie' => null, 'numero' => null],
+                        'costo'      => $p->costo_unitario,
+                        'fecha'      => now(),
+                        'obs'        => 'Stock editado en el producto',
+                    ]);
+                }
+            }
 
             $inicial = round((float) ($f['stock_inicial'] ?? 0), 4);
 

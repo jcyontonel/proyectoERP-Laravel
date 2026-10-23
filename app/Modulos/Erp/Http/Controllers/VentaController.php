@@ -286,7 +286,7 @@ class VentaController extends Controller
             'controlarStock'     => (bool) $empresa->controlar_stock,
             // Turno de caja del vendedor: sin él solo se pueden guardar borradores (config/caja.php)
             'cajaAbierta'        => app(CajaService::class)->sesionAbierta($empresaId, (int) auth()->id()),
-            'exigeCaja'          => (bool) config('caja.exigir_para_vender'),
+            'exigeCaja'          => app(CajaService::class)->exigeTurno($empresaId),
         ];
     }
 }

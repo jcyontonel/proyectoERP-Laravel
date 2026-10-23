@@ -190,6 +190,8 @@ class ProductoController extends Controller
             'tiposUnidad' => TipoUnidad::orderBy('descripcion')->get(['id', 'codigo', 'descripcion']),
             'impuestos'   => Impuesto::activo()->orderBy('tipo_afectacion')->get(['id', 'codigo', 'nombre', 'porcentaje']),
             'almacenes'   => $empresa->almacenes()->activo()->orderByDesc('es_principal')->orderBy('nombre')->get(['id', 'nombre', 'es_principal']),
+            // Sin control de inventario (solo WEB) el stock se edita aquí
+            'stockDirecto' => ProductoService::stockDirecto($empresaId),
         ];
     }
 }

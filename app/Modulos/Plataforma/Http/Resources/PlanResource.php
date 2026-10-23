@@ -2,6 +2,7 @@
 
 namespace App\Modulos\Plataforma\Http\Resources;
 
+use App\Modulos\Plataforma\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,7 +26,8 @@ class PlanResource extends JsonResource
             'dias_prueba'          => $this->dias_prueba,
             'activo'               => $this->activo,
             'orden'                => $this->orden,
-            'modulos'              => $this->modulos ?? array_keys(config('suscripciones.modulos')),   // null = todos
+            'modulos'              => $this->modulos ?? Plan::opcionalesDe($this->codigoProducto()),   // opcionales elegidas (null = todas)
+            'funcionalidades'      => $this->funcionalidades(),   // base del sistema + opcionales
             'precios'              => $this->whenLoaded('precios', fn () => $this->precios->map(fn ($p) => [
                 'id' => $p->id, 'periodicidad' => $p->periodicidad, 'meses' => $p->meses, 'precio' => $p->precio, 'activo' => $p->activo,
             ])->values()),

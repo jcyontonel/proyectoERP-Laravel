@@ -38,8 +38,8 @@
 
                 @php $nombresModulos = collect($catalogoModulos)->pluck('nombre', 'clave'); @endphp
                 <div class="mt-4 border-t border-slate-100 pt-3">
-                    <p class="text-[11px] font-medium text-slate-500">{{ count($p['modulos'] ?? []) }} de {{ $nombresModulos->count() }} módulos</p>
-                    <p class="mt-1 text-xs text-slate-600">{{ collect($p['modulos'] ?? [])->map(fn ($m) => $nombresModulos[$m] ?? $m)->implode(' · ') ?: 'Solo la base (ventas, caja, productos, SUNAT).' }}</p>
+                    <p class="text-[11px] font-medium text-slate-500">{{ $p['producto_nombre'] ?? '' }} · {{ count($p['funcionalidades'] ?? []) }} funcionalidades</p>
+                    <p class="mt-1 text-xs text-slate-600">{{ collect($p['funcionalidades'] ?? [])->map(fn ($m) => $nombresModulos[$m] ?? $m)->implode(' · ') }}</p>
                 </div>
 
                 <div class="min-h-4 flex-1"></div>

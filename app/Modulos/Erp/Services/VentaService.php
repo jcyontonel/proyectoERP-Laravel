@@ -81,7 +81,7 @@ class VentaService
             $cobraAhora = ! $borrador && (! $credito || $adelanto > 0);
 
             $sesion = $borrador ? null : $this->cajas->sesionAbierta($empresaId, $userId);
-            if ($cobraAhora && ! $sesion && config('caja.exigir_para_vender')) {
+            if ($cobraAhora && ! $sesion && $this->cajas->exigeTurno($empresaId)) {
                 throw ValidationException::withMessages(['caja' => 'Abre tu turno de caja antes de registrar ventas (puedes guardar la venta como borrador).']);
             }
 

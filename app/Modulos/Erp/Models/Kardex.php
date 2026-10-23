@@ -42,6 +42,7 @@ class Kardex extends Model
                 'venta'             => 'Venta',
                 'compra'            => 'Compra',
                 'stock_inicial'     => 'Stock inicial',
+                'ajuste_producto'   => 'Ajuste en el producto',
                 'anulacion_venta'   => 'Anulación de venta',
                 'anulacion_compra'  => 'Anulación de compra',
                 'nota_credito'      => 'Nota de crédito',
@@ -88,6 +89,7 @@ class Kardex extends Model
             'transferencia'              => route('transferencias.show', $this->referencia_id),
             'fraccionamiento'            => route('fraccionamientos.show', $this->referencia_id),
             'stock_inicial'              => route('productos.show', $this->producto_id),
+            'ajuste_producto'            => route('productos.show', $this->producto_id),
             'nota_credito', 'anulacion_nota' => route('notas.show', $this->referencia_id),
             default                      => null,
         };

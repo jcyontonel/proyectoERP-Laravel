@@ -6,6 +6,8 @@ use App\Modulos\Plataforma\Http\Resources\EmpresaResource;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Plataforma\Models\PagoSuscripcion;
 use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Support\Modulos;
 use App\Modulos\Plataforma\Models\Suscripcion;
 use Spatie\Permission\Models\Role;
 
@@ -55,7 +57,13 @@ class ResumenController extends AdminController
             'roles'          => Role::query()->whereNull('empresa_id')->orderBy('name')->pluck('name'),
             'planes'         => Plan::query()->orderBy('orden')->get(['id', 'codigo', 'nombre', 'activo']),
             'limites'        => collect(Plan::LIMITES)->map(fn ($l) => ['columna' => $l[0], 'etiqueta' => $l[1]]),
-            'modulos'        => collect(config('suscripciones.modulos'))->map(fn ($m, $clave) => ['clave' => $clave, 'nombre' => $m[0], 'descripcion' => $m[1]])->values(),
+            // Funcionalidades (todas) y por sistema: las base (todos sus planes) y las opcionales (cada plan elige)
+            'modulos'        => collect(config('suscripciones.funcionalidades'))->map(fn ($m, $clave) => ['clave' => $clave, 'nombre' => $m[0], 'descripcion' => $m[1]])->values(),
+            'productos'      => ProductoPlataforma::query()->activo()->orderBy('orden')->get()->map(fn (ProductoPlataforma $p) => [
+                'codigo' => $p->codigo, 'nombre' => $p->nombre,
+                'base' => collect(Plan::baseDe($p->codigo))->map(fn ($k) => ['clave' => $k, 'nombre' => Modulos::nombre($k)])->values(),
+                'opcionales' => collect(Plan::opcionalesDe($p->codigo))->map(fn ($k) => ['clave' => $k, 'nombre' => Modulos::nombre($k), 'descripcion' => Modulos::catalogo()[$k][1] ?? ''])->values(),
+            ])->values(),
             'dias_gracia'    => (int) config('suscripciones.dias_gracia'),
             'dias_aviso'     => (int) config('suscripciones.dias_aviso'),
         ]]);

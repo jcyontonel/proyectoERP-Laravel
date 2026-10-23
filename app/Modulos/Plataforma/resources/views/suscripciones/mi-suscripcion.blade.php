@@ -152,8 +152,8 @@
                             </p>
                             {{-- Módulos: lo que incluye (✓) y lo que no (tachado) --}}
                             <ul class="mt-2 grid gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-2">
-                                @foreach (\App\Modulos\Plataforma\Support\Modulos::catalogo() as $clave => [$nombreModulo, , , $producto])
-                                    @continue($producto !== 'erp')
+                                @foreach (\App\Modulos\Plataforma\Models\Plan::todasDe($plan->codigoProducto()) as $clave)
+                                    @php $nombreModulo = \App\Modulos\Plataforma\Support\Modulos::nombre($clave); @endphp
                                     <li @class(['flex items-center gap-1', 'text-slate-700' => $plan->incluye($clave), 'text-slate-400 line-through' => ! $plan->incluye($clave)])>
                                         <x-icon :name="$plan->incluye($clave) ? 'check' : 'x'" :class="$plan->incluye($clave) ? 'size-3 text-emerald-600' : 'size-3'" />{{ $nombreModulo }}
                                     </li>

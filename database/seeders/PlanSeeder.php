@@ -23,7 +23,7 @@ class PlanSeeder extends Seeder
             'nombre' => 'Página web', 'descripcion' => 'La página de la empresa con sus productos: catálogo o tienda con carrito, pedidos y envíos.', 'orden' => 2, 'activo' => true,
         ]);
 
-        // Límite NULL = ilimitado. Módulos: claves de config suscripciones.modulos / modulos_web (lo demás es la base)
+        // Límite NULL = ilimitado. Módulos: funcionalidades OPCIONALES de cada sistema (config suscripciones.productos); las base van en todos
         $basico = ['notas', 'cuentas_cobrar', 'reportes_basicos'];
         $pro = [...$basico, 'cotizaciones', 'compras', 'cuentas_pagar', 'inventario', 'reportes_avanzados', 'roles'];
         $total = [...$pro, 'ordenes_compra', 'multialmacen', 'lotes', 'fraccionamientos', 'auditoria'];
@@ -39,10 +39,10 @@ class PlanSeeder extends Seeder
                 'max_comprobantes_mes' => null, 'max_productos' => null, 'max_usuarios' => 20, 'max_almacenes' => 10, 'max_empresas' => 5, 'dias_prueba' => 15, 'modulos' => $total,
                 'precios' => ['mensual' => 149, 'trimestral' => 419, 'anual' => 1490]],
             ['producto_id' => $web->id, 'codigo' => 'catalogo', 'nombre' => 'Catálogo', 'descripcion' => 'Tu carta o muestrario en internet: productos, precios y contacto por WhatsApp.', 'orden' => 4, 'activo' => true,
-                'max_empresas' => 1, 'dias_prueba' => 15, 'modulos' => ['web_catalogo'],
+                'max_comprobantes_mes' => 300, 'max_productos' => 300, 'max_usuarios' => 2, 'max_almacenes' => 1, 'max_empresas' => 1, 'dias_prueba' => 15, 'modulos' => [],
                 'precios' => ['mensual' => 29, 'trimestral' => 79, 'anual' => 290]],
             ['producto_id' => $web->id, 'codigo' => 'tienda', 'nombre' => 'Tienda', 'descripcion' => 'Tienda en línea: carrito, pedidos, pago con tarjeta y envíos por zona.', 'orden' => 5, 'activo' => true,
-                'max_empresas' => 1, 'dias_prueba' => 15, 'modulos' => ['web_catalogo', 'web_tienda'],
+                'max_comprobantes_mes' => 1000, 'max_productos' => 2000, 'max_usuarios' => 5, 'max_almacenes' => 1, 'max_empresas' => 1, 'dias_prueba' => 15, 'modulos' => ['web_tienda', 'reportes_basicos', 'notas'],
                 'precios' => ['mensual' => 69, 'trimestral' => 189, 'anual' => 690]],
         ];
 

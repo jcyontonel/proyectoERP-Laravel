@@ -112,7 +112,7 @@
 
             {{-- Inventario por almacén --}}
             <x-card title="Inventario por almacén" icon="warehouse" data-solo-producto :class="$esServicio ? 'hidden' : ''"
-                :subtitle="$editando ? 'Define el stock mínimo para recibir alertas. El stock se mueve con compras, ventas y ajustes.' : 'Stock mínimo para alertas y, si ya tienes mercadería, el stock inicial (queda registrado en el kardex).'">
+                :subtitle="$editando ? ($stockDirecto ? 'Actualiza aquí el stock de cada almacén y el mínimo para recibir alertas.' : 'Define el stock mínimo para recibir alertas. El stock se mueve con compras, ventas y ajustes.') : 'Stock mínimo para alertas y, si ya tienes mercadería, el stock inicial (queda registrado en el kardex).'">
                 @if ($almacenes->isEmpty())
                     <x-alert tone="warning">Tu empresa no tiene almacenes activos.</x-alert>
                 @else
@@ -134,7 +134,12 @@
                                             <span class="font-medium">{{ $a->nombre }}</span>
                                             @if ($a->es_principal)<x-badge tone="info" class="ml-1">Principal</x-badge>@endif
                                         </td>
-                                        @if ($editando)
+                                        @if ($editando && $stockDirecto && $empresa->controlar_stock && ! $producto->maneja_lotes)
+                                            <td class="px-3 py-2.5 text-right">
+                                                <input type="number" name="almacenes[{{ $i }}][stock]" step="0.0001" min="0" aria-label="Stock en {{ $a->nombre }}"
+                                                    value="{{ old("almacenes.$i.stock", (float) ($stocks[$a->id]->stock ?? 0)) }}" class="field ml-auto h-9 w-32 text-right">
+                                            </td>
+                                        @elseif ($editando)
                                             <td class="px-3 py-2.5 text-right text-slate-600">{{ \App\Modulos\Catalogo\Support\Unidades::cantidad($stocks[$a->id]->stock ?? 0) }}</td>
                                         @endif
                                         <td class="px-3 py-2.5">

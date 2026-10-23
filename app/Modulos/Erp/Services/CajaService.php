@@ -7,6 +7,7 @@ use App\Modulos\Erp\Models\CajaSesion;
 use App\Modulos\Erp\Models\MovimientoCaja;
 use App\Modulos\Erp\Models\Pago;
 use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Plataforma\Support\Modulos;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,6 +20,15 @@ use Illuminate\Validation\ValidationException;
  */
 class CajaService
 {
+    /**
+     * Vender o cobrar exige el turno de caja abierto (config caja.exigir_para_vender) solo si la empresa tiene la
+     * funcionalidad Caja: con solo la suscripción WEB se vende y cobra sin turno.
+     */
+    public function exigeTurno(int $empresaId): bool
+    {
+        return (bool) config('caja.exigir_para_vender') && Modulos::incluido('caja', $empresaId);
+    }
+
     public function sesionAbierta(int $empresaId, int $userId): ?CajaSesion
     {
         return CajaSesion::query()->deEmpresa($empresaId)->abiertas()->where('user_id', $userId)

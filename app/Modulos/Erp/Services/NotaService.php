@@ -321,7 +321,7 @@ class NotaService
     {
         $sesion = $this->cajas->sesionAbierta($nota->empresa_id, $user->id);
         if (! $sesion) {
-            if ($metodo === 'efectivo') {
+            if ($metodo === 'efectivo' && $this->cajas->exigeTurno($nota->empresa_id)) {
                 throw ValidationException::withMessages(['metodo' => 'Para ' . ($tipo === MovimientoCaja::EGRESO ? 'devolver' : 'cobrar') . ' en efectivo abre tu turno de caja (o elige otro método).']);
             }
 

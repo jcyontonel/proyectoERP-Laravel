@@ -14,6 +14,7 @@ use App\Modulos\Plataforma\Models\Suscripcion;
 use App\Modulos\Erp\Models\Venta;
 use App\Modulos\Plataforma\Services\ComprobanteSuscripcionService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -32,16 +33,58 @@ class SuscripcionService
 
     /* ═════════════════════════════ Consultas ═════════════════════════════ */
 
-    /** La suscripción vigente (no cancelada) que cubre a la empresa en ese producto */
+    /**
+     * Suscripciones vigentes (no canceladas) que cubren a la empresa: a lo más una por sistema (ERP, WEB…).
+     *
+     * @return Collection<int, Suscripcion>
+     */
+    public function vigentes(int $empresaId): Collection
+    {
+        return $this->memo["v.$empresaId"] ??= Suscripcion::query()->deEmpresa($empresaId)->vigentes()
+            ->with('plan.producto')->orderByDesc('id')->get()
+            ->unique(fn (Suscripcion $s) => $s->plan?->codigoProducto())->values();
+    }
+
+    /** La vigente de la empresa en ese sistema */
     public function vigente(int $empresaId, string $producto = ProductoPlataforma::ERP): ?Suscripcion
     {
-        $clave = "s.$empresaId.$producto";
-        if (! array_key_exists($clave, $this->memo)) {
-            $this->memo[$clave] = Suscripcion::query()->deEmpresa($empresaId)->delProducto($producto)->vigentes()
-                ->with('plan.producto')->latest('id')->first();
+        return $this->vigentes($empresaId)->first(fn (Suscripcion $s) => $s->plan?->codigoProducto() === $producto);
+    }
+
+    /**
+     * Funcionalidades de la empresa: la UNIÓN de lo que dan sus suscripciones vigentes (ERP + WEB funcionan juntos).
+     * El plan manda aunque la suscripción esté vencida o suspendida (además rige el modo solo lectura).
+     * Sin ninguna suscripción: todo el ERP si sin_plan_ilimitado (empresas anteriores a los planes); si no, nada.
+     *
+     * @return array<int, string>
+     */
+    public function funcionalidades(int $empresaId): array
+    {
+        return $this->memo["f.$empresaId"] ??= $this->vigentes($empresaId)->isEmpty()
+            ? (config('suscripciones.sin_plan_ilimitado') ? Plan::todasDe(ProductoPlataforma::ERP) : [])
+            : $this->vigentes($empresaId)->flatMap(fn (Suscripcion $s) => $s->plan->funcionalidades())->unique()->values()->all();
+    }
+
+    /** Suscripciones vigentes que dan esa funcionalidad (null = cualquiera: la ruta es del núcleo) */
+    public function otorgan(int $empresaId, ?string $funcionalidad): Collection
+    {
+        return $this->vigentes($empresaId)->filter(fn (Suscripcion $s) => ! $funcionalidad || $s->plan->incluye($funcionalidad))->values();
+    }
+
+    /**
+     * Funcionalidades del plan vigente en ESE sistema (lo usa la página web para saber si es Catálogo o Tienda).
+     * Sin suscripción en ese sistema: [] (o null = todo, para el ERP de una empresa sin ningún plan).
+     *
+     * @return array<int, string>|null
+     */
+    public function modulos(int $empresaId, string $producto = ProductoPlataforma::ERP): ?array
+    {
+        $s = $this->vigente($empresaId, $producto);
+        if (! $s) {
+            return $producto === ProductoPlataforma::ERP && $this->vigentes($empresaId)->isEmpty() && config('suscripciones.sin_plan_ilimitado') ? null : [];
         }
 
-        return $this->memo[$clave];
+        return $s->plan->funcionalidades();
     }
 
     /** Consumo actual: comprobantes del mes, productos, usuarios y almacenes */
@@ -57,34 +100,29 @@ class SuscripcionService
     }
 
     /**
-     * Resumen para el ERP y el proyecto admin: plan, estado, vencimiento y consumo de cada límite.
+     * Límite del recurso para la empresa: el mayor de sus planes vigentes (null = ilimitado). Los límites son por
+     * empresa; con ERP y WEB rige el más amplio de los dos.
+     */
+    public function limite(int $empresaId, string $recurso): ?int
+    {
+        $limites = $this->vigentes($empresaId)->map(fn (Suscripcion $s) => $s->plan->limite($recurso));
+
+        return $limites->isEmpty() || $limites->contains(null) ? null : (int) $limites->max();
+    }
+
+    /**
+     * Resumen para «Mi suscripción» y Plataforma: plan principal (ERP, o el que tenga), estado, vencimiento y consumo
+     * de cada límite (con los límites combinados de todos sus planes).
      *
      * @return array{plan: ?Plan, suscripcion: ?Suscripcion, estado: string, dias: ?int, limites: array}
      */
-    /**
-     * Módulos que incluye el plan de la empresa en el producto (null = todos). El plan manda aunque la suscripción
-     * esté vencida o suspendida (en ese caso además rige el modo solo lectura). Sin suscripción al ERP: todos, si
-     * sin_plan_ilimitado (empresas anteriores a los planes); los demás productos siempre exigen su suscripción.
-     *
-     * @return array<int, string>|null
-     */
-    public function modulos(int $empresaId, string $producto = ProductoPlataforma::ERP): ?array
-    {
-        $s = $this->vigente($empresaId, $producto);
-        if (! $s) {
-            return $producto === ProductoPlataforma::ERP && config('suscripciones.sin_plan_ilimitado') ? null : [];
-        }
-
-        return $s->plan?->modulos;
-    }
-
     public function resumen(int $empresaId): array
     {
-        $s = $this->vigente($empresaId);
+        $s = $this->vigente($empresaId) ?? $this->vigentes($empresaId)->first();
         $uso = $this->uso($empresaId);
         $limites = [];
         foreach (Plan::LIMITES as $recurso => [, $etiqueta]) {
-            $max = $s?->plan?->limite($recurso);
+            $max = $s ? $this->limite($empresaId, $recurso) : null;
             $limites[$recurso] = [
                 'etiqueta' => $etiqueta,
                 'usado'    => $uso[$recurso],
@@ -103,30 +141,32 @@ class SuscripcionService
     }
 
     /**
-     * Exige que la empresa pueda operar y que no supere el límite del recurso (ValidationException si no).
+     * Exige que la empresa pueda operar (al menos una suscripción al día) y que no supere el límite del recurso.
      * $recurso: comprobantes | productos | usuarios | almacenes
      */
     public function exigir(int $empresaId, string $recurso, int $cantidad = 1): void
     {
-        $s = $this->vigente($empresaId);
-        if (! $s) {
+        $vigentes = $this->vigentes($empresaId);
+        if ($vigentes->isEmpty()) {
             if (config('suscripciones.sin_plan_ilimitado')) {
                 return;
             }
             throw ValidationException::withMessages(['suscripcion' => 'La empresa no tiene un plan activo. Comunícate con soporte para activarlo.']);
         }
 
-        if (! $s->permiteOperar()) {
+        if ($vigentes->doesntContain(fn (Suscripcion $s) => $s->permiteOperar())) {
+            $s = $vigentes->first();
             throw ValidationException::withMessages(['suscripcion' => $s->estadoEfectivo() === Suscripcion::CANCELADA
                 ? 'La suscripción de la empresa fue cancelada. Puedes consultar tu información, pero no registrar nuevos documentos.'
                 : 'La suscripción está suspendida' . ($s->motivo_suspension ? " ({$s->motivo_suspension})" : ' por falta de pago')
                     . '. Puedes consultar tu información; para volver a emitir, regulariza el pago.']);
         }
 
-        $max = $s->plan->limite($recurso);
+        $max = $this->limite($empresaId, $recurso);
         if ($max !== null && $this->uso($empresaId)[$recurso] + $cantidad > $max) {
             $etiqueta = Plan::LIMITES[$recurso][1];
-            throw ValidationException::withMessages(['suscripcion' => "Llegaste al límite de tu plan {$s->plan->nombre}: {$max} {$etiqueta}. "
+            $planes = $vigentes->map(fn (Suscripcion $s) => $s->plan->nombre)->join(' y ');
+            throw ValidationException::withMessages(['suscripcion' => "Llegaste al límite de tu plan {$planes}: {$max} {$etiqueta}. "
                 . 'Para seguir, cambia a un plan superior.']);
         }
     }
@@ -418,7 +458,7 @@ class SuscripcionService
     private function olvidar(int $empresaId): void
     {
         foreach (array_keys($this->memo) as $clave) {
-            if (str_starts_with($clave, "s.$empresaId.") || $clave === "u.$empresaId") {
+            if (in_array($clave, ["v.$empresaId", "f.$empresaId", "u.$empresaId"], true)) {
                 unset($this->memo[$clave]);
             }
         }

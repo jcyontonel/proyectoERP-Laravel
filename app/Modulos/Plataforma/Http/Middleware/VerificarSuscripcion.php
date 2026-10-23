@@ -11,7 +11,8 @@ use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Módulos del plan: una ruta de un módulo que el plan no incluye no se puede abrir (config suscripciones.modulos).
+ * Funcionalidades: una ruta cuya funcionalidad no da ninguna suscripción vigente de la empresa no se puede abrir
+ * (config suscripciones.funcionalidades / productos; con ERP y WEB valen las de los dos).
  *
  * Suscripción suspendida o cancelada = modo solo lectura.
  *  - Se bloquea toda escritura (POST/PUT/PATCH/DELETE), los formularios de alta y edición (*.create, *.edit)
@@ -40,12 +41,11 @@ class VerificarSuscripcion
         $user = $request->user();
         $empresaId = $user ? EmpresaActual::id($user) : null;
 
-        // Módulo que el plan no incluye: no se entra ni por el menú ni por un enlace directo
+        // Funcionalidad que ningún plan incluye: no se entra ni por el menú ni por un enlace directo
         $modulo = $empresaId ? Modulos::deRuta($request->route()?->getName()) : null;
-        $producto = Modulos::producto($modulo);   // la suscripción que manda en esta ruta (ERP o Página web)
         if ($modulo && ! Modulos::incluido($modulo, $empresaId)) {
-            $plan = $this->suscripciones->vigente($empresaId, $producto)?->plan?->nombre;
-            $mensaje = '«' . Modulos::nombre($modulo) . '» no está incluido en tu plan' . ($plan ? " {$plan}" : '') . '. Mejora tu plan para usarlo.';
+            $planes = $this->suscripciones->vigentes($empresaId)->map(fn ($s) => $s->plan?->nombre)->filter()->join(' y ');
+            $mensaje = '«' . Modulos::nombre($modulo) . '» no está incluido en tu plan' . ($planes ? " {$planes}" : '') . '. Mejora tu plan para usarlo.';
 
             return $this->rechazar($request, $user, $mensaje);
         }
@@ -54,8 +54,9 @@ class VerificarSuscripcion
             return $next($request);
         }
 
-        $s = $this->suscripciones->vigente($empresaId, $producto);
-        if (! $s || $s->permiteOperar()) {
+        // Solo lectura si TODAS las suscripciones que dan esta funcionalidad están suspendidas o canceladas
+        $s = Modulos::bloqueante($modulo, $empresaId);
+        if (! $s) {
             return $next($request);
         }
 
