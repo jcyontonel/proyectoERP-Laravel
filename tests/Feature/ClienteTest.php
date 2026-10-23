@@ -24,7 +24,7 @@ class ClienteTest extends TestCase
         $this->empresa = $this->crearEmpresa();
     }
 
-    public function test_registrar_cliente_lo_vincula_a_la_empresa(): void
+    public function test_registrar_cliente_queda_en_la_empresa(): void
     {
         $this->actingAs($this->usuarioCon('Vendedor', $this->empresa))
             ->post(route('clientes.store'), $this->datos(['numero_documento' => '74821563']))
@@ -32,20 +32,26 @@ class ClienteTest extends TestCase
             ->assertSessionHas('status');
 
         $c = Cliente::where('numero_documento', '74821563')->firstOrFail();
-        $this->assertTrue($c->empresas()->whereKey($this->empresa->id)->exists());
+        $this->assertSame($this->empresa->id, $c->empresa_id);
     }
 
-    public function test_el_mismo_documento_en_otra_empresa_solo_se_vincula(): void
+    public function test_el_mismo_documento_en_otra_empresa_es_otro_cliente(): void
     {
         $otra = $this->crearEmpresa();
         $this->actingAs($this->usuarioCon('Vendedor', $otra))->post(route('clientes.store'), $this->datos(['numero_documento' => '42678910']));
 
-        $this->actingAs($this->usuarioCon('Vendedor', $this->empresa))
+        $vendedor = $this->usuarioCon('Vendedor', $this->empresa);
+        $this->actingAs($vendedor)
             ->post(route('clientes.store'), $this->datos(['numero_documento' => '42678910', 'nombre' => 'Otro nombre']))
-            ->assertSessionHas('status', fn ($m) => str_contains($m, 'vinculado'));
+            ->assertSessionHas('status');
 
-        $this->assertSame(1, Cliente::where('numero_documento', '42678910')->count());
-        $this->assertSame(2, Cliente::where('numero_documento', '42678910')->first()->empresas()->count());
+        $this->assertSame(2, Cliente::where('numero_documento', '42678910')->count());
+        $this->assertSame('Carlos', Cliente::where('empresa_id', $otra->id)->where('numero_documento', '42678910')->value('nombre'));
+
+        // En la misma empresa el documento no se repite
+        $this->actingAs($vendedor)
+            ->post(route('clientes.store'), $this->datos(['numero_documento' => '42678910']))
+            ->assertSessionHasErrors('numero_documento');
     }
 
     public function test_valida_el_dni_de_8_digitos(): void
@@ -63,7 +69,7 @@ class ClienteTest extends TestCase
 
         $this->actingAs($user)->get(route('clientes.index'))->assertOk()->assertSee('Valeria Mendoza')->assertDontSee('Cliente Ajeno');
         $this->actingAs($user)->get(route('clientes.show', $propio))->assertOk()->assertSee('Productos favoritos');
-        $this->actingAs($user)->get(route('clientes.show', $ajeno))->assertForbidden();
+        $this->actingAs($user)->get(route('clientes.show', $ajeno))->assertNotFound();
         $this->actingAs($user)->get(route('clientes.edit', $propio))->assertOk();
     }
 
@@ -85,7 +91,7 @@ class ClienteTest extends TestCase
         ]);
 
         $this->actingAs($admin)->delete(route('clientes.destroy', $c))->assertSessionHas('error');
-        $this->assertTrue($c->empresas()->whereKey($this->empresa->id)->exists());
+        $this->assertNotSoftDeleted($c);
     }
 
     private function datos(array $extra = []): array
@@ -101,9 +107,6 @@ class ClienteTest extends TestCase
 
     private function cliente(Empresa $empresa, string $nombre): Cliente
     {
-        $c = Cliente::factory()->create(['nombre' => $nombre, 'apellido' => null]);
-        $c->empresas()->attach($empresa->id);
-
-        return $c;
+        return Cliente::factory()->create(['empresa_id' => $empresa->id, 'nombre' => $nombre, 'apellido' => null]);
     }
 }

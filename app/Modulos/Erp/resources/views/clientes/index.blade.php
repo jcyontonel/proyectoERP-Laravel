@@ -23,7 +23,7 @@
 
     <section aria-label="Resumen de la cartera" class="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <x-stat-card title="Clientes" icon="users" :value="number_format($resumen['total'])">
-            <span>vinculados a tu empresa</span>
+            <span>registrados en tu empresa</span>
         </x-stat-card>
         <x-stat-card title="Activos" icon="check-circle" tone="emerald" :value="number_format($resumen['activos'])" :href="route('clientes.index', ['estado' => 'activos'])">
             <span>disponibles al vender</span>

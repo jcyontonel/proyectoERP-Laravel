@@ -74,10 +74,10 @@ class Empresa extends Model
         return $this->hasMany(Compra::class);
     }
 
-    /** Clientes de la empresa (tabla pivote cliente_empresa) */
-    public function clientes(): BelongsToMany
+    /** Clientes propios de la empresa */
+    public function clientes(): HasMany
     {
-        return $this->belongsToMany(Cliente::class, 'cliente_empresa')->withTimestamps();
+        return $this->hasMany(Cliente::class);
     }
 
     public function suscripciones(): HasMany

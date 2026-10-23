@@ -222,7 +222,7 @@ class VentaController extends Controller
             ->orderByDesc('es_principal')->orderBy('nombre')
             ->get(['id', 'nombre', 'es_principal']);
 
-        // Clientes de la empresa (cliente_empresa) con su tipo de documento
+        // Clientes de la empresa con su tipo de documento
         $clientes = $empresa->clientes()
             ->where('clientes.activo', true)
             ->with('tipoDocumento:id,codigo,descripcion')

@@ -19,7 +19,7 @@ class CotizacionRequest extends FormRequest
         $empresa = EmpresaActual::id($this->user());
 
         return [
-            'cliente_id'    => ['nullable', Rule::exists('cliente_empresa', 'cliente_id')->where('empresa_id', $empresa)],
+            'cliente_id'    => ['nullable', Rule::exists('clientes', 'id')->where('empresa_id', $empresa)],
             'fecha_emision' => ['required', 'date', 'before_or_equal:today'],
             'vence_el'      => ['nullable', 'date', 'after_or_equal:fecha_emision'],
             'descuento'     => ['nullable', 'numeric', 'between:0,100'],

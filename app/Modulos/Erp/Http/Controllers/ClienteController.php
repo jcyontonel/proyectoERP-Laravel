@@ -60,17 +60,13 @@ class ClienteController extends Controller
     /** Alta normal (redirige) o alta rápida desde Nueva venta (responde JSON) */
     public function store(ClienteRequest $request, ClienteService $clientes)
     {
-        [$cliente, $vinculado] = $clientes->registrar($request->validated(), $this->empresaId($request));
+        $cliente = $clientes->registrar($request->validated(), $this->empresaId($request));
 
         if ($request->expectsJson()) {
-            return response()->json($this->payload($cliente, $vinculado), 201);
+            return response()->json($this->payload($cliente), 201);
         }
 
-        $mensaje = $vinculado
-            ? "Ese documento ya existía en el sistema: «{$cliente->nombre_completo}» fue vinculado a tu empresa con sus datos actuales."
-            : "Cliente «{$cliente->nombre_completo}» creado.";
-
-        return redirect()->route('clientes.show', $cliente)->with('status', $mensaje);
+        return redirect()->route('clientes.show', $cliente)->with('status', "Cliente «{$cliente->nombre_completo}» creado.");
     }
 
     /** Ficha: datos, resumen de compras, saldo al crédito, productos favoritos y últimas ventas */
@@ -79,7 +75,7 @@ class ClienteController extends Controller
         Gate::authorize('view', $cliente);
         $empresaId = $this->empresaId($request);
 
-        $cliente->load('tipoDocumento')->loadCount('empresas');
+        $cliente->load('tipoDocumento');
 
         $completadas = Venta::query()->deEmpresa($empresaId)->completadas()->where('cliente_id', $cliente->id);
 
@@ -117,8 +113,7 @@ class ClienteController extends Controller
     }
 
     /**
-     * Nueva venta: busca un DNI/RUC en la empresa, en el sistema o en RENIEC/SUNAT.
-     * Si no es cliente de la empresa lo vincula o lo registra automáticamente (JSON).
+     * Nueva venta: busca un DNI/RUC en la empresa y, si no es cliente suyo, lo registra con RENIEC/SUNAT (JSON).
      */
     public function documento(Request $request, string $numero, ClienteService $clientes)
     {
@@ -131,12 +126,11 @@ class ClienteController extends Controller
 
         [$cliente, $origen] = $clientes->obtenerPorDocumento($numero, $empresaId);
 
-        return response()->json($this->payload($cliente, $origen === ClienteService::ORIGEN_SISTEMA) + [
+        return response()->json($this->payload($cliente) + [
             'origen'    => $origen,
             'direccion' => $cliente->direccion,
             'mensaje'   => match ($origen) {
                 ClienteService::ORIGEN_EXTERNO => 'Cliente registrado automáticamente con los datos de ' . (strlen($numero) === 8 ? 'RENIEC.' : 'SUNAT.'),
-                ClienteService::ORIGEN_SISTEMA => 'El cliente ya existía en el sistema y se vinculó a tu empresa.',
                 default                        => null,
             },
         ], $origen === ClienteService::ORIGEN_EMPRESA ? 200 : 201);
@@ -145,9 +139,7 @@ class ClienteController extends Controller
     /** Formulario de cliente: datos de RENIEC/SUNAT para autocompletar (no registra nada) */
     public function consulta(Request $request, string $numero, ClienteService $clientes)
     {
-        $this->empresaId($request);
-
-        return response()->json($clientes->consultarDocumento($numero));
+        return response()->json($clientes->consultarDocumento($numero, $this->empresaId($request)));
     }
 
     public function edit(Request $request, Cliente $cliente)
@@ -155,7 +147,7 @@ class ClienteController extends Controller
         Gate::authorize('update', $cliente);
 
         return view('clientes.form', [
-            'cliente'        => $cliente->loadCount('empresas'),
+            'cliente'        => $cliente,
             'tiposDocumento' => $this->tiposDocumento(),
         ]);
     }
@@ -172,12 +164,12 @@ class ClienteController extends Controller
         Gate::authorize('delete', $cliente);
 
         try {
-            $clientes->eliminar($cliente, $this->empresaId($request));
+            $clientes->eliminar($cliente);
         } catch (ValidationException $e) {
             return back()->with('error', collect($e->errors())->flatten()->first());
         }
 
-        return redirect()->route('clientes.index')->with('status', "Cliente «{$cliente->nombre_completo}» eliminado de tu empresa.");
+        return redirect()->route('clientes.index')->with('status', "Cliente «{$cliente->nombre_completo}» eliminado.");
     }
 
     /* ───────────────────────── Privado ───────────────────────── */
@@ -202,8 +194,8 @@ class ClienteController extends Controller
         ];
     }
 
-    /** Forma que espera el buscador de Nueva venta. Si el cliente ya existía en otra empresa no se exponen sus datos de contacto. */
-    private function payload(Cliente $c, bool $vinculado): array
+    /** Forma que espera el buscador de Nueva venta */
+    private function payload(Cliente $c): array
     {
         $c->loadMissing('tipoDocumento');
 
@@ -213,9 +205,8 @@ class ClienteController extends Controller
             'doc'       => (string) $c->numero_documento,
             'tipo_doc'  => $c->tipo_doc_etiqueta,
             'es_ruc'    => $c->es_ruc,
-            'email'     => $vinculado ? null : $c->correo,
-            'telefono'  => $vinculado ? null : $c->telefono,
-            'vinculado' => $vinculado,
+            'email'     => $c->correo,
+            'telefono'  => $c->telefono,
         ];
     }
 }

@@ -167,14 +167,12 @@ trait SiembraNegocio
     protected function clientes(array $clientes): void
     {
         $tipos = TipoDocumento::pluck('id', 'codigo');
-        $ids = [];
         foreach ($clientes as [$tipo, $numero, $nombre, $apellido, $direccion, $correo, $telefono]) {
-            $ids[] = Cliente::firstOrCreate(['numero_documento' => $numero], [
-                'tipo_documento_id' => $tipos[$tipo], 'nombre' => $nombre, 'apellido' => $apellido, 'direccion' => $direccion,
+            Cliente::firstOrCreate(['empresa_id' => $this->empresa->id, 'tipo_documento_id' => $tipos[$tipo], 'numero_documento' => $numero], [
+                'nombre' => $nombre, 'apellido' => $apellido, 'direccion' => $direccion,
                 'correo' => $correo, 'telefono' => $telefono, 'activo' => true,
-            ])->id;
+            ]);
         }
-        $this->empresa->clientes()->syncWithoutDetaching($ids);
     }
 
     /** Proveedores: [RUC, razón social, nombre comercial, contacto, teléfono, correo, dirección, distrito] */

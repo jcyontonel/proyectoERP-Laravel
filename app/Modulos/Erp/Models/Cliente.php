@@ -7,25 +7,25 @@ use App\Modulos\Nucleo\Models\TipoDocumento;
 
 use App\Modulos\Nucleo\Models\Concerns\Auditable;
 use App\Modulos\Nucleo\Models\Concerns\EsActivable;
+use App\Modulos\Nucleo\Models\Concerns\EsDeEmpresa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Cliente GLOBAL (tipo + número de documento únicos en toda la base).
- * Cada empresa lo ve solo si está vinculado en cliente_empresa.
+ * Cliente de UNA empresa (tipo + número de documento únicos dentro de la empresa).
+ * Otra empresa con el mismo DNI/RUC tiene su propio registro: datos de contacto e historial no se comparten.
  */
 class Cliente extends Model
 {
-    use Auditable, HasFactory, EsActivable, SoftDeletes;
+    use Auditable, HasFactory, EsActivable, EsDeEmpresa, SoftDeletes;
 
     protected $fillable = [
-        'tipo_documento_id', 'numero_documento', 'nombre', 'apellido', 'correo', 'telefono', 'direccion', 'activo',
+        'empresa_id', 'tipo_documento_id', 'numero_documento', 'nombre', 'apellido', 'correo', 'telefono', 'direccion', 'activo',
     ];
 
     protected function casts(): array
@@ -40,9 +40,9 @@ class Cliente extends Model
         return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');
     }
 
-    public function empresas(): BelongsToMany
+    public function empresa(): BelongsTo
     {
-        return $this->belongsToMany(Empresa::class, 'cliente_empresa')->withTimestamps();
+        return $this->belongsTo(Empresa::class);
     }
 
     public function ventas(): HasMany
@@ -51,12 +51,6 @@ class Cliente extends Model
     }
 
     /* ───────── Scopes ───────── */
-
-    /** Clientes vinculados a una empresa (tabla cliente_empresa) */
-    public function scopeDeEmpresa(Builder $query, int $empresaId): void
-    {
-        $query->whereHas('empresas', fn ($q) => $q->where('empresas.id', $empresaId));
-    }
 
     public function scopeBuscar(Builder $query, ?string $texto): void
     {

@@ -1,6 +1,6 @@
 {{--
     Crear y editar cliente (ClienteController@create / @edit)
-      $cliente         Cliente (nuevo o existente con empresas_count)
+      $cliente         Cliente (nuevo o existente)
       $tiposDocumento  catálogo SUNAT 06 (codigo, abreviatura, descripcion)
 --}}
 @extends('layouts.app')
@@ -8,7 +8,6 @@
 @php
     $editando = $cliente->exists;
     $titulo   = $editando ? 'Editar cliente' : 'Nuevo cliente';
-    $compartido = $editando && ($cliente->empresas_count ?? 1) > 1;
 @endphp
 
 @section('title', $titulo)
@@ -16,13 +15,10 @@
 @section('content')
     <x-page-header :title="$titulo"
         :migas="array_filter(['Clientes' => route('clientes.index'), ($editando ? $cliente->nombre_completo : '') => $editando ? route('clientes.show', $cliente) : null, $titulo => null], fn ($v, $k) => $k !== '', ARRAY_FILTER_USE_BOTH)"
-        subtitle="El documento identifica al cliente en todo el sistema: si ya existe en otra empresa, solo se vincula a la tuya." />
+        subtitle="El documento identifica al cliente dentro de tu empresa. Sus datos solo los ve tu empresa." />
 
     <x-flash />
 
-    @if ($compartido)
-        <x-alert tone="info" class="mt-4">Este cliente también está vinculado a otras empresas: los cambios en sus datos se verán en todas.</x-alert>
-    @endif
 
     <form method="POST" action="{{ $editando ? route('clientes.update', $cliente) : route('clientes.store') }}" data-form-cliente
         class="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -136,8 +132,8 @@
                     if (campo('apellido')) campo('apellido').value = data.apellido ?? '';
                     if (data.direccion) campo('direccion').value = data.direccion;
                     const extra = [data.estado, data.condicion].filter(Boolean).join(' · ');
-                    mostrar('ok', data.origen === 'sistema'
-                        ? 'Este documento ya está registrado en el sistema: al guardar se vinculará a tu empresa.'
+                    mostrar('ok', data.origen === 'empresa'
+                        ? 'Este documento ya es cliente de tu empresa.'
                         : `Datos obtenidos de ${num.value.length === 8 ? 'RENIEC' : 'SUNAT'}${extra ? ' · ' + extra : ''}.`);
                 } catch {
                     mostrar('error', 'Sin conexión con el servidor.');

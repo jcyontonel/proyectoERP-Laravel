@@ -38,7 +38,7 @@ class ClienteDocumentoTest extends TestCase
 
         $c = Cliente::where('numero_documento', '44556677')->firstOrFail();
         $this->assertSame('Mendoza Rios', $c->apellido);
-        $this->assertTrue($c->empresas()->whereKey($this->empresa->id)->exists());
+        $this->assertSame($this->empresa->id, $c->empresa_id);
 
         // El token va en la cabecera Authorization (nunca al navegador)
         Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer token-de-prueba') && $r['dni'] === '44556677');
@@ -57,19 +57,38 @@ class ClienteDocumentoTest extends TestCase
             ->assertJson(['nombre' => 'VETERINARIA PATITAS S.A.C.', 'es_ruc' => true, 'direccion' => 'AV. LIMA 123 - BARRANCA']);
     }
 
-    public function test_cliente_de_otra_empresa_solo_se_vincula_sin_consultar_la_api(): void
+    public function test_cliente_de_otra_empresa_no_se_comparte_se_registra_con_reniec(): void
     {
-        Http::fake();
-        $c = Cliente::factory()->create(['tipo_documento_id' => TipoDocumento::where('codigo', '1')->value('id'), 'numero_documento' => '70345621']);
-        $c->empresas()->attach($this->crearEmpresa()->id);
+        Http::fake(['api.apiperu.dev/dni' => Http::response(['success' => true, 'data' => [
+            'nombres' => 'ANA', 'apellido_paterno' => 'TORRES', 'apellido_materno' => 'GIL',
+        ]])]);
+        $ajeno = Cliente::factory()->create([
+            'empresa_id' => $this->crearEmpresa()->id, 'tipo_documento_id' => TipoDocumento::where('codigo', '1')->value('id'),
+            'numero_documento' => '70345621', 'correo' => 'privado@otra.pe', 'telefono' => '999111222',
+        ]);
 
         $this->actingAs($this->usuarioCon('Vendedor', $this->empresa))
             ->getJson(route('clientes.documento', '70345621'))
             ->assertCreated()
-            ->assertJson(['id' => $c->id, 'origen' => 'sistema']);
+            ->assertJson(['nombre' => 'Ana Torres Gil', 'origen' => 'externo', 'email' => null, 'telefono' => null])
+            ->assertJsonMissing(['id' => $ajeno->id]);
+
+        Http::assertSentCount(1);
+        $this->assertSame(2, Cliente::where('numero_documento', '70345621')->count());
+        $this->assertSame('privado@otra.pe', $ajeno->fresh()->correo);
+    }
+
+    public function test_cliente_propio_se_devuelve_sin_consultar_la_api(): void
+    {
+        Http::fake();
+        $c = Cliente::factory()->create(['empresa_id' => $this->empresa->id, 'tipo_documento_id' => TipoDocumento::where('codigo', '1')->value('id'), 'numero_documento' => '70345621']);
+
+        $this->actingAs($this->usuarioCon('Vendedor', $this->empresa))
+            ->getJson(route('clientes.documento', '70345621'))
+            ->assertOk()
+            ->assertJson(['id' => $c->id, 'origen' => 'empresa']);
 
         Http::assertNothingSent();
-        $this->assertSame(2, $c->empresas()->count());
     }
 
     public function test_documento_no_encontrado_responde_422(): void

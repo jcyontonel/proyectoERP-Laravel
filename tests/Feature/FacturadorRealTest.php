@@ -55,10 +55,10 @@ class FacturadorRealTest extends TestCase
 
         // Factura a un RUC
         $cliente = Cliente::factory()->create([
+            'empresa_id' => $this->empresa->id,
             'tipo_documento_id' => TipoDocumento::where('codigo', '6')->value('id'), 'numero_documento' => '20100070970',
             'nombre' => 'SUPERMERCADOS PERUANOS SOCIEDAD ANONIMA', 'apellido' => null, 'direccion' => 'CAL. MORELLI 181',
         ]);
-        $cliente->empresas()->attach($this->empresa->id);
         $factura = $this->vender('F001', ['cliente_id' => $cliente->id]);
         $this->assertSame('aceptado', $factura->sunat?->estado, (string) $factura->sunat?->mensaje_respuesta);
 

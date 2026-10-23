@@ -29,7 +29,7 @@ class StoreVentaRequest extends FormRequest
             'accion'         => ['required', 'in:registrar,borrador'],
             'correlativo_id' => ['required', Rule::exists(Correlativo::class, 'id')->where($deLaEmpresa())],
             'almacen_id'     => ['required', Rule::exists(Almacen::class, 'id')->where($deLaEmpresa())],
-            'cliente_id'     => ['nullable', Rule::exists('cliente_empresa', 'cliente_id')->where('empresa_id', $empresa)],
+            'cliente_id'     => ['nullable', Rule::exists('clientes', 'id')->where('empresa_id', $empresa)],
             'fecha_emision'  => ['required', 'date'],
             'metodo_pago'    => ['required', Rule::in(array_keys(config('ventas.metodos_pago')))],
             // Crédito: queda en Cuentas por cobrar (exige cliente; el adelanto es opcional)

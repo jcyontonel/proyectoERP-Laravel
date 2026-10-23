@@ -56,6 +56,10 @@ class FinanzasTest extends TestCase
         $this->actingAs($admin)->post(route('ventas.store'), $this->venta($producto, 1, null))->assertSessionHasErrors('cliente_id');
         $this->actingAs($admin)->post(route('ventas.store'), $this->venta($producto, 1, $this->cliente(), ['adelanto' => 500]))->assertSessionHasErrors('adelanto');
 
+        // Un cliente de otra empresa no existe para esta
+        $ajeno = Cliente::factory()->create(['empresa_id' => $this->crearEmpresa()->id]);
+        $this->actingAs($admin)->post(route('ventas.store'), $this->venta($producto, 1, $ajeno))->assertSessionHasErrors('cliente_id');
+
         $this->assertSame(0, Venta::count());
     }
 
@@ -162,8 +166,7 @@ class FinanzasTest extends TestCase
 
     private function cliente(): Cliente
     {
-        $c = Cliente::factory()->create();
-        $c->empresas()->attach($this->empresa->id);
+        $c = Cliente::factory()->create(['empresa_id' => $this->empresa->id]);
 
         return $c;
     }

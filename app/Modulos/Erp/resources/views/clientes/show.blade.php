@@ -1,6 +1,6 @@
 {{--
     Ficha del cliente (ClienteController@show)
-      $cliente (tipoDocumento, empresas_count)
+      $cliente (tipoDocumento)
       $resumen   ventas, vendido, ticket, ultima, primera, saldo (crédito pendiente)
       $favoritos productos más comprados (producto_id, descripcion, cantidad, importe, veces)
       $ventas    últimas 10 ventas en la empresa
@@ -91,9 +91,6 @@
                     <li class="flex items-start gap-3"><x-icon name="mail" class="mt-0.5 text-slate-400" /> <span class="break-all">{{ $cliente->correo ?: 'Sin correo' }}</span></li>
                     <li class="flex items-start gap-3"><x-icon name="map-pin" class="mt-0.5 text-slate-400" /> <span>{{ $cliente->direccion ?: 'Sin dirección' }}</span></li>
                 </ul>
-                @if ($cliente->empresas_count > 1)
-                    <p class="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-500">También es cliente de otras {{ $cliente->empresas_count - 1 }} {{ $cliente->empresas_count - 1 === 1 ? 'empresa' : 'empresas' }} del sistema.</p>
-                @endif
             </x-card>
 
             <x-card title="Productos favoritos" icon="sparkles" subtitle="Lo que más compra (por importe)">

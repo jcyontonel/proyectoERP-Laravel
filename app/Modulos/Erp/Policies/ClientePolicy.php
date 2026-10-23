@@ -7,7 +7,7 @@ use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Nucleo\Support\EmpresaActual;
 
 /**
- * El cliente es global: solo lo ve la empresa que lo tiene vinculado (cliente_empresa).
+ * El cliente es de una empresa: solo lo ve esa empresa.
  * Registrar, editar y quitar exige "gestionar-clientes". El Administrador pasa por Gate::before.
  */
 class ClientePolicy
@@ -19,7 +19,7 @@ class ClientePolicy
 
     public function view(User $user, Cliente $cliente): bool
     {
-        return $this->vinculado($user, $cliente);
+        return $this->esDeSuEmpresa($user, $cliente);
     }
 
     public function create(User $user): bool
@@ -29,7 +29,7 @@ class ClientePolicy
 
     public function update(User $user, Cliente $cliente): bool
     {
-        return $this->vinculado($user, $cliente) && $user->can('gestionar-clientes');
+        return $this->esDeSuEmpresa($user, $cliente) && $user->can('gestionar-clientes');
     }
 
     public function delete(User $user, Cliente $cliente): bool
@@ -37,10 +37,10 @@ class ClientePolicy
         return $this->update($user, $cliente);
     }
 
-    private function vinculado(User $user, Cliente $cliente): bool
+    private function esDeSuEmpresa(User $user, Cliente $cliente): bool
     {
         $empresaId = EmpresaActual::id($user);
 
-        return $empresaId !== null && $cliente->empresas()->where('empresas.id', $empresaId)->exists();
+        return $empresaId !== null && (int) $cliente->empresa_id === $empresaId;
     }
 }

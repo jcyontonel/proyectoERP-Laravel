@@ -73,8 +73,7 @@ class NotaTest extends TestCase
 
     public function test_anulacion_total_en_venta_al_credito_reduce_la_deuda_y_se_revierte(): void
     {
-        $cliente = Cliente::factory()->create();
-        $cliente->empresas()->attach($this->empresa->id);
+        $cliente = Cliente::factory()->create(['empresa_id' => $this->empresa->id]);
         [$venta, $producto] = $this->vender(2, 25, ['condicion_pago' => 'credito', 'cliente_id' => $cliente->id, 'fecha_vencimiento' => now()->addDays(30)->toDateString()]);
         $this->assertEquals(50.0, $venta->saldo());
 
