@@ -2,60 +2,86 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Modulos\Nucleo\Models\Permission;
+use App\Modulos\Nucleo\Models\Role;
 use Illuminate\Database\Seeder;
-use App\Models\Role;
-use App\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesYPermisosSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Roles GLOBALES (empresa_id NULL en roles): existen una sola vez y se asignan
+     * a cada usuario por empresa (model_has_roles.empresa_id).
      */
     public function run(): void
     {
-        // Limpiar tablas
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->forgetCachedPermissions();
+        $registrar->setPermissionsTeamId(null);
+
         Permission::query()->delete();
         Role::query()->delete();
 
-        // Crear permisos
         $permisos = [
+            // Ventas
             'ver_ventas',
             'emitir-ventas',
             'editar_ventas',
             'eliminar_ventas',
+            'emitir-notas',
+            // Compras
+            'gestionar-compras',
+            'gestionar-proveedores',
+            // Inventario
+            'gestionar-productos',
+            'gestionar-inventario',
+            'aprobar-ajustes',
+            // Caja y tesorería
+            'gestionar-caja',
+            'registrar-pagos',
+            // Maestros y configuración
+            'gestionar-clientes',
             'ver_usuarios',
             'crear_usuarios',
-            'gestionar-clientes',
-            'gestionar-productos',
             'gestionar-usuarios',
             'gestionar-empresas',
             'configurar-correlativos',
             'configurar-impuestos',
+            // Reportes
+            'ver-reportes',
         ];
 
         foreach ($permisos as $permiso) {
             Permission::create(['name' => $permiso]);
         }
 
-        // Crear roles
-        $admin = Role::create(['name' => 'Administrador']);
+        $admin    = Role::create(['name' => 'Administrador']);
         $vendedor = Role::create(['name' => 'Vendedor']);
+        $almacen  = Role::create(['name' => 'Almacenero']);
         $contador = Role::create(['name' => 'Contador']);
 
-        // Asignar permisos por rol
         $admin->givePermissionTo(Permission::all());
         $vendedor->givePermissionTo([
             'ver_ventas',
-            'gestionar-clientes', 
-            'emitir-ventas'
+            'emitir-ventas',
+            'gestionar-clientes',
+            'gestionar-caja',
+            'registrar-pagos',
+        ]);
+        $almacen->givePermissionTo([
+            'gestionar-productos',
+            'gestionar-inventario',
+            'gestionar-compras',
+            'gestionar-proveedores',
         ]);
         $contador->givePermissionTo([
-            'ver_ventas', 
-            'emitir-ventas', 
-            'configurar-correlativos', 
-            'configurar-impuestos'
+            'ver_ventas',
+            'emitir-ventas',
+            'emitir-notas',
+            'registrar-pagos',
+            'configurar-correlativos',
+            'configurar-impuestos',
+            'ver-reportes',
         ]);
     }
 }

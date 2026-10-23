@@ -2,36 +2,36 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use App\Models\User;
-use App\Models\Empresa;
-use App\Models\Role;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\Role;
+use App\Modulos\Nucleo\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Faker\Factory as Faker;
+use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 
+/** Un usuario por rol en cada empresa (excepto RicoPet): vendedor3@erp.com / password */
 class UsuarioSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $faker = Faker::create();
-        $empresas = Empresa::all();
+        $registrar = app(PermissionRegistrar::class);
         $roles = Role::all();
 
-        foreach ($empresas as $empresa) {
+        foreach (Empresa::where('ruc', '!=', '20000000001')->get() as $empresa) {
+            $registrar->setPermissionsTeamId($empresa->id);
+
             foreach ($roles as $rol) {
-                $user = User::create([
-                    'name' => $rol->nombre . ' ' . $faker->firstName,
-                    'email' => strtolower($rol->name) . $empresa->id . '@erp.com',
-                    'password' => Hash::make('password'),
-                ]);
+                $user = User::firstOrCreate(
+                    ['email' => Str::lower($rol->name) . $empresa->id . '@erp.com'],
+                    ['name' => $rol->name . ' ' . fake()->firstName(), 'password' => Hash::make('password')]
+                );
+
+                $user->empresas()->syncWithoutDetaching([$empresa->id]);
+                $user->assignRole($rol);
             }
-            $user->assignRole($rol->name);
-            // Relación muchos a muchos con empresa
-            $user->empresas()->attach($empresa->id);
         }
+
+        $registrar->setPermissionsTeamId(null);
     }
 }

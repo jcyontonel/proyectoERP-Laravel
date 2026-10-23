@@ -2,35 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Services\EmpresaService;
 use Illuminate\Database\Seeder;
-use App\Models\Empresa;
-use App\Models\Correlativo;
 
+/** Series iniciales de cada empresa (la lista está en EmpresaService::SERIES) */
 class CorrelativoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $empresas = Empresa::all();
-
-        foreach ($empresas as $empresa) {
-            Correlativo::insert([
-                [
-                    'empresa_id' => $empresa->id,
-                    'tipo' => 'factura',
-                    'serie' => 'F001',
-                    'numero' => 0
-                ],
-                [
-                    'empresa_id' => $empresa->id,
-                    'tipo' => 'boleta',
-                    'serie' => 'B001',
-                    'numero' => 0
-                ],
-            ]);
+        foreach (Empresa::all() as $empresa) {
+            app(EmpresaService::class)->series($empresa);
         }
     }
 }

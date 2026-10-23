@@ -8,11 +8,13 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-vue": "^6.0.10",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
         "tailwindcss": "^4.1.13",
-        "vite": "^7.0.4"
+        "vite": "^7.0.4",
+        "vue": "^3.5.44"
     },
     "dependencies": {
         "flowbite": "^3.1.2"

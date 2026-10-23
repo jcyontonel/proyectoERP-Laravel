@@ -2,25 +2,28 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use App\Models\TipoDocumento;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Seeder;
 
 class TipoDocumentoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $documentos = [
-            ['codigo' => 'DNI', 'descripcion' => 'Documento Nacional de Identidad'],
-            ['codigo' => 'RUC', 'descripcion' => 'Registro Único de Contribuyentes'],
-            ['codigo' => 'PAS', 'descripcion' => 'Pasaporte'],
+        // Catálogo SUNAT 06 (es lo que validan ClienteRequest y los modelos Cliente/Proveedor)
+        $tipos = [
+            ['codigo' => '0', 'abreviatura' => 'S/D', 'descripcion' => 'Sin documento'],
+            ['codigo' => '1', 'abreviatura' => 'DNI', 'descripcion' => 'Documento Nacional de Identidad'],
+            ['codigo' => '4', 'abreviatura' => 'CE', 'descripcion' => 'Carné de Extranjería'],
+            ['codigo' => '6', 'abreviatura' => 'RUC', 'descripcion' => 'Registro Único de Contribuyentes'],
+            ['codigo' => '7', 'abreviatura' => 'PAS', 'descripcion' => 'Pasaporte'],
+            ['codigo' => 'A', 'abreviatura' => 'CD', 'descripcion' => 'Cédula Diplomática de Identidad'],
         ];
 
-        foreach ($documentos as $doc) {
-            TipoDocumento::create($doc);
+        foreach ($tipos as $tipo) {
+            TipoDocumento::updateOrCreate(
+                ['codigo' => $tipo['codigo']],
+                ['abreviatura' => $tipo['abreviatura'], 'descripcion' => $tipo['descripcion']]
+            );
         }
     }
 }

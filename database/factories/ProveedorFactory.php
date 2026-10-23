@@ -2,41 +2,40 @@
 
 namespace Database\Factories;
 
-use App\Models\Empresa;
-use App\Models\TipoDocumento;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Proveedor;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Proveedor>
+ * @extends Factory<Proveedor>
  */
 class ProveedorFactory extends Factory
 {
+    protected $model = Proveedor::class;
+
     public function definition(): array
     {
-        $empresa = Empresa::inRandomOrder()->first() ?? Empresa::factory()->create();
-        $tipoDocumento = TipoDocumento::inRandomOrder()->first() ?? TipoDocumento::factory()->create([
-            'codigo' => '6',
-            'descripcion' => 'RUC',
-        ]);
-
         return [
-            'empresa_id' => $empresa->id,
-            'tipo_documento_id' => $tipoDocumento->id,
-            'numero_documento' => $this->faker->unique()->numerify('10#########'),
-            'razon_social' => strtoupper($this->faker->company()),
-            'nombre_comercial' => $this->faker->companySuffix(),
-            'contacto_nombre' => $this->faker->name(),
-            'contacto_cargo' => $this->faker->randomElement(['Gerente', 'Administrador', 'Vendedor']),
-            'telefono' => $this->faker->numerify('01########'),
-            'celular' => $this->faker->numerify('9########'),
-            'email' => $this->faker->unique()->safeEmail(),
+            'empresa_id' => Empresa::factory(),
+            // RUC (catálogo SUNAT 06 = '6')
+            'tipo_documento_id' => fn () => TipoDocumento::where('codigo', '6')->value('id')
+                ?? TipoDocumento::factory()->ruc(),
+            'numero_documento' => fake()->unique()->numerify('20#########'),
+            'razon_social' => strtoupper(fake()->unique()->company()) . ' S.A.C.',
+            'nombre_comercial' => fake()->company(),
+            'contacto_nombre' => fake()->name(),
+            'contacto_cargo' => fake()->randomElement(['Gerente', 'Administrador', 'Vendedor']),
+            'telefono' => fake()->numerify('01#######'),
+            'celular' => fake()->numerify('9########'),
+            'email' => fake()->unique()->safeEmail(),
             'pais' => 'Perú',
-            'departamento' => $this->faker->randomElement(['Lima', 'La Libertad', 'Arequipa', 'Piura', 'Cusco']),
-            'provincia' => $this->faker->city(),
-            'distrito' => $this->faker->citySuffix(),
-            'direccion' => $this->faker->streetAddress(),
-            'observacion' => $this->faker->optional()->sentence(8),
-            'activo' => $this->faker->boolean(90),
+            'departamento' => fake()->randomElement(['Lima', 'La Libertad', 'Arequipa', 'Piura', 'Cusco']),
+            'provincia' => fake()->city(),
+            'distrito' => fake()->city(),
+            'direccion' => fake()->streetAddress(),
+            'observacion' => fake()->optional()->sentence(8),
+            'activo' => true,
         ];
     }
 }

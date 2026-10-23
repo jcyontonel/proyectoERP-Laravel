@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\Negocios\BoticaSeeder;
+use Database\Seeders\Negocios\CaralCodeSeeder;
+use Database\Seeders\Negocios\RicoPetSeeder;
+use Database\Seeders\Negocios\TiendaVariedadesSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,19 +16,25 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolesYPermisosSeeder::class,
-            //EmpresaSeeder::class,
-            //UsuarioSeeder::class,
+            // 1) Catálogos globales (SUNAT / ISO)
+            MonedaSeeder::class,
             TipoDocumentoSeeder::class,
-            //CorrelativoSeeder::class,
-            //ClienteSeeder::class,
-            //TipoUnidadSeeder::class,
-            //CategoriaSeeder::class,
-            //ProductoSeeder::class,
-            //VentaSeeder::class,
-            //DetalleVentaSeeder::class,
-            //ProveedorSeeder::class,
-            RicoPetSeeder::class,
+            TipoUnidadSeeder::class,
+            ImpuestoSeeder::class,
+
+            // 2) Roles y permisos globales (se asignan por empresa) y planes de suscripción
+            RolesYPermisosSeeder::class,
+            PlanSeeder::class,
+
+            // 3) Un seeder por negocio: empresa (almacén, caja, series), usuarios, categorías, productos con stock,
+            //    clientes, proveedores y plan. Jhonnatan es Administrador en todas.
+            CaralCodeSeeder::class,          // consultora dueña del ERP: sus servicios incluyen la suscripción
+            RicoPetSeeder::class,            // tienda de mascotas
+            BoticaSeeder::class,             // farmacia (roles propios, lotes y vencimientos)
+            TiendaVariedadesSeeder::class,   // minimarket de productos variados
+
+            //EmpresaSeeder::class,   // empresas demo al azar para probar multiempresa
+            //UsuarioSeeder::class,   // un usuario por rol en cada empresa demo
         ]);
     }
 }

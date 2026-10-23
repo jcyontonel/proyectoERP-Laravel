@@ -2,28 +2,32 @@
 
 namespace Database\Factories;
 
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\TipoDocumento;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Cliente>
+ * @extends Factory<Cliente>
  */
 class ClienteFactory extends Factory
 {
+    protected $model = Cliente::class;
+
     public function definition(): array
     {
-        // Asegura que exista al menos un tipo de documento
-        $tipoDoc = TipoDocumento::inRandomOrder()->first();
-
         return [
-            'tipo_documento_id' => $tipoDoc ? $tipoDoc->id : 1, // fallback por si no hay datos
-            'numero_documento' => $this->faker->numerify('########'),
-            'nombre' => $this->faker->name(),
-            'correo' => $this->faker->unique()->safeEmail(),
-            'telefono' => $this->faker->phoneNumber(),
-            'direccion' => $this->faker->address(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'empresa_id' => Empresa::factory(),
+            // DNI (catálogo SUNAT 06 = '1'); el seeder puede cambiarlo con sequence()
+            'tipo_documento_id' => fn () => TipoDocumento::where('codigo', '1')->value('id')
+                ?? TipoDocumento::factory()->dni(),
+            'numero_documento' => fake()->unique()->numerify('########'),
+            'nombre' => fake()->firstName(),
+            'apellido' => fake()->lastName(),
+            'correo' => fake()->unique()->safeEmail(),
+            'telefono' => fake()->numerify('9########'),
+            'direccion' => fake()->streetAddress(),
+            'activo' => true,
         ];
     }
 }

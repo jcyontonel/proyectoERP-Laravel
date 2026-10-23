@@ -1,0 +1,19 @@
+@import "tailwindcss" source(none);
+
+/* Tienda pública (app Vue): solo escanea sus componentes, así su CSS es pequeño y no depende del ERP */
+@source "../js/tienda/**/*.{vue,js}";
+@source "../../app/Modulos/Web/resources/views/publica.blade.php";
+@source "../../app/Modulos/Web/resources/views/directorio.blade.php";
+
+/* Color de la marca de cada tienda: style="--marca: #1773ab" en el body */
+@theme {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --color-marca: var(--marca, #1773ab);
+}
+
+@layer components {
+    .btn-marca { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-marca px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50; }
+    .btn-suave { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50; }
+    .campo { @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-marca focus:ring-2 focus:ring-marca/20; }
+    .etiqueta { @apply mb-1 block text-xs font-medium text-slate-600; }
+}
