@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Http\Controllers;
+namespace App\Modulos\Plataforma\Http\Controllers\Suscripcion;
 
 use App\Modulos\Nucleo\Http\Controllers\Controller;
 use App\Modulos\Nucleo\Support\EmpresaActual;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Http\Request;
 
 /**
@@ -20,7 +20,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        return view('suscripciones.portal', [
+        return view('plataforma::suscripciones.portal', [
             'empresas' => $this->administradas($user)->map(fn ($e) => (object) [
                 'empresa' => $e,
                 'actual'  => $e->id === EmpresaActual::id($user),

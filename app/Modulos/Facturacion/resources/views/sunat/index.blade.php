@@ -76,7 +76,7 @@
                             <td class="py-3 pl-5 pr-3">
                                 @if ($url)<a href="{{ $url }}" class="font-semibold text-brand-600 hover:text-brand-700">{{ $c->numeroCompleto() }}</a>@else<span class="font-semibold">{{ $c->numeroCompleto() }}</span>@endif
                                 <p class="text-xs text-slate-500">{{ $tipos[$c->tipo] ?? $c->tipo }} · {{ ($c->fecha_emision ?? $c->created_at)->format('d/m/Y H:i') }}</p>
-                                @if ($doc instanceof \App\Modulos\Suscripciones\Models\PagoSuscripcion)
+                                @if ($doc instanceof \App\Modulos\Plataforma\Models\PagoSuscripcion)
                                     <p class="text-xs text-slate-500">Suscripción de {{ $doc->empresa?->razon_social }}</p>
                                 @endif
                             </td>

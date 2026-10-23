@@ -3,7 +3,7 @@
 namespace App\Modulos\Nucleo\View\Composers;
 
 use App\Modulos\Erp\Services\NotificacionService;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use App\Modulos\Nucleo\Support\EmpresaActual;
 use App\Modulos\Nucleo\Support\Menu;
 use Illuminate\View\View;

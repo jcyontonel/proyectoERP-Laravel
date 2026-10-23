@@ -5,7 +5,7 @@ namespace App\Modulos\Plataforma\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Modulos\Suscripciones\Models\Suscripcion */
+/** @mixin \App\Modulos\Plataforma\Models\Suscripcion */
 class SuscripcionResource extends JsonResource
 {
     public function toArray(Request $request): array

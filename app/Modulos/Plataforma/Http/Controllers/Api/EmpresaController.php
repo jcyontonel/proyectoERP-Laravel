@@ -6,11 +6,11 @@ use App\Modulos\Plataforma\Http\Resources\EmpresaResource;
 use App\Modulos\Plataforma\Http\Resources\PagoSuscripcionResource;
 use App\Modulos\Plataforma\Http\Resources\SuscripcionResource;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\Suscripcion;
 use App\Modulos\Nucleo\Services\Documentos\ApiPeruService;
 use App\Modulos\Erp\Services\EmpresaService;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +70,7 @@ class EmpresaController extends AdminController
             'estado'        => $resumen['estado'],
             'limites'       => $resumen['limites'],
             'suscripciones' => SuscripcionResource::collection($empresa->suscripciones()->with('plan', 'oferta')->latest('id')->get()),
-            'pagos'         => PagoSuscripcionResource::collection($empresa->hasMany(\App\Modulos\Suscripciones\Models\PagoSuscripcion::class)
+            'pagos'         => PagoSuscripcionResource::collection($empresa->hasMany(\App\Modulos\Plataforma\Models\PagoSuscripcion::class)
                 ->with('suscripcion.plan', 'oferta', 'comprobante', 'notaCredito')->latest('id')->limit(50)->get()),
         ]]);
     }

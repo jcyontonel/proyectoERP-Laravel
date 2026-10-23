@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Models;
+namespace App\Modulos\Plataforma\Models;
 
 use App\Modulos\Nucleo\Models\Concerns\EsActivable;
 use Illuminate\Database\Eloquent\Model;

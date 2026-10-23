@@ -4,11 +4,11 @@ namespace App\Modulos\Plataforma\Http\Controllers\Api;
 
 use App\Modulos\Plataforma\Http\Resources\PagoSuscripcionResource;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Services\ComprobanteSuscripcionService;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Services\ComprobanteSuscripcionService;
 use App\Modulos\Facturacion\Http\Controllers\ComprobanteSunatController;
 use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -125,7 +125,7 @@ class PagoController extends AdminController
         $pago->load(self::RELACIONES);
         abort_unless($pago->comprobante, 404, 'El pago no tiene comprobante.');
 
-        return view('suscripciones.comprobante', ['pago' => $pago, 'emisor' => Empresa::find($pago->comprobante->empresa_id)]);
+        return view('plataforma::suscripciones.comprobante', ['pago' => $pago, 'emisor' => Empresa::find($pago->comprobante->empresa_id)]);
     }
 
     private const RELACIONES = ['empresa', 'suscripcion.plan', 'oferta', 'comprobante', 'notaCredito'];

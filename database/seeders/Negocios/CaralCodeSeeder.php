@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Negocios;
 
-use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Plataforma\Models\Plan;
 use App\Modulos\Catalogo\Models\Producto;
 use App\Modulos\Catalogo\Models\TipoUnidad;
 use Illuminate\Database\Seeder;

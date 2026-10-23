@@ -1,7 +1,7 @@
 <?php
 
-use App\Modulos\Suscripciones\Http\Controllers\Configuracion\ComprobanteSuscripcionController;
-use App\Modulos\Suscripciones\Http\Controllers\Configuracion\SuscripcionController;
+use App\Modulos\Plataforma\Http\Controllers\Suscripcion\ComprobanteSuscripcionController;
+use App\Modulos\Plataforma\Http\Controllers\Suscripcion\SuscripcionController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Mi suscripción (dentro del ERP de la empresa) ───── */

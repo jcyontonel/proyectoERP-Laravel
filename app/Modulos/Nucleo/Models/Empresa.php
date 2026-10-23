@@ -9,7 +9,7 @@ use App\Modulos\Erp\Models\Compra;
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Erp\Models\Proveedor;
 use App\Modulos\Erp\Models\Venta;
-use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\Suscripcion;
 
 use App\Modulos\Nucleo\Models\Concerns\Auditable;
 use App\Modulos\Nucleo\Models\Concerns\EsActivable;

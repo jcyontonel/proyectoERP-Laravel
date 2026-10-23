@@ -9,7 +9,7 @@ use App\Modulos\Catalogo\Models\Producto;
 use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Models\Venta;
 use App\Modulos\Erp\Services\NotificacionService;
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Support\Modulos;
 use App\Modulos\Nucleo\Support\Sql;
 use App\Modulos\Catalogo\Support\Unidades;
 use Illuminate\Database\Eloquent\Builder;

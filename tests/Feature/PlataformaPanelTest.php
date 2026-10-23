@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Nucleo\Models\User;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\Plan;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;

@@ -5,9 +5,9 @@ namespace App\Modulos\Plataforma\Http\Controllers\Api;
 use App\Modulos\Plataforma\Http\Resources\PagoSuscripcionResource;
 use App\Modulos\Plataforma\Http\Resources\SuscripcionResource;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\Suscripcion;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\Suscripcion;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 

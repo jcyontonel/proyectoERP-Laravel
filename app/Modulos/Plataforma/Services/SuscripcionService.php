@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Services;
+namespace App\Modulos\Plataforma\Services;
 
 use App\Modulos\Erp\Models\Almacen;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\Oferta;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
-use App\Modulos\Suscripciones\Models\Titular;
+use App\Modulos\Plataforma\Models\Oferta;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Models\Titular;
 use App\Modulos\Catalogo\Models\Producto;
-use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\Suscripcion;
 use App\Modulos\Erp\Models\Venta;
-use App\Modulos\Suscripciones\Services\ComprobanteSuscripcionService;
+use App\Modulos\Plataforma\Services\ComprobanteSuscripcionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

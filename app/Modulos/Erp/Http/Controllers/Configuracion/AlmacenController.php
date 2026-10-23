@@ -6,7 +6,7 @@ use App\Modulos\Nucleo\Http\Controllers\Concerns\ResuelveEmpresa;
 use App\Modulos\Nucleo\Http\Controllers\Controller;
 use App\Modulos\Erp\Models\Almacen;
 use App\Modulos\Erp\Models\AlmacenProducto;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;

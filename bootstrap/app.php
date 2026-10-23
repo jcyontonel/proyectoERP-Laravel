@@ -29,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // y suscripción suspendida o cancelada = solo lectura
         $middleware->web(append: [
             \App\Modulos\Nucleo\Http\Middleware\EstablecerEmpresaActual::class,
-            \App\Modulos\Suscripciones\Http\Middleware\VerificarSuscripcion::class,
+            \App\Modulos\Plataforma\Http\Middleware\VerificarSuscripcion::class,
         ]);
 
         // aliases para usar en rutas ->middleware('role:admin') etc.

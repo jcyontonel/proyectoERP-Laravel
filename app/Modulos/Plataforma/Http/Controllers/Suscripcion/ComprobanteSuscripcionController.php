@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Http\Controllers\Configuracion;
+namespace App\Modulos\Plataforma\Http\Controllers\Suscripcion;
 
 use App\Modulos\Facturacion\Http\Controllers\ComprobanteSunatController;
 use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
 use App\Modulos\Nucleo\Http\Controllers\Concerns\ResuelveEmpresa;
 use App\Modulos\Nucleo\Http\Controllers\Controller;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
 use Illuminate\Http\Request;
 
 /** La empresa cliente ve y descarga los comprobantes de sus pagos de suscripción */
@@ -23,7 +23,7 @@ class ComprobanteSuscripcionController extends Controller
         abort_unless($pago->comprobante, 404);
 
         if ($cual === 'impreso') {
-            return view('suscripciones.comprobante', ['pago' => $pago, 'emisor' => Empresa::find($pago->comprobante->empresa_id)]);
+            return view('plataforma::suscripciones.comprobante', ['pago' => $pago, 'emisor' => Empresa::find($pago->comprobante->empresa_id)]);
         }
 
         $contenido = $facturacion->archivo($pago->comprobante, $cual);

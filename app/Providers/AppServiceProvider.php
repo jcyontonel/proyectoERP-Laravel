@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Modulos\Erp\Models\Nota;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
 use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Models\Venta;
 use Illuminate\Cache\RateLimiting\Limit;

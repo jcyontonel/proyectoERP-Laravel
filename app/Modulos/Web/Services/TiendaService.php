@@ -4,8 +4,8 @@ namespace App\Modulos\Web\Services;
 
 use App\Modulos\Catalogo\Models\Categoria;
 use App\Modulos\Catalogo\Models\Producto;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use App\Modulos\Web\Models\PedidoWeb;
 use App\Modulos\Web\Models\Tienda;
 use App\Modulos\Web\Models\ZonaEnvio;

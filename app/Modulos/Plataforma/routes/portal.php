@@ -1,6 +1,6 @@
 <?php
 
-use App\Modulos\Suscripciones\Http\Controllers\PortalController;
+use App\Modulos\Plataforma\Http\Controllers\Suscripcion\PortalController;
 use Illuminate\Support\Facades\Route;
 
 /*

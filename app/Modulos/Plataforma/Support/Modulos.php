@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Support;
+namespace App\Modulos\Plataforma\Support;
 
-use App\Modulos\Suscripciones\Http\Middleware\VerificarSuscripcion;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Http\Middleware\VerificarSuscripcion;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use Illuminate\Support\Str;
 
 /**

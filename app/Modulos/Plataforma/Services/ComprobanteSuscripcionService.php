@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Services;
+namespace App\Modulos\Plataforma\Services;
 
 use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
 
 use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Models\Titular;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\Titular;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 

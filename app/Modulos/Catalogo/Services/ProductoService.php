@@ -3,7 +3,7 @@
 namespace App\Modulos\Catalogo\Services;
 
 use App\Modulos\Erp\Services\InventarioService;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 
 use App\Modulos\Erp\Models\AlmacenProducto;
 use App\Modulos\Nucleo\Models\Empresa;

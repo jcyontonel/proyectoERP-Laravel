@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\PlanPrecio;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\PlanPrecio;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
 use Illuminate\Database\Seeder;
 
 /**

@@ -2,7 +2,7 @@
 
 namespace App\Modulos\Nucleo\Support;
 
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Support\Modulos;
 
 use App\Modulos\Nucleo\Models\User;
 use Illuminate\Support\Collection;

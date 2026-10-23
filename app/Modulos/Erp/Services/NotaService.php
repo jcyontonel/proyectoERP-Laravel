@@ -2,7 +2,7 @@
 
 namespace App\Modulos\Erp\Services;
 
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Erp\Models\Devolucion;

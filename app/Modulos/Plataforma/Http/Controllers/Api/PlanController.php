@@ -3,9 +3,9 @@
 namespace App\Modulos\Plataforma\Http\Controllers\Api;
 
 use App\Modulos\Plataforma\Http\Resources\PlanResource;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\ProductoPlataforma;
-use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\ProductoPlataforma;
+use App\Modulos\Plataforma\Models\Suscripcion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;

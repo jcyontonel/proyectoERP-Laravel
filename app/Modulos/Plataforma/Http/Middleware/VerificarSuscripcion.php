@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modulos\Suscripciones\Http\Middleware;
+namespace App\Modulos\Plataforma\Http\Middleware;
 
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use App\Modulos\Nucleo\Support\EmpresaActual;
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Support\Modulos;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

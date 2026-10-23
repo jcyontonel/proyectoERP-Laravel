@@ -3,7 +3,7 @@
 namespace App\Modulos\Plataforma\Http\Controllers\Api;
 
 use App\Modulos\Plataforma\Http\Resources\OfertaResource;
-use App\Modulos\Suscripciones\Models\Oferta;
+use App\Modulos\Plataforma\Models\Oferta;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 

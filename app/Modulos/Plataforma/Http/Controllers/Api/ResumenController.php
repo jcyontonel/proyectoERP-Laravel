@@ -4,9 +4,9 @@ namespace App\Modulos\Plataforma\Http\Controllers\Api;
 
 use App\Modulos\Plataforma\Http\Resources\EmpresaResource;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\Suscripcion;
 use Spatie\Permission\Models\Role;
 
 /** Panel del proyecto admin: empresas por estado, ingresos, MRR y vencimientos próximos; y catálogos */

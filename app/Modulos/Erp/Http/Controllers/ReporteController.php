@@ -10,7 +10,7 @@ use App\Modulos\Erp\Models\Almacen;
 use App\Modulos\Catalogo\Models\Categoria;
 use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Services\Reportes\ReporteService;
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Support\Modulos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;

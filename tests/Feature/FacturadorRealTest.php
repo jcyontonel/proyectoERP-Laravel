@@ -88,8 +88,8 @@ class FacturadorRealTest extends TestCase
         $this->seed(\Database\Seeders\PlanSeeder::class);
         $cliente = $this->crearEmpresa(['ruc' => '20100070970', 'razon_social' => 'SUPERMERCADOS PERUANOS SOCIEDAD ANONIMA', 'direccion' => 'CAL. MORELLI 181']);
         config(['suscripciones.facturacion.emisor_empresa_id' => $this->empresa->id, 'services.admin.token' => 'token-e2e']);
-        $servicio = app(\App\Modulos\Suscripciones\Services\SuscripcionService::class);
-        $s = $servicio->asignar($cliente, \App\Modulos\Suscripciones\Models\Plan::where('codigo', 'basico')->firstOrFail(), ['periodicidad' => 'mensual']);
+        $servicio = app(\App\Modulos\Plataforma\Services\SuscripcionService::class);
+        $s = $servicio->asignar($cliente, \App\Modulos\Plataforma\Models\Plan::where('codigo', 'basico')->firstOrFail(), ['periodicidad' => 'mensual']);
 
         $pago = $servicio->registrarPago($s, ['metodo' => 'yape', 'referencia' => 'E2E-1']);
         $reg = $pago->comprobante()->first();

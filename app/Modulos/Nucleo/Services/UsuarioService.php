@@ -2,7 +2,7 @@
 
 namespace App\Modulos\Nucleo\Services;
 
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Nucleo\Services\AuditoriaService;

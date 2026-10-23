@@ -8,8 +8,8 @@ use App\Modulos\Facturacion\Contracts\EmisorComprobantes;
 use App\Modulos\Facturacion\Events\EstadoDocumentoCambiado;
 use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\PagoSuscripcion;
-use App\Modulos\Suscripciones\Services\ComprobanteSuscripcionService;
+use App\Modulos\Plataforma\Models\PagoSuscripcion;
+use App\Modulos\Plataforma\Services\ComprobanteSuscripcionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 

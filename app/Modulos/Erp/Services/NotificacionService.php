@@ -9,7 +9,7 @@ use App\Modulos\Erp\Models\Pago;
 use App\Modulos\Catalogo\Models\Producto;
 use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Models\Venta;
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Support\Modulos;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

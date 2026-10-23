@@ -6,7 +6,7 @@ use App\Modulos\Facturacion\Models\Documento;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Modulos\Suscripciones\Models\PagoSuscripcion */
+/** @mixin \App\Modulos\Plataforma\Models\PagoSuscripcion */
 class PagoSuscripcionResource extends JsonResource
 {
     public function toArray(Request $request): array

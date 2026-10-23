@@ -5,7 +5,7 @@ namespace App\Modulos\Plataforma\Http\Controllers\Api;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Services\EmpresaService;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Plataforma\Services\SuscripcionService;
 use App\Modulos\Nucleo\Services\UsuarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

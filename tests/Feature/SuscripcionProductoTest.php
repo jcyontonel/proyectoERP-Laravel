@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Suscripciones\Models\Plan;
-use App\Modulos\Suscripciones\Models\Suscripcion;
-use App\Modulos\Suscripciones\Models\Titular;
-use App\Modulos\Suscripciones\Services\SuscripcionService;
-use App\Modulos\Suscripciones\Support\Modulos;
+use App\Modulos\Plataforma\Models\Plan;
+use App\Modulos\Plataforma\Models\Suscripcion;
+use App\Modulos\Plataforma\Models\Titular;
+use App\Modulos\Plataforma\Services\SuscripcionService;
+use App\Modulos\Plataforma\Support\Modulos;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
