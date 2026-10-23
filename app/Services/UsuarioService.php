@@ -153,7 +153,7 @@ class UsuarioService
             ->join('empresa_user as eu', fn ($j) => $j->on('eu.user_id', '=', 'u.id')->where('eu.empresa_id', $empresaId))
             ->where('mr.role_id', $admin->id)
             ->where('mr.empresa_id', $empresaId)
-            ->where('mr.model_type', User::class)
+            ->where('mr.model_type', (new User())->getMorphClass())   // alias de AppServiceProvider::MORPH_MAP
             ->where('u.activo', true)
             ->whereNull('u.deleted_at')
             ->exists();
