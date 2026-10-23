@@ -1,28 +1,30 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-B6hkwZta.css",
+    "file": "assets/app-BWxMf9ZV.css",
     "src": "resources/css/app.css",
     "isEntry": true,
+    "name": "app",
     "names": [
       "app.css"
     ]
   },
   "resources/css/tienda.css": {
-    "file": "assets/tienda-BWqJ7rla.css",
+    "file": "assets/tienda-oQErFBkJ.css",
     "src": "resources/css/tienda.css",
     "isEntry": true,
+    "name": "tienda",
     "names": [
       "tienda.css"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-DXHeQJeO.js",
+    "file": "assets/app-CV91oQtz.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
   },
   "resources/js/tienda/main.js": {
-    "file": "assets/main-CaeKXXny.js",
+    "file": "assets/main-Dw5iNly1.js",
     "name": "main",
     "src": "resources/js/tienda/main.js",
     "isEntry": true
