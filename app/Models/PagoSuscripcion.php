@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /** Cobro de un periodo de suscripción: pendiente → pagado (extiende la suscripción) | anulado */
 class PagoSuscripcion extends Model
@@ -43,5 +44,28 @@ class PagoSuscripcion extends Model
     public function oferta(): BelongsTo
     {
         return $this->belongsTo(Oferta::class);
+    }
+
+    /** Factura o boleta electrónica del pago (la emite la empresa dueña de la plataforma) */
+    public function comprobante(): MorphOne
+    {
+        return $this->morphOne(ComprobanteSunat::class, 'comprobante')->whereIn('tipo', ['01', '03']);
+    }
+
+    /** Nota de crédito, si el pago se anuló fuera del plazo de baja */
+    public function notaCredito(): MorphOne
+    {
+        return $this->morphOne(ComprobanteSunat::class, 'comprobante')->where('tipo', '07');
+    }
+
+    public function esPagado(): bool
+    {
+        return $this->estado === self::PAGADO;
+    }
+
+    /** El facturador pide la baja cuando un comprobante se acepta y su origen ya está anulado */
+    public function esAnulada(): bool
+    {
+        return $this->estado === self::ANULADO;
     }
 }

@@ -20,8 +20,10 @@ use RuntimeException;
 /** Empresas clientes del ERP: listado con su plan, ficha con consumo y alta completa */
 class EmpresaController extends AdminController
 {
-    public function __construct(private SuscripcionService $suscripciones)
+    /** Se resuelve en cada uso: el servicio es por petición (el controlador puede reutilizarse) */
+    private function suscripciones(): SuscripcionService
     {
+        return app(SuscripcionService::class);
     }
 
     public function index(Request $request)
@@ -61,7 +63,7 @@ class EmpresaController extends AdminController
     /** Ficha: datos, consumo del plan, historial de suscripciones y pagos */
     public function show(Empresa $empresa)
     {
-        $resumen = $this->suscripciones->resumen($empresa->id);
+        $resumen = $this->suscripciones()->resumen($empresa->id);
 
         return response()->json(['data' => [
             'empresa'       => new EmpresaResource($empresa->load('suscripcion.plan', 'suscripcion.oferta')->loadCount('usuarios')),
@@ -69,7 +71,7 @@ class EmpresaController extends AdminController
             'limites'       => $resumen['limites'],
             'suscripciones' => SuscripcionResource::collection($empresa->suscripciones()->with('plan', 'oferta')->latest('id')->get()),
             'pagos'         => PagoSuscripcionResource::collection($empresa->hasMany(\App\Models\PagoSuscripcion::class)
-                ->with('suscripcion.plan', 'oferta')->latest('id')->limit(50)->get()),
+                ->with('suscripcion.plan', 'oferta', 'comprobante', 'notaCredito')->latest('id')->limit(50)->get()),
         ]]);
     }
 
@@ -89,12 +91,13 @@ class EmpresaController extends AdminController
             'oferta'         => ['nullable', 'string', 'max:30'],
             'metodo'         => ['nullable', Rule::in(array_keys(config('suscripciones.metodos_pago')))],
             'referencia'     => ['nullable', 'string', 'max:100'],
+            'comprobante'    => ['nullable', Rule::in(['factura', 'boleta', 'ninguno'])],   // del primer pago
         ]);
 
         [$empresa, $admin, $existia] = DB::transaction(function () use ($d, $empresas, $request) {
             $resultado = $empresas->crear(collect($d)->only(array_keys($this->reglas()))->all(), $d['admin']);
             if (filled($d['plan_id'] ?? null)) {
-                $this->suscripciones->asignar($resultado[0], Plan::findOrFail($d['plan_id']), $d, $this->operador($request));
+                $this->suscripciones()->asignar($resultado[0], Plan::findOrFail($d['plan_id']), $d, $this->operador($request));
             }
 
             return $resultado;

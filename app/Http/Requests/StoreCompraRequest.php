@@ -48,6 +48,7 @@ class StoreCompraRequest extends FormRequest
             'afecto_igv'           => ['boolean'],
             'precios_incluyen_igv' => ['boolean'],
             'observacion'      => ['nullable', 'string', 'max:1000'],
+            'orden_compra_id'  => ['nullable', 'integer'],   // recepción de una orden (se valida en OrdenCompraService)
 
             'condicion_pago'  => ['required', 'in:contado,credito'],
             'metodo_pago'     => [Rule::requiredIf($contado), 'nullable', Rule::in(array_keys(config('compras.metodos_pago')))],

@@ -36,4 +36,8 @@
     @if ($venta->esCredito() && ! $venta->esBorrador())
         @include('ventas.partials.show.cobros')
     @endif
+
+    @include('ventas.partials.show.notas')
+
+    @include('sunat.partials.estado', ['sunat' => $venta->sunat, 'aplica' => in_array($venta->tipo, ['01', '03'], true) && ! $venta->esBorrador()])
 </aside>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\OrdenCompraController;
 use App\Http\Controllers\ProveedorController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,19 @@ Route::middleware('can:gestionar-compras')->group(function () {
     });
 
     Route::resource('compras', CompraController::class)->only(['index', 'create', 'store', 'show']);
+
+    /* ───── Órdenes de compra ───── */
+    Route::controller(OrdenCompraController::class)->prefix('ordenes-compra')->name('ordenes.')->group(function () {
+        Route::post('{orden}/recibir', 'recibir')->name('recibir');
+        Route::patch('{orden}/cerrar', 'cerrar')->name('cerrar');
+        Route::patch('{orden}/anular', 'anular')->name('anular');
+        Route::get('{orden}/imprimir', 'imprimir')->name('imprimir');
+    });
+
+    Route::resource('ordenes-compra', OrdenCompraController::class)
+        ->except('destroy')
+        ->names('ordenes')
+        ->parameters(['ordenes-compra' => 'orden']);
 });
 
 /* ───── Proveedores ───── */

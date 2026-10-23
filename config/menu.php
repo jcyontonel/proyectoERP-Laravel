@@ -25,9 +25,9 @@ return [
             'items'  => [
                 ['clave' => 'nueva-venta', 'label' => 'Nueva venta', 'icon' => 'plus-circle', 'route' => 'ventas.create', 'permiso' => 'emitir-ventas'],
                 ['clave' => 'ventas', 'label' => 'Comprobantes', 'icon' => 'receipt', 'route' => 'ventas.index', 'activo' => ['ventas.index', 'ventas.show', 'ventas.edit'], 'permiso' => 'ver_ventas', 'contador' => 'borradores'],
-                ['clave' => 'notas', 'label' => 'Notas de crédito / débito', 'icon' => 'file-minus', 'route' => 'notas.index', 'permiso' => 'emitir-notas',
+                ['clave' => 'notas', 'label' => 'Notas de crédito / débito', 'icon' => 'file-minus', 'route' => 'notas.index', 'activo' => ['notas.*', 'ventas.notas.*'], 'permiso' => 'emitir-notas',
                     'descripcion' => 'Emite notas de crédito y débito sobre facturas y boletas: anulaciones, devoluciones, descuentos y penalidades.'],
-                ['clave' => 'cotizaciones', 'label' => 'Cotizaciones', 'icon' => 'clipboard', 'route' => 'cotizaciones.index', 'permiso' => 'emitir-ventas',
+                ['clave' => 'cotizaciones', 'label' => 'Cotizaciones', 'icon' => 'clipboard', 'route' => 'cotizaciones.index', 'activo' => ['cotizaciones.*'], 'permiso' => 'emitir-ventas',
                     'descripcion' => 'Prepara proformas para tus clientes y conviértelas en venta con un clic.'],
                 ['clave' => 'clientes', 'label' => 'Clientes', 'icon' => 'users', 'route' => 'clientes.index', 'activo' => ['clientes.*']],
             ],
@@ -50,7 +50,7 @@ return [
             'items'  => [
                 ['clave' => 'compras', 'label' => 'Compras', 'icon' => 'truck', 'route' => 'compras.index', 'activo' => ['compras.*'], 'permiso' => 'gestionar-compras'],
                 ['clave' => 'proveedores', 'label' => 'Proveedores', 'icon' => 'building', 'route' => 'proveedores.index', 'activo' => ['proveedores.*'], 'permiso' => 'gestionar-proveedores'],
-                ['clave' => 'ordenes-compra', 'label' => 'Órdenes de compra', 'icon' => 'clipboard', 'route' => 'ordenes.index', 'permiso' => 'gestionar-compras',
+                ['clave' => 'ordenes-compra', 'label' => 'Órdenes de compra', 'icon' => 'clipboard', 'route' => 'ordenes.index', 'activo' => ['ordenes.*'], 'permiso' => 'gestionar-compras',
                     'descripcion' => 'Pide mercadería a tus proveedores y recíbela parcial o totalmente como compra.'],
             ],
         ],

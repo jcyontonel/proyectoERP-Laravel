@@ -36,6 +36,7 @@ class StoreVentaRequest extends FormRequest
             'condicion_pago'    => ['nullable', 'in:contado,credito'],
             'fecha_vencimiento' => ['nullable', 'required_if:condicion_pago,credito', 'date', 'after_or_equal:fecha_emision'],
             'adelanto'          => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'cotizacion_id'     => ['nullable', 'integer'],   // venta que viene de una cotización (se valida en CotizacionService)
             'observaciones'  => ['nullable', 'string', 'max:1000'],
             'descuento'      => ['nullable', 'numeric', 'between:0,100'],
 

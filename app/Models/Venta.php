@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Support\Sql;
 use Illuminate\Support\Carbon;
@@ -78,6 +79,24 @@ class Venta extends Model
     public function pagos(): HasMany
     {
         return $this->hasMany(Pago::class);
+    }
+
+    /** Notas de crédito y débito emitidas sobre este comprobante */
+    public function notas(): HasMany
+    {
+        return $this->hasMany(Nota::class);
+    }
+
+    /** Estado en SUNAT (facturador electrónico) */
+    public function sunat(): MorphOne
+    {
+        return $this->morphOne(ComprobanteSunat::class, 'comprobante');
+    }
+
+    /** Solo facturas y boletas admiten notas (no los tickets) */
+    public function admiteNotas(): bool
+    {
+        return $this->esCompletada() && in_array($this->tipo, ['01', '03'], true);
     }
 
     /* ───────── Scopes de reporte ───────── */

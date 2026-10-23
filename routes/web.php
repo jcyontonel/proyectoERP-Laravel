@@ -49,4 +49,5 @@ Route::middleware('auth')->group(function () {
     require __DIR__ . '/erp/inventario.php';
     require __DIR__ . '/erp/reportes.php';
     require __DIR__ . '/erp/configuracion.php';
+    require __DIR__ . '/erp/sunat.php';
 });

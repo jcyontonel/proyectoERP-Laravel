@@ -22,6 +22,13 @@
             </a>
         @endif
 
+        @if ($venta->admiteNotas())
+            @can('emitir-notas')
+                <a href="{{ route('ventas.notas.create', [$venta, 'tipo' => '07']) }}" class="btn btn-secondary"><x-icon name="file-minus" class="text-brand-600" /> Nota de crédito</a>
+                <a href="{{ route('ventas.notas.create', [$venta, 'tipo' => '08']) }}" class="btn btn-secondary"><x-icon name="plus-circle" class="text-brand-600" /> Nota de débito</a>
+            @endcan
+        @endif
+
         @if ($venta->esAnulable())
             <button type="button" data-anular="{{ route('ventas.anular', $venta) }}" data-numero="{{ $venta->numero_completo }}"
                 class="btn btn-secondary text-red-600 hover:bg-red-50">

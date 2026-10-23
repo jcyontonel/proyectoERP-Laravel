@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\NotaController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,32 @@ Route::resource('ventas', VentaController::class)
 Route::resource('ventas', VentaController::class)
     ->only(['create', 'store', 'edit', 'update'])
     ->middleware('can:emitir-ventas');
+
+/* ───── Notas de crédito y débito ───── */
+Route::middleware('can:emitir-notas')->group(function () {
+    Route::get('ventas/{venta}/notas/crear', [NotaController::class, 'create'])->name('ventas.notas.create');
+    Route::post('ventas/{venta}/notas', [NotaController::class, 'store'])->name('ventas.notas.store');
+
+    Route::controller(NotaController::class)->prefix('notas')->name('notas.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{nota}', 'show')->name('show');
+        Route::get('{nota}/imprimir', 'ticket')->name('ticket');
+        Route::patch('{nota}/anular', 'anular')->name('anular');
+    });
+});
+
+/* ───── Cotizaciones ───── */
+Route::middleware('can:emitir-ventas')->group(function () {
+    Route::controller(CotizacionController::class)->prefix('cotizaciones')->name('cotizaciones.')->group(function () {
+        Route::patch('{cotizacion}/estado', 'estado')->name('estado');
+        Route::post('{cotizacion}/convertir', 'convertir')->name('convertir');
+        Route::get('{cotizacion}/imprimir', 'imprimir')->name('imprimir');
+    });
+
+    Route::resource('cotizaciones', CotizacionController::class)
+        ->except('destroy')
+        ->parameters(['cotizaciones' => 'cotizacion']);
+});
 
 /* ───── Clientes (la autorización fina está en ClientePolicy) ───── */
 Route::controller(ClienteController::class)->prefix('clientes')->name('clientes.')

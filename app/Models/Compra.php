@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Support\Sql;
@@ -67,6 +68,12 @@ class Compra extends Model
     public function pagos(): HasMany
     {
         return $this->hasMany(Pago::class);
+    }
+
+    /** Orden de compra que esta compra recibió (a lo más una) */
+    public function ordenesCompra(): BelongsToMany
+    {
+        return $this->belongsToMany(OrdenCompra::class, 'recepciones_orden_compra')->withPivot('cantidades')->withTimestamps();
     }
 
     /* ───────── Estado ───────── */

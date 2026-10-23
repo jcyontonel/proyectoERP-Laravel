@@ -35,6 +35,13 @@ class Correlativo extends Model
         'transferencia'   => ['TR' => ['Transferencia', '/^[A-Z0-9]{2,10}$/', 'TR01']],
         'devolucion'      => ['DV' => ['Devolución', '/^[A-Z0-9]{2,10}$/', 'DV01']],
         'fraccionamiento' => ['FR' => ['Fraccionamiento', '/^[A-Z0-9]{2,10}$/', 'FR01']],
+        'cotizacion'      => ['CT' => ['Cotización', '/^[A-Z0-9]{2,10}$/', 'CT01']],
+        'orden_compra'    => ['OC' => ['Orden de compra', '/^[A-Z0-9]{2,10}$/', 'OC01']],
+        // Comprobantes de los pagos de suscripción al ERP (solo en la empresa emisora de la plataforma)
+        'suscripcion' => [
+            '01' => ['Factura de suscripción', '/^F[A-Z0-9]{3}$/', 'F900'],
+            '03' => ['Boleta de suscripción', '/^B[A-Z0-9]{3}$/', 'B900'],
+        ],
     ];
 
     public const MODULOS = [
@@ -44,6 +51,9 @@ class Correlativo extends Model
         'transferencia'   => 'Transferencias',
         'devolucion'      => 'Devoluciones',
         'fraccionamiento' => 'Fraccionamientos',
+        'cotizacion'      => 'Cotizaciones',
+        'orden_compra'    => 'Órdenes de compra',
+        'suscripcion'     => 'Suscripciones (plataforma)',
     ];
 
     protected $fillable = ['empresa_id', 'modulo', 'tipo', 'destipo', 'serie', 'numero', 'activo'];

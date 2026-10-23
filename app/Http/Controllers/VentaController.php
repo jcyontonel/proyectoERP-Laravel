@@ -13,6 +13,7 @@ use App\Models\Producto;
 use App\Models\UnidadConversion;
 use App\Models\Venta;
 use App\Services\CajaService;
+use App\Services\Facturacion\FacturacionElectronicaService;
 use App\Services\VentaExportService;
 use App\Services\VentaService;
 use Illuminate\Http\Request;
@@ -70,7 +71,8 @@ class VentaController extends Controller
 
         $mensaje = $venta->esBorrador()
             ? "Borrador {$venta->numero_completo} guardado. No afectó stock ni correlativos."
-            : "Venta {$venta->numero_completo} registrada correctamente.";
+            : "Venta {$venta->numero_completo} registrada correctamente."
+                . FacturacionElectronicaService::aviso(app(FacturacionElectronicaService::class)->emitirSeguro($venta));
 
         return redirect()->route('ventas.show', $venta)->with('status', $mensaje)
             // Preferencias → imprimir el ticket apenas se registra
@@ -82,7 +84,7 @@ class VentaController extends Controller
     {
         $this->propia($request, $venta);
 
-        $venta->load(['empresa', 'almacen', 'usuario', 'cliente.tipoDocumento', 'detalles.producto', 'detalles.tipoUnidad', 'pagos.usuario:id,name']);
+        $venta->load(['empresa', 'almacen', 'usuario', 'cliente.tipoDocumento', 'detalles.producto', 'detalles.tipoUnidad', 'pagos.usuario:id,name', 'notas', 'sunat']);
 
         return view('ventas.show', compact('venta'));
     }
@@ -115,7 +117,8 @@ class VentaController extends Controller
 
         $mensaje = $venta->esBorrador()
             ? "Borrador {$venta->numero_completo} actualizado."
-            : "Venta {$venta->numero_completo} registrada correctamente.";
+            : "Venta {$venta->numero_completo} registrada correctamente."
+                . FacturacionElectronicaService::aviso(app(FacturacionElectronicaService::class)->emitirSeguro($venta));
 
         return redirect()->route('ventas.show', $venta)->with('status', $mensaje);
     }
@@ -168,7 +171,22 @@ class VentaController extends Controller
             return back()->with('error', collect($e->errors())->flatten()->first());
         }
 
-        return back()->with('status', "El comprobante {$venta->numero_completo} fue anulado y el stock repuesto.");
+        // En SUNAT: comunicación de baja (facturas) o resumen diario (boletas); el resultado llega por webhook
+        $baja = '';
+        try {
+            $reg = app(FacturacionElectronicaService::class)->anular($venta);
+            $baja = match (true) {
+                ! $reg => '',
+                in_array($reg->baja_estado, ['enviado', 'aceptado'], true) => ' Se pidió la baja a SUNAT.',
+                $reg->baja_estado === 'por_pedir' => ' La baja en SUNAT se pedirá cuando vuelva la conexión.',
+                $reg->baja_estado === 'error' => ' SUNAT no aceptó la baja: ' . $reg->mensaje_respuesta,
+                default => ' Aún no estaba aceptado en SUNAT: la baja se pedirá al aceptarse.',
+            };
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('status', "El comprobante {$venta->numero_completo} fue anulado y el stock repuesto.{$baja}");
     }
 
     /* ───────────────────────── Privado ───────────────────────── */

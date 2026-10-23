@@ -40,6 +40,13 @@
         <p class="mt-1.5 text-sm text-slate-500">Registra lo que compraste a tu proveedor: ingresará stock al almacén y quedará en el kardex.</p>
     </div>
 
+    @if (old('orden_compra_id'))
+        <x-alert tone="info" class="mt-4">
+            Recepción de la orden <a href="{{ route('ordenes.show', old('orden_compra_id')) }}" class="font-semibold underline">{{ old('orden_compra_ref', 'de compra') }}</a>:
+            se cargó lo pendiente con los costos pedidos (sin IGV). Ajusta las cantidades a lo que realmente llegó y completa el comprobante del proveedor.
+        </x-alert>
+    @endif
+
     @if (collect($almacenes)->isEmpty())
         <x-alert tone="warning" class="mt-4">Esta empresa no tiene almacenes activos. Crea uno antes de registrar compras.</x-alert>
     @endif
@@ -61,6 +68,11 @@
     <form id="compra-form" method="POST" action="{{ route('compras.store') }}" novalidate
         class="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_21.5rem]">
         @csrf
+        @if (old('orden_compra_id'))
+            {{-- Recepción de una orden de compra: al registrar, la orden suma lo recibido --}}
+            <input type="hidden" name="orden_compra_id" value="{{ old('orden_compra_id') }}">
+            <input type="hidden" name="orden_compra_ref" value="{{ old('orden_compra_ref') }}">
+        @endif
 
         @include('compras.partials.proveedor',   ['class' => 'lg:col-start-1 lg:row-start-1'])
         @include('compras.partials.productos',   ['class' => 'lg:col-span-2 lg:col-start-1 lg:row-start-2'])

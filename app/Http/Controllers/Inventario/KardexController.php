@@ -74,6 +74,8 @@ class KardexController extends Controller
             'stock_inicial'    => 'Stock inicial',
             'anulacion_venta'  => 'Anulaciones de venta',
             'anulacion_compra' => 'Anulaciones de compra',
+            'nota_credito'     => 'Notas de crédito (devoluciones)',
+            'anulacion_nota'   => 'Anulaciones de nota',
         ];
     }
 

@@ -17,3 +17,17 @@ Artisan::command('suscripciones:procesar', function (SuscripcionService $suscrip
 })->purpose('Genera los cobros pendientes de las suscripciones por vencer');
 
 Schedule::command('suscripciones:procesar')->dailyAt('06:00');
+
+// Facturación electrónica: envía al facturador lo que no llegó (sin conexión), pide bajas pendientes
+// y refresca estados por si se perdió un aviso. Requiere "php artisan schedule:work" (o la tarea de Windows).
+Artisan::command('facturacion:sincronizar', function (\App\Services\Facturacion\FacturacionElectronicaService $facturacion) {
+    if (! $facturacion->activo()) {
+        $this->warn('Facturación electrónica apagada: falta FACTURADOR_URL o FACTURADOR_TOKEN en .env.');
+
+        return;
+    }
+    $r = $facturacion->sincronizar();
+    $this->info("Enviados al facturador: {$r['enviados']} · estados refrescados: {$r['consultados']}.");
+})->purpose('Reintenta los comprobantes que no llegaron al facturador electrónico');
+
+Schedule::command('facturacion:sincronizar')->everyMinute()->withoutOverlapping(10);

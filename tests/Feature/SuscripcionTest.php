@@ -36,10 +36,16 @@ class SuscripcionTest extends TestCase
 
     public function test_planes_iniciales(): void
     {
-        $this->assertFalse(Plan::where('codigo', 'gratis')->value('activo'));
+        // Tres planes en este orden, cada uno con más módulos que el anterior
+        $this->assertSame(['basico', 'pro', 'total'], Plan::where('activo', true)->orderBy('orden')->pluck('codigo')->all());
         $basico = Plan::where('codigo', 'basico')->with('precios')->firstOrFail();
         $this->assertSame(['mensual', 'trimestral', 'anual'], $basico->precios->pluck('periodicidad')->all());
-        $this->assertNull(Plan::where('codigo', 'premium')->value('max_comprobantes_mes'));
+        $this->assertNull(Plan::where('codigo', 'total')->value('max_comprobantes_mes'));
+
+        [$pro, $total] = [Plan::where('codigo', 'pro')->first(), Plan::where('codigo', 'total')->first()];
+        $this->assertTrue($basico->incluye('notas') && ! $basico->incluye('compras') && ! $basico->incluye('cotizaciones'));
+        $this->assertTrue($pro->incluye('compras') && $pro->incluye('cotizaciones') && ! $pro->incluye('lotes'));
+        $this->assertTrue(collect(array_keys(config('suscripciones.modulos')))->every(fn ($m) => $total->incluye($m)));
     }
 
     public function test_limite_de_comprobantes_al_mes(): void
@@ -86,7 +92,8 @@ class SuscripcionTest extends TestCase
 
         $this->travel(6)->days();
         $this->assertSame(Suscripcion::SUSPENDIDA, $s->refresh()->estadoEfectivo());
-        $this->vender($admin)->assertSessionHasErrors('suscripcion');
+        $this->vender($admin)->assertSessionHas('error', fn ($m) => str_contains($m, 'suspendida'));
+        $this->assertSame(1, Venta::count());   // solo la venta de los días de gracia; la de suspendida no se registró
         $this->actingAs($admin)->get(route('ventas.index'))->assertOk()->assertSee('suspendida');   // consulta sí, con aviso
 
         // Pagar reactiva: el periodo empieza hoy (no cubre los días suspendidos)
@@ -100,13 +107,13 @@ class SuscripcionTest extends TestCase
 
     public function test_pagos_consecutivos_y_anulacion_del_ultimo(): void
     {
-        $s = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'premium')->first(), ['periodicidad' => 'trimestral', 'pagado' => true, 'metodo' => 'yape']);
+        $s = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'total')->first(), ['periodicidad' => 'trimestral', 'pagado' => true, 'metodo' => 'yape']);
         $this->assertSame('2026-06-09', $s->vence_el->toDateString());          // 10/03 + 3 meses − 1 día
 
         $segundo = $this->servicio()->registrarPago($s, ['metodo' => 'yape']);    // por adelantado: continúa tras el vencimiento
         $this->assertSame('2026-06-10', $segundo->periodo_desde->toDateString());
         $this->assertSame('2026-09-09', $s->refresh()->vence_el->toDateString());
-        $this->assertEquals(279.0, $segundo->monto);
+        $this->assertEquals(419.0, $segundo->monto);   // Total trimestral
 
         $primero = $s->pagos()->where('estado', PagoSuscripcion::PAGADO)->orderBy('id')->first();
         $this->expectaLimite(fn () => $this->servicio()->anularPago($primero), 'pago');   // no es el último
@@ -157,26 +164,77 @@ class SuscripcionTest extends TestCase
         $cobro = $s->pagos()->sole();
         $this->assertSame('2026-03-25', $cobro->periodo_desde->toDateString());   // continúa tras la prueba
 
-        // Cambio a Premium: la anterior queda cancelada y su cobro pendiente se reemplaza
-        $nueva = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'premium')->first(), ['periodicidad' => 'anual', 'pagado' => true]);
+        // Cambio a Total: la anterior queda cancelada y su cobro pendiente se reemplaza
+        $nueva = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'total')->first(), ['periodicidad' => 'anual', 'pagado' => true]);
         $this->assertSame(Suscripcion::CANCELADA, $s->refresh()->estado);
         $this->assertSame(PagoSuscripcion::ANULADO, $cobro->refresh()->estado);
         $this->assertSame($nueva->id, app(SuscripcionService::class)->vigente($this->empresa->id)->id);
-        $this->assertEquals(990.0, $nueva->pagos()->where('estado', PagoSuscripcion::PAGADO)->value('monto'));
+        $this->assertEquals(1490.0, $nueva->pagos()->where('estado', PagoSuscripcion::PAGADO)->value('monto'));   // Total anual
     }
 
     public function test_mi_suscripcion_y_aviso_en_el_erp(): void
     {
         $plan = Plan::where('codigo', 'basico')->firstOrFail();
-        $plan->update(['max_productos' => 2]);
+        $plan->update(['max_productos' => 2, 'max_comprobantes_mes' => 5]);
         $this->servicio()->asignar($this->empresa, $plan, ['periodicidad' => 'mensual', 'pagado' => true]);
         $this->productoConStock($this->empresa, 0);
         $this->productoConStock($this->empresa, 0);
         $admin = $this->usuarioCon('Administrador', $this->empresa);
 
         $this->actingAs($admin)->get(route('config.suscripcion'))->assertOk()->assertSee('Básico')->assertSee('Pagado hasta')->assertSee('09/04/2026');
-        $this->actingAs($admin)->get(route('inicio'))->assertOk()->assertSee('Usaste 2 de 2 productos');
+
+        // Productos, usuarios o almacenes en su tope no generan aviso (1 de 1 almacén es normal)
+        $this->actingAs($admin)->get(route('inicio'))->assertOk()->assertDontSee('de 2 productos')->assertDontSee('almacenes de tu plan');
+
+        // Comprobantes por agotarse sí: 4 de 5 (80 %)
+        foreach (range(1, 4) as $_) {
+            $this->vender($admin)->assertSessionHasNoErrors();
+        }
+        $this->app->forgetScopedInstances();
+        $this->actingAs($admin)->get(route('inicio'))->assertOk()->assertSee('Te quedan 1 de 5 comprobantes este mes');
+        $this->vender($admin)->assertSessionHasNoErrors();
+        $this->app->forgetScopedInstances();
+        $this->actingAs($admin)->get(route('inicio'))->assertOk()->assertSee('Emitiste los 5 comprobantes de este mes');
+
         $this->actingAs($this->usuarioCon('Vendedor', $this->empresa))->get(route('config.suscripcion'))->assertForbidden();
+    }
+
+    public function test_suspendida_queda_en_solo_lectura(): void
+    {
+        $this->crearCaja($this->empresa);
+        // Plan Total (todos los módulos): así solo se prueba el efecto de la suspensión
+        $s = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'total')->first(), ['periodicidad' => 'mensual', 'pagado' => true]);
+        $admin = $this->usuarioCon('Administrador', $this->empresa);
+        $cajaId = \App\Models\Caja::where('empresa_id', $this->empresa->id)->value('id');
+
+        // Con el turno abierto antes de la suspensión
+        $this->actingAs($admin)->post(route('caja.abrir'), ['caja_id' => $cajaId, 'monto_apertura' => 50])->assertSessionHasNoErrors();
+        $this->servicio()->suspender($s, 'Falta de pago');
+        $this->app->forgetScopedInstances();
+
+        // Bloqueado: formularios y cualquier escritura
+        foreach (['ventas.create', 'compras.create', 'productos.create', 'clientes.create', 'ajustes.create', 'transferencias.create', 'usuarios.create'] as $ruta) {
+            $this->actingAs($admin)->get(route($ruta))->assertRedirect(route('config.suscripcion'))->assertSessionHas('error');
+        }
+        $this->actingAs($admin)->post(route('caja.movimientos.store'), ['tipo' => 'egreso', 'concepto' => 'X', 'metodo_pago' => 'efectivo', 'monto' => 5])->assertSessionHas('error');
+        $this->actingAs($admin)->post(route('categorias.store'), ['nombre' => 'Nueva'])->assertSessionHas('error');
+        $this->actingAs($admin)->put(route('config.empresa.update'), ['ruc' => $this->empresa->ruc, 'razon_social' => 'X'])->assertSessionHas('error');
+        $this->assertSame(0, \App\Models\MovimientoCaja::count());
+        $this->assertDatabaseMissing('categorias', ['nombre' => 'Nueva']);
+        $this->actingAs($admin)->getJson(route('clientes.documento', '12345678'))->assertForbidden();
+
+        // Permitido: consultar, exportar, mi perfil y cerrar el turno abierto
+        foreach (['inicio', 'ventas.index', 'compras.index', 'productos.index', 'caja.index', 'config.suscripcion', 'perfil.edit'] as $ruta) {
+            $this->actingAs($admin)->get(route($ruta))->assertOk();
+        }
+        $this->actingAs($admin)->get(route('ventas.export'))->assertOk();
+        $this->actingAs($admin)->get(route('caja.cierre'))->assertOk();
+        $this->actingAs($admin)->post(route('caja.cerrar'), ['monto_contado' => 50])->assertSessionHasNoErrors();
+
+        // Al reactivar vuelve todo
+        $this->servicio()->reactivar($s->refresh());
+        $this->app->forgetScopedInstances();
+        $this->actingAs($admin)->get(route('ventas.create'))->assertOk();
     }
 
     public function test_sin_plan_no_hay_limites(): void

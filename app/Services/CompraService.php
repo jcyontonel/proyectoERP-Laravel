@@ -240,6 +240,11 @@ class CompraService
                 ]);
             }
 
+            // Recepción de una orden de compra: suma lo recibido a la orden
+            if (filled($d['orden_compra_id'] ?? null)) {
+                app(OrdenCompraService::class)->registrarRecepcion((int) $d['orden_compra_id'], $compra->load('detalles'));
+            }
+
             return $compra;
         });
     }
@@ -292,6 +297,7 @@ class CompraService
             }
 
             $c->pagos()->where('estado', Pago::REGISTRADO)->update(['estado' => Pago::ANULADO]);
+            app(OrdenCompraService::class)->revertirRecepcion($c->load('detalles'));
             $c->update(['estado' => Compra::ANULADA]);
         });
     }

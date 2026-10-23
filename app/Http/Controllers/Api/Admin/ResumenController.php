@@ -55,6 +55,7 @@ class ResumenController extends AdminController
             'roles'          => Role::query()->whereNull('empresa_id')->orderBy('name')->pluck('name'),
             'planes'         => Plan::query()->orderBy('orden')->get(['id', 'codigo', 'nombre', 'activo']),
             'limites'        => collect(Plan::LIMITES)->map(fn ($l) => ['columna' => $l[0], 'etiqueta' => $l[1]]),
+            'modulos'        => collect(config('suscripciones.modulos'))->map(fn ($m, $clave) => ['clave' => $clave, 'nombre' => $m[0], 'descripcion' => $m[1]])->values(),
             'dias_gracia'    => (int) config('suscripciones.dias_gracia'),
             'dias_aviso'     => (int) config('suscripciones.dias_aviso'),
         ]]);

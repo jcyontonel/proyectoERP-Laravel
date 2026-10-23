@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Correlativo;
 use App\Models\Empresa;
 use App\Services\CertificadoService;
+use App\Services\Facturacion\FacturacionElectronicaService;
+use App\Services\Facturacion\FacturadorNoDisponible;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -103,7 +105,19 @@ class SunatController extends Controller
 
         $empresa->save();
 
-        return redirect()->route('config.sunat')->with('status', 'Configuración de SUNAT guardada' . ($empresa->sunat_modo === 'produccion' ? ' (modo producción).' : ' (modo beta: los comprobantes no tienen validez tributaria).'));
+        // El facturador electrónico recibe los mismos datos (modo, SOL y certificado)
+        $facturador = '';
+        $facturacion = app(FacturacionElectronicaService::class);
+        if ($facturacion->activo()) {
+            try {
+                $r = $facturacion->sincronizarEmisor($empresa->refresh());
+                $facturador = $r['ok'] ? ' El facturador electrónico quedó actualizado.' : ' El facturador no aceptó los datos: ' . $r['mensaje'];
+            } catch (FacturadorNoDisponible $e) {
+                $facturador = ' No se pudo actualizar el facturador (se hará al emitir el próximo comprobante): ' . $e->getMessage();
+            }
+        }
+
+        return redirect()->route('config.sunat')->with('status', 'Configuración de SUNAT guardada' . ($empresa->sunat_modo === 'produccion' ? ' (modo producción).' : ' (modo beta: los comprobantes no tienen validez tributaria).') . $facturador);
     }
 
     /* ───────────────────────── Privado ───────────────────────── */

@@ -19,14 +19,14 @@
             default => null,
         };
 
-        // Sin aviso de vigencia: el límite más cercano a agotarse
-        if (! $aviso) {
-            $cerca = collect($suscripcion['limites'])->filter(fn ($l) => $l['maximo'] && $l['fraccion'] >= config('suscripciones.aviso_uso'))->sortByDesc('fraccion')->first();
-            if ($cerca) {
-                $aviso = [$cerca['usado'] >= $cerca['maximo'] ? 'danger' : 'warning',
-                    "Usaste {$cerca['usado']} de {$cerca['maximo']} {$cerca['etiqueta']} de tu plan {$s->plan->nombre}."
-                    . ($cerca['usado'] >= $cerca['maximo'] ? ' Llegaste al límite: cambia a un plan superior para continuar.' : '')];
-            }
+        // Sin aviso de vigencia: solo se avisa cuando quedan pocos comprobantes del mes.
+        // (Productos, usuarios y almacenes en su tope es normal, p. ej. 1 de 1 almacén: se informa al intentar crear uno más.)
+        $c = $suscripcion['limites']['comprobantes'] ?? null;
+        if (! $aviso && $c && $c['maximo'] && $c['fraccion'] >= config('suscripciones.aviso_uso')) {
+            $quedan = max($c['maximo'] - $c['usado'], 0);
+            $aviso = $quedan === 0
+                ? ['danger', "Emitiste los {$c['maximo']} comprobantes de este mes de tu plan {$s->plan->nombre}: no podrás emitir más hasta el 1 del próximo mes o hasta cambiar a un plan superior."]
+                : ['warning', "Te quedan {$quedan} de {$c['maximo']} comprobantes este mes en tu plan {$s->plan->nombre}."];
         }
     }
 @endphp

@@ -41,7 +41,9 @@ class Kardex extends Model
                 'stock_inicial'     => 'Stock inicial',
                 'anulacion_venta'   => 'Anulación de venta',
                 'anulacion_compra'  => 'Anulación de compra',
-                default             => ucfirst(str_replace('_', ' ', (string) $this->referencia_tipo)) ?: 'Movimiento',
+                'nota_credito'      => 'Nota de crédito',
+                'anulacion_nota'    => 'Anulación de nota',
+                default             =>ucfirst(str_replace('_', ' ', (string) $this->referencia_tipo)) ?: 'Movimiento',
             };
             $doc = trim(($this->referencia_serie ? $this->referencia_serie . '-' : '') . $this->referencia_numero, '-');
 
@@ -83,6 +85,7 @@ class Kardex extends Model
             'transferencia'              => route('transferencias.show', $this->referencia_id),
             'fraccionamiento'            => route('fraccionamientos.show', $this->referencia_id),
             'stock_inicial'              => route('productos.show', $this->producto_id),
+            'nota_credito', 'anulacion_nota' => route('notas.show', $this->referencia_id),
             default                      => null,
         };
     }

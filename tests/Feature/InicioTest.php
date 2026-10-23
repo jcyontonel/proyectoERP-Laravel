@@ -87,10 +87,12 @@ class InicioTest extends TestCase
         $admin = $this->usuarioCon('Administrador', $this->empresa);
 
         $this->actingAs($admin)->get(route('inicio'))
-            ->assertSee('Notas de crédito / débito')
-            ->assertSee(route('pronto', 'notas'));
+            ->assertSee('Centro de ayuda')
+            ->assertSee(route('pronto', 'ayuda'))
+            ->assertSee(route('notas.index'))     // las notas y SUNAT ya son módulos reales
+            ->assertSee(route('sunat.index'));
 
-        $this->actingAs($admin)->get(route('pronto', 'notas'))->assertOk()->assertSee('Próximamente');
+        $this->actingAs($admin)->get(route('pronto', 'ayuda'))->assertOk()->assertSee('Próximamente');
         $this->actingAs($admin)->get(route('pronto', 'no-existe'))->assertNotFound();
     }
 

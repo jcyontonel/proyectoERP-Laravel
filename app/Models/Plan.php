@@ -24,7 +24,7 @@ class Plan extends Model
 
     protected $fillable = [
         'codigo', 'nombre', 'descripcion', 'max_comprobantes_mes', 'max_productos', 'max_usuarios', 'max_almacenes',
-        'dias_prueba', 'activo', 'orden',
+        'dias_prueba', 'activo', 'orden', 'modulos',
     ];
 
     protected function casts(): array
@@ -32,7 +32,14 @@ class Plan extends Model
         return [
             'max_comprobantes_mes' => 'integer', 'max_productos' => 'integer', 'max_usuarios' => 'integer',
             'max_almacenes' => 'integer', 'dias_prueba' => 'integer', 'activo' => 'boolean', 'orden' => 'integer',
+            'modulos' => 'array',   // claves de config suscripciones.modulos; null = todos
         ];
+    }
+
+    /** El plan incluye el módulo (null = todos los módulos) */
+    public function incluye(string $modulo): bool
+    {
+        return $this->modulos === null || in_array($modulo, $this->modulos, true);
     }
 
     public function precios(): HasMany

@@ -55,4 +55,18 @@ Route::prefix('admin')->name('api.admin.')->middleware([TokenAdministracion::cla
 
     Route::get('pagos', [PagoController::class, 'index'])->name('pagos.index');
     Route::post('pagos/{pago}/anular', [PagoController::class, 'anular'])->name('pagos.anular');
+
+    // Comprobante electrónico del pago (factura/boleta de la plataforma, vía el facturador)
+    Route::get('pagos/{pago}', [PagoController::class, 'show'])->name('pagos.show');
+    Route::post('pagos/{pago}/comprobante', [PagoController::class, 'comprobante'])->name('pagos.comprobante');
+    Route::get('pagos/{pago}/comprobante/impreso', [PagoController::class, 'impreso'])->name('pagos.comprobante.impreso');
+    Route::get('pagos/{pago}/comprobante/{cual}', [PagoController::class, 'archivo'])->name('pagos.comprobante.archivo')
+        ->where('cual', 'xml|cdr|nota-xml|nota-cdr');
 });
+
+/*
+| Avisos del facturador electrónico (ricopet/facturacion): cambios de estado en SUNAT.
+| Sin sesión: se valida la firma HMAC con FACTURADOR_WEBHOOK_SECRETO.
+*/
+Route::post('facturador/webhook', \App\Http\Controllers\Api\FacturadorWebhookController::class)
+    ->middleware('throttle:600,1')->name('api.facturador.webhook');

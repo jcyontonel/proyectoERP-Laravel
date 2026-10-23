@@ -80,10 +80,17 @@ class PlanController extends AdminController
             'precios.*.periodicidad' => ['required', Rule::in($periodicidades)],
             'precios.*.precio'     => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'precios.*.activo'     => ['boolean'],
-        ], ['codigo.unique' => 'Ya existe un plan con ese código.']);
+            // Módulos incluidos (config suscripciones.modulos); la base la tienen todos
+            'modulos'              => ['nullable', 'array'],
+            'modulos.*'            => ['string', Rule::in(array_keys(config('suscripciones.modulos')))],
+        ], ['codigo.unique' => 'Ya existe un plan con ese código.', 'modulos.*.in' => 'Uno de los módulos no existe.']);
 
         $d['dias_prueba'] = (int) ($d['dias_prueba'] ?? 0);
         $d['orden'] = (int) ($d['orden'] ?? 0);
+        if ($request->has('modulos')) {
+            // En el orden del catálogo y sin repetidos
+            $d['modulos'] = array_values(array_intersect(array_keys(config('suscripciones.modulos')), $d['modulos'] ?? []));
+        }
 
         return $d;
     }

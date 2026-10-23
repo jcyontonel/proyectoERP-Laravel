@@ -44,7 +44,7 @@ class NotificacionService
             'por_cobrar_vencidas' => $this->ventasCreditoVencidas($empresaId)->count(),
             'por_pagar_vencidas'  => $this->comprasCreditoVencidas($empresaId)->count(),
             'sunat_pendientes'    => DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-                ->whereIn('estado', ['pendiente', 'observado', 'rechazado'])->count(),
+                ->whereIn('estado', ['pendiente', 'observado', 'rechazado', 'error'])->count(),
         ];
     }
 
@@ -91,7 +91,7 @@ class NotificacionService
         if ($c['sunat_pendientes'] > 0 && $user->can('emitir-notas')) {
             $alertas->push($this->alerta('danger', 'upload-cloud', 'Comprobantes sin aceptar',
                 "{$c['sunat_pendientes']} " . str('comprobante')->plural($c['sunat_pendientes']) . ' pendientes u observados por SUNAT.',
-                route('pronto', 'sunat')));
+                route('sunat.index')));
         }
 
         if ($user->can('gestionar-caja') && ! $this->cajaAbierta($empresaId, $user)) {

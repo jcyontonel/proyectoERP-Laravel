@@ -11,6 +11,7 @@ use App\Models\Pago;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\Montos;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -166,51 +167,20 @@ class VentaService
                 }
             }
 
-            /* 5) Totales (misma fórmula que el navegador) */
+            /* 5) Totales (misma fórmula que el navegador: App\Support\Montos) */
             $lineas = [];
-            $bruto  = 0;
             foreach ($pedido as $id => $cantidad) {
-                $p      = $productos[$id];
-                $precio = $p->precio_unitario;
-                $gross  = round($precio * $cantidad, 2);
-                $bruto += $gross;
-                $lineas[] = ['p' => $p, 'cant' => $cantidad, 'precio' => $precio, 'gross' => $gross];
-            }
-            $bruto = round($bruto, 2);
-
-            $pct       = min(max((float) ($d['descuento'] ?? 0), 0), 100);
-            $descTotal = round($bruto * $pct / 100, 2);
-            $neto      = round($bruto - $descTotal, 2);
-
-            if ($incluyeIgv) {
-                $total = $neto;
-                $base  = round($total / (1 + $igvPct / 100), 2);
-                $igv   = round($total - $base, 2);
-            } else {
-                $base  = $neto;
-                $igv   = round($base * $igvPct / 100, 2);
-                $total = round($base + $igv, 2);
+                $p = $productos[$id];
+                $lineas[] = ['p' => $p, 'cant' => $cantidad, 'precio' => $p->precio_unitario, 'gross' => round($p->precio_unitario * $cantidad, 2)];
             }
 
-            // Reparto por línea (descuento, base e IGV)
-            foreach ($lineas as &$l) {
-                $l['desc'] = round($l['gross'] * $pct / 100, 2);
-                $netoLinea = round($l['gross'] - $l['desc'], 2);
-                if ($incluyeIgv) {
-                    $l['base'] = round($netoLinea / (1 + $igvPct / 100), 2);
-                    $l['igv']  = round($netoLinea - $l['base'], 2);
-                } else {
-                    $l['base'] = $netoLinea;
-                    $l['igv']  = round($netoLinea * $igvPct / 100, 2);
-                }
-            }
-            unset($l);
-
-            // El residuo de redondeo va a la última línea: Σ líneas = cabecera
-            $ult = array_key_last($lineas);
-            $lineas[$ult]['desc'] = round($lineas[$ult]['desc'] + ($descTotal - array_sum(array_column($lineas, 'desc'))), 2);
-            $lineas[$ult]['base'] = round($lineas[$ult]['base'] + ($base - array_sum(array_column($lineas, 'base'))), 2);
-            $lineas[$ult]['igv']  = round($lineas[$ult]['igv'] + ($igv - array_sum(array_column($lineas, 'igv'))), 2);
+            $calculo   = Montos::calcular($lineas, (float) ($d['descuento'] ?? 0), $igvPct, $incluyeIgv);
+            $lineas    = $calculo['lineas'];
+            $pct       = $calculo['pct'];
+            $descTotal = $calculo['descuento'];
+            $base      = $calculo['base'];
+            $igv       = $calculo['igv'];
+            $total     = $calculo['total'];
 
             /* 6) Serie y número (ventas.numero es BIGINT; índice único empresa+tipo+serie+numero) */
             if ($borrador) {
@@ -274,6 +244,11 @@ class VentaService
             // Los fraccionamientos automáticos quedan enlazados a la venta que los justificó
             foreach ($fraccionados as $f) {
                 $f->update(['venta_id' => $venta->id, 'observacion' => "Automático al vender {$venta->numero_completo}"]);
+            }
+
+            // Venta que viene de una cotización: la cotización queda convertida
+            if (filled($d['cotizacion_id'] ?? null)) {
+                app(CotizacionService::class)->marcarConvertida((int) $d['cotizacion_id'], $venta);
             }
 
             /* 8b) Cobro al contado (o adelanto del crédito): queda en el turno de caja (arqueo y resumen por método de pago) */
@@ -363,6 +338,7 @@ class VentaService
             }
 
             $this->revertirCobros($v, $userId);
+            app(CotizacionService::class)->liberar($v);
             $v->update(['estado' => Venta::ANULADA]);
         });
     }

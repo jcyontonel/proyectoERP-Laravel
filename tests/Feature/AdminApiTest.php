@@ -71,7 +71,7 @@ class AdminApiTest extends TestCase
     {
         $con = $this->crearEmpresa(['razon_social' => 'Con Plan SAC']);
         $sin = $this->crearEmpresa(['razon_social' => 'Sin Plan SAC']);
-        $this->api('post', "empresas/{$con->id}/suscripcion", ['plan_id' => Plan::where('codigo', 'premium')->value('id'), 'periodicidad' => 'anual', 'pagado' => true, 'metodo' => 'transferencia'])
+        $this->api('post', "empresas/{$con->id}/suscripcion", ['plan_id' => Plan::where('codigo', 'total')->value('id'), 'periodicidad' => 'anual', 'pagado' => true, 'metodo' => 'transferencia'])
             ->assertCreated();
 
         $this->api('get', 'empresas?estado=activa')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.razon_social', 'Con Plan SAC');
@@ -81,7 +81,7 @@ class AdminApiTest extends TestCase
         $this->api('get', "empresas/{$con->id}")->assertOk()
             ->assertJsonPath('data.estado', 'activa')
             ->assertJsonPath('data.limites.productos.maximo', null)
-            ->assertJsonPath('data.pagos.0.monto', 990)
+            ->assertJsonPath('data.pagos.0.monto', 1490)
             ->assertJsonPath('data.pagos.0.estado', 'pagado');
 
         $this->api('put', "empresas/{$sin->id}", ['ruc' => $sin->ruc, 'razon_social' => 'Renombrada SAC', 'activo' => false])->assertOk()->assertJsonPath('data.activo', false);
@@ -116,7 +116,8 @@ class AdminApiTest extends TestCase
 
     public function test_planes_y_ofertas(): void
     {
-        $this->api('get', 'planes')->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('data.0.codigo', 'gratis')->assertJsonPath('data.0.activo', false);
+        $this->api('get', 'planes')->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('data.0.codigo', 'basico')->assertJsonPath('data.1.codigo', 'pro')->assertJsonPath('data.2.codigo', 'total')
+            ->assertJsonPath('data.0.modulos', ['notas', 'cuentas_cobrar', 'reportes_basicos']);
 
         $plan = $this->api('post', 'planes', [
             'codigo' => 'empresarial', 'nombre' => 'Empresarial', 'max_comprobantes_mes' => null, 'max_usuarios' => 50, 'activo' => true, 'orden' => 4,
@@ -132,9 +133,9 @@ class AdminApiTest extends TestCase
         $this->api('post', 'ofertas', ['nombre' => 'Mal', 'tipo' => 'porcentaje', 'valor' => 150, 'desde' => today()->toDateString()])->assertJsonValidationErrors('valor');
 
         $empresa = $this->crearEmpresa();
-        $this->api('post', "empresas/{$empresa->id}/suscripcion", ['plan_id' => Plan::where('codigo', 'premium')->value('id'), 'periodicidad' => 'mensual', 'oferta' => 'cyber', 'pagado' => true])
+        $this->api('post', "empresas/{$empresa->id}/suscripcion", ['plan_id' => Plan::where('codigo', 'total')->value('id'), 'periodicidad' => 'mensual', 'oferta' => 'cyber', 'pagado' => true])
             ->assertCreated();
-        $this->api('get', "empresas/{$empresa->id}")->assertJsonPath('data.pagos.0.monto', 69.3);
+        $this->api('get', "empresas/{$empresa->id}")->assertJsonPath('data.pagos.0.monto', 104.3);   // Total mensual 149 − 30 %
         $this->api('delete', "ofertas/{$oferta['id']}")->assertStatus(422);   // ya se usó
     }
 

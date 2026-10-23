@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Negocios\BoticaSeeder;
+use Database\Seeders\Negocios\CaralCodeSeeder;
+use Database\Seeders\Negocios\RicoPetSeeder;
+use Database\Seeders\Negocios\TiendaVariedadesSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -22,23 +26,15 @@ class DatabaseSeeder extends Seeder
             RolesYPermisosSeeder::class,
             PlanSeeder::class,
 
-            // 3) Empresas y usuarios
-            RicoPetSeeder::class,
-            //EmpresaSeeder::class,   // empresas demo para probar multiempresa
+            // 3) Un seeder por negocio: empresa (almacén, caja, series), usuarios, categorías, productos con stock,
+            //    clientes, proveedores y plan. Jhonnatan es Administrador en todas.
+            CaralCodeSeeder::class,          // consultora dueña del ERP: sus servicios incluyen la suscripción
+            RicoPetSeeder::class,            // tienda de mascotas
+            BoticaSeeder::class,             // farmacia (roles propios, lotes y vencimientos)
+            TiendaVariedadesSeeder::class,   // minimarket de productos variados
+
+            //EmpresaSeeder::class,   // empresas demo al azar para probar multiempresa
             //UsuarioSeeder::class,   // un usuario por rol en cada empresa demo
-
-            // 4) Configuración de cada empresa (recorren todas las empresas)
-            AlmacenSeeder::class,
-            CorrelativoSeeder::class,
-            CajaSeeder::class,
-            MotivoAjusteSeeder::class,
-
-            // 5) Datos de RicoPet
-            CategoriaSeeder::class,
-            ClienteSeeder::class,
-            ProveedorSeeder::class,
-            ProductoSeeder::class,
-            UnidadesConversionSeeder::class,   // presentaciones y reglas de fraccionamiento (saco → kilos)
         ]);
     }
 }

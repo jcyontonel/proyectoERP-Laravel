@@ -102,6 +102,22 @@
         </p>
     </div>
 
+    @if (! $editando && old('cotizacion_id'))
+        <x-alert tone="info" class="mt-4">
+            Venta desde la cotización <a href="{{ route('cotizaciones.show', old('cotizacion_id')) }}" class="font-semibold underline">{{ old('cotizacion_ref', 'de origen') }}</a>:
+            cliente, productos y descuento ya están cargados con los precios vigentes. Al registrarla, la cotización quedará como convertida.
+        </x-alert>
+    @endif
+
+    @if (collect($correlativos)->isNotEmpty() && ! collect($correlativos)->whereIn('tipo', ['01', '03'])->count()
+        && app(\App\Services\Facturacion\FacturacionElectronicaService::class)->activo())
+        <x-alert tone="warning" class="mt-4">
+            Solo tienes series de <strong>ticket</strong> activas: los tickets no se envían a SUNAT.
+            Para emitir boletas o facturas electrónicas, activa las series B001 / F001 en
+            <a href="{{ route('series.index') }}" class="font-semibold underline">Configuración → Series</a>.
+        </x-alert>
+    @endif
+
     @if (collect($correlativos)->isEmpty())
         <div role="alert" class="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <x-icon name="alert-triangle" class="mt-0.5" />
@@ -150,6 +166,11 @@
         @if ($editando) @method('PUT') @endif
 
         <input type="hidden" name="empresa_id" value="{{ data_get($empresa ?? null, 'id') }}">
+        @if (! $editando && old('cotizacion_id'))
+            {{-- Venta desde una cotización: al registrarla, la cotización queda convertida --}}
+            <input type="hidden" name="cotizacion_id" value="{{ old('cotizacion_id') }}">
+            <input type="hidden" name="cotizacion_ref" value="{{ old('cotizacion_ref') }}">
+        @endif
 
         @include('ventas.partials.cliente',   ['class' => 'lg:col-start-1 lg:row-start-1'])
         @include('ventas.partials.productos', ['class' => 'lg:col-span-2 lg:col-start-1 lg:row-start-2'])

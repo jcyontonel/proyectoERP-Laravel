@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Models\Producto;
 use App\Models\Suscripcion;
 use App\Models\Venta;
+use App\Services\Facturacion\ComprobanteSuscripcionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -54,6 +55,23 @@ class SuscripcionService
      *
      * @return array{plan: ?Plan, suscripcion: ?Suscripcion, estado: string, dias: ?int, limites: array}
      */
+    /**
+     * Módulos que incluye el plan de la empresa (null = todos). El plan manda aunque la suscripción esté
+     * vencida o suspendida (en ese caso además rige el modo solo lectura). Sin suscripción: todos, si
+     * sin_plan_ilimitado; si no, solo la base.
+     *
+     * @return array<int, string>|null
+     */
+    public function modulos(int $empresaId): ?array
+    {
+        $s = $this->vigente($empresaId);
+        if (! $s) {
+            return config('suscripciones.sin_plan_ilimitado') ? null : [];
+        }
+
+        return $s->plan?->modulos;
+    }
+
     public function resumen(int $empresaId): array
     {
         $s = $this->vigente($empresaId);
@@ -156,7 +174,7 @@ class SuscripcionService
             if (! $prueba) {
                 $cobro = $this->generarCobro($s, primerPago: true);
                 if (($d['pagado'] ?? false) || $cobro->monto <= 0) {
-                    $this->registrarPago($s, ['pago_id' => $cobro->id, 'metodo' => $d['metodo'] ?? null, 'referencia' => $d['referencia'] ?? null], $registradoPor);
+                    $this->registrarPago($s, ['pago_id' => $cobro->id, 'metodo' => $d['metodo'] ?? null, 'referencia' => $d['referencia'] ?? null, 'comprobante' => $d['comprobante'] ?? null], $registradoPor);
                 }
             }
 
@@ -230,6 +248,9 @@ class SuscripcionService
             $s->update(['vence_el' => $hasta, 'estado' => Suscripcion::ACTIVA, 'motivo_suspension' => null]);
             $this->olvidar($s->empresa_id);
 
+            // Factura o boleta electrónica del pago (después del commit: si SUNAT o el facturador fallan, el pago queda igual)
+            DB::afterCommit(fn () => app(ComprobanteSuscripcionService::class)->emitirSeguro($pago->refresh(), $d['comprobante'] ?? null));
+
             return $pago->refresh();
         });
     }
@@ -253,6 +274,15 @@ class SuscripcionService
 
             $p->update(['estado' => PagoSuscripcion::ANULADO, 'notas' => trim(($p->notas ? $p->notas . "\n" : '') . 'Anulado' . ($motivo ? ": {$motivo}" : '') . ' el ' . now()->format('d/m/Y H:i'))]);
             $this->olvidar($p->empresa_id);
+
+            // Su comprobante: baja en SUNAT (hasta 7 días) o nota de crédito
+            DB::afterCommit(function () use ($p) {
+                try {
+                    app(ComprobanteSuscripcionService::class)->anular($p->refresh());
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
         });
     }
 

@@ -8,6 +8,8 @@ use App\Services\Dashboard\DashboardService;
 use App\Services\NotificacionService;
 use App\Services\SuscripcionService;
 use App\Support\EmpresaActual;
+use App\Support\Modulos;
+use Illuminate\Support\Facades\Blade;
 use App\View\Composers\EmpresaComposer;
 use App\View\Composers\LayoutComposer;
 use Illuminate\Auth\Events\Failed;
@@ -37,7 +39,7 @@ class ErpServiceProvider extends ServiceProvider
         'venta', 'cliente', 'compra', 'proveedor', 'producto', 'categoria', 'ajuste', 'transferencia',
         'lote', 'sesion', 'movimiento', 'almacen', 'caja', 'motivo', 'regla', 'fraccionamiento', 'pago',
         'usuario', 'rol', 'serie', 'impuesto', 'unidad',
-        'empresa', 'plan', 'oferta', 'suscripcion',
+        'empresa', 'plan', 'oferta', 'suscripcion', 'nota', 'cotizacion', 'orden', 'comprobante',
     ];
 
     public function register(): void
@@ -60,6 +62,9 @@ class ErpServiceProvider extends ServiceProvider
             && ($user->can('gestionar-compras') || $user->can('ver-reportes')));
 
         Paginator::defaultView('vendor.pagination.ricopet');
+
+        // @ruta('compras.create') … @endruta: solo si el plan incluye ese módulo y la suscripción permite abrirla
+        Blade::if('ruta', fn (string $ruta) => Modulos::rutaDisponible($ruta, ($u = auth()->user()) ? EmpresaActual::id($u) : null));
 
         // Accesos en la auditoría (el intento fallido guarda solo el correo, nunca la contraseña)
         Event::listen(Login::class, fn (Login $e) => app(AuditoriaService::class)->registrar('inicio de sesión', 'User', $e->user->getAuthIdentifier(), userId: $e->user->getAuthIdentifier()));

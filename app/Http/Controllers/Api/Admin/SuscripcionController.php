@@ -14,8 +14,10 @@ use Illuminate\Validation\Rule;
 /** Plan de cada empresa: asignar o cambiar, suspender, reactivar, cancelar y generar cobros */
 class SuscripcionController extends AdminController
 {
-    public function __construct(private SuscripcionService $suscripciones)
+    /** Se resuelve en cada uso: el servicio es por petición (el controlador puede reutilizarse) */
+    private function suscripciones(): SuscripcionService
     {
+        return app(SuscripcionService::class);
     }
 
     /** Asigna (o cambia) el plan de la empresa */
@@ -29,11 +31,12 @@ class SuscripcionController extends AdminController
             'oferta'                => ['nullable', 'string', 'max:30'],
             'metodo'                => ['nullable', Rule::in(array_keys(config('suscripciones.metodos_pago')))],
             'referencia'            => ['nullable', 'string', 'max:100'],
+            'comprobante'           => ['nullable', Rule::in(['factura', 'boleta', 'ninguno'])],   // del pago inicial
             'renovacion_automatica' => ['boolean'],
             'notas'                 => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $s = $this->suscripciones->asignar($empresa, Plan::findOrFail($d['plan_id']), $d, $this->operador($request));
+        $s = $this->suscripciones()->asignar($empresa, Plan::findOrFail($d['plan_id']), $d, $this->operador($request));
 
         return (new SuscripcionResource($s->load('plan', 'oferta')))->response()->setStatusCode(201);
     }
@@ -52,7 +55,7 @@ class SuscripcionController extends AdminController
     {
         $d = $request->validate(['motivo' => ['required', 'string', 'max:255']]);
         $this->vigente($suscripcion);
-        $this->suscripciones->suspender($suscripcion, $d['motivo']);
+        $this->suscripciones()->suspender($suscripcion, $d['motivo']);
 
         return new SuscripcionResource($suscripcion->refresh()->load('plan', 'oferta'));
     }
@@ -60,7 +63,7 @@ class SuscripcionController extends AdminController
     public function reactivar(Suscripcion $suscripcion)
     {
         $this->vigente($suscripcion);
-        $this->suscripciones->reactivar($suscripcion);
+        $this->suscripciones()->reactivar($suscripcion);
 
         return new SuscripcionResource($suscripcion->refresh()->load('plan', 'oferta'));
     }
@@ -69,7 +72,7 @@ class SuscripcionController extends AdminController
     {
         $d = $request->validate(['motivo' => ['nullable', 'string', 'max:255']]);
         $this->vigente($suscripcion);
-        $this->suscripciones->cancelar($suscripcion, $d['motivo'] ?? null);
+        $this->suscripciones()->cancelar($suscripcion, $d['motivo'] ?? null);
 
         return new SuscripcionResource($suscripcion->refresh()->load('plan', 'oferta'));
     }
@@ -79,7 +82,7 @@ class SuscripcionController extends AdminController
     {
         $this->vigente($suscripcion);
 
-        return new PagoSuscripcionResource($this->suscripciones->generarCobro($suscripcion->load('plan', 'oferta')));
+        return new PagoSuscripcionResource($this->suscripciones()->generarCobro($suscripcion->load('plan', 'oferta')));
     }
 
     private function vigente(Suscripcion $s): void

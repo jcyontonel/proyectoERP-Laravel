@@ -26,6 +26,9 @@
             <x-dato label="Serie y número">{{ ($compra->serie && $compra->numero) ? $compra->serie . '-' . $compra->numero : 'Sin número' }}</x-dato>
             <x-dato label="Emisión">{{ $compra->fecha_emision->translatedFormat('d M Y') }}</x-dato>
             <x-dato label="Almacén">{{ $compra->almacen?->nombre ?? '—' }}</x-dato>
+            @foreach ($compra->ordenesCompra as $orden)
+                <x-dato label="Orden de compra"><a href="{{ route('ordenes.show', $orden) }}" class="font-medium text-brand-600 hover:underline">{{ $orden->numero_completo }}</a></x-dato>
+            @endforeach
             <x-dato label="Registrada">{{ $compra->created_at?->translatedFormat('d M Y · h:i A') }}</x-dato>
             <x-dato label="Registrada por">{{ $compra->usuario?->name ?? '—' }}</x-dato>
         </dl>

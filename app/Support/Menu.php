@@ -7,7 +7,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Arma el menú de config/menu.php para un usuario: filtra por permiso, resuelve la URL
+ * Arma el menú de config/menu.php para un usuario: filtra por permiso, por los módulos del plan de la
+ * empresa y (si la suscripción está suspendida) por las páginas bloqueadas; resuelve la URL
  * (o "Próximamente" si el módulo aún no tiene ruta) y marca el ítem activo.
  */
 class Menu
@@ -19,11 +20,14 @@ class Menu
     public static function para(User $user, array $contadores = []): Collection
     {
         $actual = Route::currentRouteName();
+        $empresaId = EmpresaActual::id($user);
 
         return collect(config('menu.secciones'))
-            ->map(function (array $s) use ($user, $contadores, $actual) {
+            ->map(function (array $s) use ($user, $contadores, $actual, $empresaId) {
                 $items = collect($s['items'])
                     ->filter(fn (array $i) => empty($i['permiso']) || $user->can($i['permiso']))
+                    // Módulo que el plan no incluye, o página bloqueada por suscripción suspendida: no se muestra
+                    ->filter(fn (array $i) => Modulos::rutaDisponible($i['route'], $empresaId))
                     ->map(fn (array $i) => self::item($i, $contadores, $actual))
                     ->values();
 

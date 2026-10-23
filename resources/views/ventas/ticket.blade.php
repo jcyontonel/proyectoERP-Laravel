@@ -109,8 +109,5 @@
         // Abre el diálogo de impresión al cargar (en borradores/anulados también, para revisarlo)
         window.addEventListener('load', () => setTimeout(() => window.print(), 300));
     </script>
-    @if (request()->boolean('auto'))
-        <script>window.addEventListener('load', () => window.print());</script>
-    @endif
 </body>
 </html>

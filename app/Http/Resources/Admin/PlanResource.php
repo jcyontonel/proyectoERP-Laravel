@@ -22,6 +22,7 @@ class PlanResource extends JsonResource
             'dias_prueba'          => $this->dias_prueba,
             'activo'               => $this->activo,
             'orden'                => $this->orden,
+            'modulos'              => $this->modulos ?? array_keys(config('suscripciones.modulos')),   // null = todos
             'precios'              => $this->whenLoaded('precios', fn () => $this->precios->map(fn ($p) => [
                 'id' => $p->id, 'periodicidad' => $p->periodicidad, 'meses' => $p->meses, 'precio' => $p->precio, 'activo' => $p->activo,
             ])->values()),

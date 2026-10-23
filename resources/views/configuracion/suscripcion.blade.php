@@ -31,7 +31,12 @@
             <x-card title="Consumo del plan" icon="bar-chart" :subtitle="$s ? 'Los comprobantes se cuentan por mes calendario: el contador se reinicia el día 1.' : 'Tu empresa aún no tiene un plan asignado: por ahora no hay límites.'">
                 <div class="space-y-4">
                     @foreach ($resumen['limites'] as $recurso => $l)
-                        @php $lleno = $l['maximo'] && $l['usado'] >= $l['maximo']; @endphp
+                        @php
+                            // Solo los comprobantes del mes se "agotan"; productos, usuarios y almacenes en su tope es normal
+                            $alerta = $recurso === 'comprobantes';
+                            $lleno = $alerta && $l['maximo'] && $l['usado'] >= $l['maximo'];
+                            $l['fraccion'] = $alerta ? $l['fraccion'] : 0;
+                        @endphp
                         <div>
                             <div class="flex items-baseline justify-between text-sm">
                                 <span class="font-medium">{{ ucfirst($l['etiqueta']) }}</span>
@@ -42,7 +47,7 @@
                             @if ($l['maximo'])
                                 <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow="{{ $l['usado'] }}" aria-valuemax="{{ $l['maximo'] }}" aria-label="{{ $l['etiqueta'] }}">
                                     <div @class(['h-full rounded-full', 'bg-red-500' => $lleno, 'bg-amber-500' => ! $lleno && $l['fraccion'] >= config('suscripciones.aviso_uso'), 'bg-brand-500' => $l['fraccion'] < config('suscripciones.aviso_uso')])
-                                        style="width: {{ max($l['fraccion'] * 100, 2) }}%"></div>
+                                        style="width: {{ max(min($l['usado'] / $l['maximo'], 1) * 100, 2) }}%"></div>
                                 </div>
                             @endif
                         </div>
@@ -57,7 +62,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left text-xs text-slate-500">
-                                <tr><th class="py-2 pr-3">Periodo</th><th class="px-3 py-2">Plan</th><th class="px-3 py-2 text-right">Monto</th><th class="px-3 py-2">Estado</th><th class="py-2 pl-3">Pagado el</th></tr>
+                                <tr><th class="py-2 pr-3">Periodo</th><th class="px-3 py-2">Plan</th><th class="px-3 py-2 text-right">Monto</th><th class="px-3 py-2">Estado</th><th class="px-3 py-2">Pagado el</th><th class="py-2 pl-3">Comprobante</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach ($pagos as $p)
@@ -69,7 +74,19 @@
                                             @if ($p->descuento > 0)<p class="text-[11px] text-emerald-700">−<x-money :value="$p->descuento" /> de descuento</p>@endif
                                         </td>
                                         <td class="px-3 py-2"><x-badge :tone="$tonosPago[$p->estado] ?? 'neutral'" shape="box">{{ ucfirst($p->estado) }}</x-badge></td>
-                                        <td class="py-2 pl-3 whitespace-nowrap text-slate-600">{{ $p->fecha_pago?->format('d/m/Y') ?? '—' }} @if ($p->metodo)<span class="text-xs text-slate-500">· {{ $metodos[$p->metodo] ?? $p->metodo }}</span>@endif</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-slate-600">{{ $p->fecha_pago?->format('d/m/Y') ?? '—' }} @if ($p->metodo)<span class="text-xs text-slate-500">· {{ $metodos[$p->metodo] ?? $p->metodo }}</span>@endif</td>
+                                        <td class="py-2 pl-3 whitespace-nowrap">
+                                            @if ($c = $p->comprobante)
+                                                <a href="{{ route('config.suscripcion.comprobante', [$p, 'impreso']) }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ $c->numeroCompleto() }}</a>
+                                                <x-badge :tone="$c->tono()" shape="box">{{ $c->fueAceptado() ? 'SUNAT ✓' : $c->etiqueta() }}</x-badge>
+                                                @if ($c->facturador_id)
+                                                    <a href="{{ route('config.suscripcion.comprobante', [$p, 'xml']) }}" class="ml-1 text-xs text-slate-500 hover:underline">XML</a>
+                                                    @if ($c->fueAceptado())<a href="{{ route('config.suscripcion.comprobante', [$p, 'cdr']) }}" class="ml-1 text-xs text-slate-500 hover:underline">CDR</a>@endif
+                                                @endif
+                                            @else
+                                                <span class="text-slate-400">—</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -102,8 +119,17 @@
                             <p class="mt-0.5 text-xs text-slate-500">
                                 {{ $plan->max_comprobantes_mes ? number_format($plan->max_comprobantes_mes) . ' comprobantes/mes' : 'Comprobantes ilimitados' }} ·
                                 {{ $plan->max_productos ? number_format($plan->max_productos) . ' productos' : 'productos ilimitados' }} ·
-                                {{ $plan->max_usuarios ?? '∞' }} usuarios
+                                {{ $plan->max_usuarios ?? '∞' }} usuarios ·
+                                {{ $plan->max_almacenes ?? '∞' }} {{ $plan->max_almacenes === 1 ? 'almacén' : 'almacenes' }}
                             </p>
+                            {{-- Módulos: lo que incluye (✓) y lo que no (tachado) --}}
+                            <ul class="mt-2 grid gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-2">
+                                @foreach (\App\Support\Modulos::catalogo() as $clave => [$nombreModulo])
+                                    <li @class(['flex items-center gap-1', 'text-slate-700' => $plan->incluye($clave), 'text-slate-400 line-through' => ! $plan->incluye($clave)])>
+                                        <x-icon :name="$plan->incluye($clave) ? 'check' : 'x'" :class="$plan->incluye($clave) ? 'size-3 text-emerald-600' : 'size-3'" />{{ $nombreModulo }}
+                                    </li>
+                                @endforeach
+                            </ul>
                             <p class="mt-1.5 text-xs">
                                 @foreach ($plan->precios as $pr)
                                     <span class="mr-2 whitespace-nowrap"><strong><x-money :value="$pr->precio" /></strong> {{ strtolower($periodicidades[$pr->periodicidad][0] ?? $pr->periodicidad) }}</span>

@@ -32,6 +32,8 @@ class EmpresaService
         ['modulo' => 'transferencia',   'tipo' => 'TR', 'destipo' => 'Transferencia',        'serie' => 'TR01'],
         ['modulo' => 'devolucion',      'tipo' => 'DV', 'destipo' => 'Devolución',           'serie' => 'DV01'],
         ['modulo' => 'fraccionamiento', 'tipo' => 'FR', 'destipo' => 'Fraccionamiento',      'serie' => 'FR01'],
+        ['modulo' => 'cotizacion',      'tipo' => 'CT', 'destipo' => 'Cotización',           'serie' => 'CT01'],
+        ['modulo' => 'orden_compra',    'tipo' => 'OC', 'destipo' => 'Orden de compra',      'serie' => 'OC01'],
     ];
 
     public const MOTIVOS_AJUSTE = [

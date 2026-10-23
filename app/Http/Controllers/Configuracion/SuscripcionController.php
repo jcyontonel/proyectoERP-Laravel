@@ -20,7 +20,7 @@ class SuscripcionController extends Controller
 
         return view('configuracion.suscripcion', [
             'resumen' => $suscripciones->resumen($empresaId),
-            'pagos'   => PagoSuscripcion::query()->where('empresa_id', $empresaId)->with('suscripcion.plan')->latest('id')->limit(24)->get(),
+            'pagos'   => PagoSuscripcion::query()->where('empresa_id', $empresaId)->with('suscripcion.plan', 'comprobante')->latest('id')->limit(24)->get(),
             'planes'  => Plan::query()->activo()->with(['precios' => fn ($q) => $q->where('activo', true)])->orderBy('orden')->get(),
             'periodicidades' => config('suscripciones.periodicidades'),
             'metodos' => config('suscripciones.metodos_pago'),

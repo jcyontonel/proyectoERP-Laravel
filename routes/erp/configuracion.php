@@ -3,6 +3,7 @@
 use App\Http\Controllers\Configuracion\AlmacenController;
 use App\Http\Controllers\Configuracion\AuditoriaController;
 use App\Http\Controllers\Configuracion\CajaController;
+use App\Http\Controllers\Configuracion\ComprobanteSuscripcionController;
 use App\Http\Controllers\Configuracion\EmpresaController;
 use App\Http\Controllers\Configuracion\ImpuestoController;
 use App\Http\Controllers\Configuracion\MotivoAjusteController;
@@ -45,6 +46,8 @@ Route::prefix('configuracion')->group(function () {
         Route::put('sunat', [SunatController::class, 'update'])->name('config.sunat.update');
         Route::get('auditoria', [AuditoriaController::class, 'index'])->name('config.auditoria');
         Route::get('suscripcion', SuscripcionController::class)->name('config.suscripcion');
+        Route::get('suscripcion/pagos/{pago}/comprobante/{cual}', ComprobanteSuscripcionController::class)
+            ->name('config.suscripcion.comprobante')->where('cual', 'impreso|xml|cdr');
         Route::get('auditoria/exportar', [AuditoriaController::class, 'export'])->name('config.auditoria.export');
     });
 

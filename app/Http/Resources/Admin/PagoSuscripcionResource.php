@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\ComprobanteSunat;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,6 +32,31 @@ class PagoSuscripcionResource extends JsonResource
             'registrado_por' => $this->registrado_por,
             'notas'          => $this->notas,
             'creado'         => $this->created_at?->toIso8601String(),
+            // Factura/boleta electrónica del pago y, si se anuló fuera de plazo, su nota de crédito
+            'comprobante'    => $this->whenLoaded('comprobante', fn () => self::comprobante($this->comprobante)),
+            'nota_credito'   => $this->whenLoaded('notaCredito', fn () => self::comprobante($this->notaCredito)),
         ];
+    }
+
+    public static function comprobante(?ComprobanteSunat $c): ?array
+    {
+        return $c ? [
+            'tipo'          => $c->tipo,
+            'tipo_nombre'   => ['01' => 'Factura', '03' => 'Boleta', '07' => 'Nota de crédito'][$c->tipo] ?? $c->tipo,
+            'numero'        => $c->numeroCompleto(),
+            'estado'        => $c->estado,
+            'estado_nombre' => $c->etiqueta(),
+            'tono'          => $c->tono(),
+            'aceptado'      => $c->fueAceptado(),
+            'codigo'        => $c->codigo_respuesta,
+            'mensaje'       => $c->mensaje_respuesta,
+            'observaciones' => $c->observaciones ?? [],
+            'hash'          => $c->hash,
+            'baja_estado'   => $c->baja_estado,
+            'reenviable'    => $c->esReenviable() || $c->baja_estado === 'por_pedir',
+            'tiene_archivos' => (bool) $c->facturador_id,
+            'intentos'      => $c->intentos,
+            'emitido'       => $c->created_at?->toIso8601String(),
+        ] : null;
     }
 }

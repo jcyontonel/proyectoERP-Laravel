@@ -16,6 +16,8 @@ class CorrelativoService
         'transferencia' => ['TR', 'Transferencia', 'TR01'],
         'devolucion'    => ['DV', 'Devolución', 'DV01'],
         'fraccionamiento' => ['FR', 'Fraccionamiento', 'FR01'],
+        'cotizacion'      => ['CT', 'Cotización', 'CT01'],
+        'orden_compra'    => ['OC', 'Orden de compra', 'OC01'],
     ];
 
     /**

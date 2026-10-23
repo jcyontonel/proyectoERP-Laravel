@@ -79,7 +79,7 @@ class CompraController extends Controller
         $compra->load([
             'empresa', 'almacen', 'usuario', 'proveedor.tipoDocumento',
             'detalles.producto', 'detalles.lote', 'detalles.tipoUnidad',
-            'pagos.usuario',
+            'pagos.usuario', 'ordenesCompra',
         ]);
 
         return view('compras.show', compact('compra'));

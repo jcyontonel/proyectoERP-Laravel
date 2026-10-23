@@ -8,6 +8,7 @@ use App\Models\Almacen;
 use App\Models\Categoria;
 use App\Models\User;
 use App\Services\Reportes\ReporteService;
+use App\Support\Modulos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -21,10 +22,13 @@ class ReporteController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $empresaId = $this->empresaId($request);
+
         return view('reportes.index', [
-            'grupos' => collect(ReporteService::CATALOGO)->map(fn ($r, $clave) => [
+            // Solo los reportes que incluye el plan de la empresa
+            'grupos' => collect(ReporteService::CATALOGO)->filter(fn ($r, $clave) => Modulos::rutaIncluida("reportes.{$clave}", $empresaId))->map(fn ($r, $clave) => [
                 'clave' => $clave, 'titulo' => $r[0], 'descripcion' => $r[1], 'icono' => $r[2], 'grupo' => $r[3],
             ])->groupBy('grupo'),
         ]);

@@ -45,4 +45,10 @@ class DetalleVenta extends Model
     {
         return $this->belongsTo(TipoUnidad::class, 'tipo_unidad_id');
     }
+
+    /** Afectación del IGV (catálogo SUNAT 07) para la facturación electrónica */
+    public function impuesto(): BelongsTo
+    {
+        return $this->belongsTo(Impuesto::class);
+    }
 }
