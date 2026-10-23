@@ -7,20 +7,8 @@ use App\Modulos\Plataforma\Http\Controllers\Api\PlanController;
 use App\Modulos\Plataforma\Http\Controllers\Api\ResumenController;
 use App\Modulos\Plataforma\Http\Controllers\Api\SuscripcionController;
 use App\Modulos\Plataforma\Http\Controllers\Api\UsuarioEmpresaController;
-use App\Modulos\Nucleo\Http\Controllers\AuthController;
-use App\Modulos\Erp\Http\Controllers\VentaController;
 use App\Modulos\Plataforma\Http\Middleware\TokenAdministracion;
 use Illuminate\Support\Facades\Route;
-
-// AuthController@login responde JSON (con token Sanctum) cuando la petición lo pide
-Route::post('login', [AuthController::class, 'login']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('user', [AuthController::class, 'user']);
-
-    Route::post('ventas', [VentaController::class, 'store']);
-});
 
 /*
 | API de administración: la usa el proyecto admin (ricopet/admin) para gestionar empresas,
@@ -63,10 +51,3 @@ Route::prefix('admin')->name('api.admin.')->middleware([TokenAdministracion::cla
     Route::get('pagos/{pago}/comprobante/{cual}', [PagoController::class, 'archivo'])->name('pagos.comprobante.archivo')
         ->where('cual', 'xml|cdr|nota-xml|nota-cdr');
 });
-
-/*
-| Avisos del facturador electrónico (ricopet/facturacion): cambios de estado en SUNAT.
-| Sin sesión: se valida la firma HMAC con FACTURADOR_WEBHOOK_SECRETO.
-*/
-Route::post('facturador/webhook', \App\Modulos\Facturacion\Http\Controllers\Api\FacturadorWebhookController::class)
-    ->middleware('throttle:600,1')->name('api.facturador.webhook');

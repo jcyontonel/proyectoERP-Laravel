@@ -12,8 +12,8 @@ Env::disablePutenv();
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        // Las rutas de cada módulo las publica su provider (app/Modulos/*/Providers)
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )

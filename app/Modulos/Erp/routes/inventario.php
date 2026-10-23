@@ -1,28 +1,20 @@
 <?php
 
 use App\Modulos\Erp\Http\Controllers\Inventario\AjusteInventarioController;
-use App\Modulos\Catalogo\Http\Controllers\Inventario\CategoriaController;
 use App\Modulos\Erp\Http\Controllers\Inventario\FraccionamientoController;
 use App\Modulos\Erp\Http\Controllers\Inventario\KardexController;
 use App\Modulos\Erp\Http\Controllers\Inventario\LoteController;
 use App\Modulos\Erp\Http\Controllers\Inventario\ReglaFraccionamientoController;
 use App\Modulos\Erp\Http\Controllers\Inventario\TransferenciaController;
-use App\Modulos\Catalogo\Http\Controllers\ProductoController;
 use Illuminate\Support\Facades\Route;
 
-/* ───── Productos (consulta: cualquier usuario; cambios: ProductoPolicy) ───── */
-Route::resource('productos', ProductoController::class);
+// (Productos y categorías: módulo Catálogo)
 
 // Reglas de fraccionamiento del producto de origen (1 saco = 15 kg de otro producto)
 Route::controller(ReglaFraccionamientoController::class)->prefix('productos/{producto}/fracciones')->name('productos.fracciones.')->group(function () {
     Route::post('/', 'store')->name('store');
     Route::delete('{regla}', 'destroy')->name('destroy');
 });
-
-/* ───── Categorías ───── */
-Route::resource('categorias', CategoriaController::class)
-    ->except('show')
-    ->middleware('can:gestionar-productos');
 
 /* ───── Movimientos de inventario ───── */
 Route::middleware('can:gestionar-inventario')->group(function () {
