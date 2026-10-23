@@ -45,7 +45,7 @@
             </div>
             @if ($nota->devolucion)
                 <p class="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                    <x-icon name="package" class="size-3.5" /> Devolución {{ $nota->devolucion->serie }}-{{ \App\Models\Correlativo::formatear($nota->devolucion->numero) }}:
+                    <x-icon name="package" class="size-3.5" /> Devolución {{ $nota->devolucion->serie }}-{{ \App\Modulos\Erp\Models\Correlativo::formatear($nota->devolucion->numero) }}:
                     el stock volvió a {{ $nota->devolucion->almacen?->nombre ?? 'el almacén' }}{{ $nota->devolucion->estado === 'anulada' ? ' (revertida al anular la nota)' : '' }}.
                 </p>
             @endif

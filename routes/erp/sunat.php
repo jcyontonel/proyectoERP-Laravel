@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ComprobanteSunatController;
+use App\Modulos\Facturacion\Http\Controllers\ComprobanteSunatController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Envíos a SUNAT (facturador electrónico) ───── */

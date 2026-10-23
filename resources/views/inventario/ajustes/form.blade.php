@@ -32,7 +32,7 @@
             <x-card title="Datos del ajuste" icon="sliders">
                 <div class="space-y-4">
                     <x-select name="tipo" label="Tipo de ajuste *">
-                        @foreach (\App\Models\AjusteInventario::TIPOS as $v => $e)
+                        @foreach (\App\Modulos\Erp\Models\AjusteInventario::TIPOS as $v => $e)
                             <option value="{{ $v }}" @selected(old('tipo', $ajuste->tipo) === $v)>{{ $e }}</option>
                         @endforeach
                     </x-select>

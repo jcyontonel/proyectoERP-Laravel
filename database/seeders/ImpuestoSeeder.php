@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Impuesto;
+use App\Modulos\Nucleo\Models\Impuesto;
 use Illuminate\Database\Seeder;
 
 class ImpuestoSeeder extends Seeder

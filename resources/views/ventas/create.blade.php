@@ -110,7 +110,7 @@
     @endif
 
     @if (collect($correlativos)->isNotEmpty() && ! collect($correlativos)->whereIn('tipo', ['01', '03'])->count()
-        && app(\App\Services\Facturacion\FacturacionElectronicaService::class)->activo())
+        && app(\App\Modulos\Facturacion\Services\FacturacionElectronicaService::class)->activo())
         <x-alert tone="warning" class="mt-4">
             Solo tienes series de <strong>ticket</strong> activas: los tickets no se envían a SUNAT.
             Para emitir boletas o facturas electrónicas, activa las series B001 / F001 en

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Cliente;
-use App\Models\Empresa;
-use App\Models\TipoDocumento;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\ConEmpresa;

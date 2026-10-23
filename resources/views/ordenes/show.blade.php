@@ -3,7 +3,7 @@
 
 @php
     $o = $orden;
-    [$etiqueta, $tono] = \App\Models\OrdenCompra::ESTADOS[$o->estado];
+    [$etiqueta, $tono] = \App\Modulos\Erp\Models\OrdenCompra::ESTADOS[$o->estado];
     $qty = fn ($n) => rtrim(rtrim(number_format($n, 4, '.', ''), '0'), '.');
 @endphp
 

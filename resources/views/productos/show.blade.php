@@ -6,7 +6,7 @@
 --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @php
     $unidad      = $producto->tipoUnidad?->descripcion ?? 'unidad';

@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditoriaEvento;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Impuesto;
-use App\Models\PreferenciaUsuario;
-use App\Models\Producto;
-use App\Models\TipoUnidad;
-use App\Models\User;
-use App\Support\EmpresaActual;
+use App\Modulos\Nucleo\Models\AuditoriaEvento;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\Impuesto;
+use App\Modulos\Nucleo\Models\PreferenciaUsuario;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Catalogo\Models\TipoUnidad;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Nucleo\Support\EmpresaActual;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -224,7 +224,7 @@ class ConfiguracionAvanzadaTest extends TestCase
             ->assertSessionHasErrors('empresa_inicio_id');
 
         // La alerta de caja cerrada (oculta) ya no aparece
-        $alertas = app(\App\Services\NotificacionService::class)->alertas($this->empresa->id, $this->comoUsuario($this->admin->fresh(), $this->empresa));
+        $alertas = app(\App\Modulos\Erp\Services\NotificacionService::class)->alertas($this->empresa->id, $this->comoUsuario($this->admin->fresh(), $this->empresa));
         $this->assertFalse($alertas->contains('titulo', 'Caja cerrada'));
     }
 
@@ -241,7 +241,7 @@ class ConfiguracionAvanzadaTest extends TestCase
             'productos' => [['id' => $producto->id, 'cantidad' => 1]],
         ])->assertSessionHas('imprimir_ticket', true);
 
-        $venta = \App\Models\Venta::firstOrFail();
+        $venta = \App\Modulos\Erp\Models\Venta::firstOrFail();
         $this->actingAs($this->admin)->get(route('ventas.ticket', [$venta, 'auto' => 1]))->assertOk()->assertSee('54mm')->assertSee('window.print()', false);
     }
 }

@@ -1,18 +1,18 @@
 <?php
 
-use App\Http\Controllers\Configuracion\AlmacenController;
-use App\Http\Controllers\Configuracion\AuditoriaController;
-use App\Http\Controllers\Configuracion\CajaController;
-use App\Http\Controllers\Configuracion\ComprobanteSuscripcionController;
-use App\Http\Controllers\Configuracion\EmpresaController;
-use App\Http\Controllers\Configuracion\ImpuestoController;
-use App\Http\Controllers\Configuracion\MotivoAjusteController;
-use App\Http\Controllers\Configuracion\RolController;
-use App\Http\Controllers\Configuracion\SerieController;
-use App\Http\Controllers\Configuracion\SunatController;
-use App\Http\Controllers\Configuracion\SuscripcionController;
-use App\Http\Controllers\Configuracion\UnidadController;
-use App\Http\Controllers\Configuracion\UsuarioController;
+use App\Modulos\Erp\Http\Controllers\Configuracion\AlmacenController;
+use App\Modulos\Nucleo\Http\Controllers\Configuracion\AuditoriaController;
+use App\Modulos\Erp\Http\Controllers\Configuracion\CajaController;
+use App\Modulos\Suscripciones\Http\Controllers\Configuracion\ComprobanteSuscripcionController;
+use App\Modulos\Nucleo\Http\Controllers\Configuracion\EmpresaController;
+use App\Modulos\Nucleo\Http\Controllers\Configuracion\ImpuestoController;
+use App\Modulos\Erp\Http\Controllers\Configuracion\MotivoAjusteController;
+use App\Modulos\Nucleo\Http\Controllers\Configuracion\RolController;
+use App\Modulos\Erp\Http\Controllers\Configuracion\SerieController;
+use App\Modulos\Facturacion\Http\Controllers\Configuracion\SunatController;
+use App\Modulos\Suscripciones\Http\Controllers\Configuracion\SuscripcionController;
+use App\Modulos\Catalogo\Http\Controllers\Configuracion\UnidadController;
+use App\Modulos\Nucleo\Http\Controllers\Configuracion\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Configuración de la empresa ───── */

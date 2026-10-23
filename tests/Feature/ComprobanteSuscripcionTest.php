@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\ComprobanteSunat;
-use App\Models\Empresa;
-use App\Models\PagoSuscripcion;
-use App\Models\Plan;
-use App\Services\SuscripcionService;
+use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;

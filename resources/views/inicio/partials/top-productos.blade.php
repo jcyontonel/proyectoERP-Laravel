@@ -1,4 +1,4 @@
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 {{-- $topProductos: id, nombre, unidad, cantidad, importe (últimos 30 días) --}}
 <x-card title="Más vendidos" icon="trending-up" subtitle="Últimos 30 días, por importe">
     @if ($topProductos->isEmpty())

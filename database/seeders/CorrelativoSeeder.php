@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Empresa;
-use App\Services\EmpresaService;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Services\EmpresaService;
 use Illuminate\Database\Seeder;
 
 /** Series iniciales de cada empresa (la lista está en EmpresaService::SERIES) */

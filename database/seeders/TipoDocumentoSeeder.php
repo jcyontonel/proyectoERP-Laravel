@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\TipoDocumento;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Seeder;
 
 class TipoDocumentoSeeder extends Seeder

@@ -22,7 +22,7 @@
 
         <x-card title="Datos de la serie" icon="hash">
             @if ($fija)
-                <x-alert tone="info" class="mb-4">Esta serie ya emitió documentos hasta el número {{ \App\Models\Correlativo::formatear($serie->numero) }}: solo puedes cambiar su descripción, adelantar el número o desactivarla.</x-alert>
+                <x-alert tone="info" class="mb-4">Esta serie ya emitió documentos hasta el número {{ \App\Modulos\Erp\Models\Correlativo::formatear($serie->numero) }}: solo puedes cambiar su descripción, adelantar el número o desactivarla.</x-alert>
             @endif
 
             <fieldset @disabled($fija) class="grid gap-4 sm:grid-cols-2">

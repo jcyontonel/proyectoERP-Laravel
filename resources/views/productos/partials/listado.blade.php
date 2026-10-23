@@ -1,4 +1,4 @@
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 @php
     // "148.5 Kilogramo" o "Servicio"
     $stockTexto = fn ($p) => $p->es_servicio ? 'Servicio' : Unidades::conUnidad($p->stock_total ?? 0, $p->tipoUnidad?->descripcion);
@@ -13,7 +13,7 @@
 
     @if ($productos->isEmpty())
         <x-empty-state class="border-t border-slate-200" icon="package" title="No se encontraron productos" description="Crea el primero o prueba con otros filtros.">
-            @can('create', App\Models\Producto::class)
+            @can('create', App\Modulos\Catalogo\Models\Producto::class)
                 <a href="{{ route('productos.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nuevo producto</a>
             @endcan
         </x-empty-state>

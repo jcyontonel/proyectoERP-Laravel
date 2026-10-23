@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Almacen;
-use App\Models\Empresa;
-use App\Models\Kardex;
-use App\Models\Producto;
-use App\Models\TipoUnidad;
+use App\Modulos\Erp\Models\Almacen;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Kardex;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Catalogo\Models\TipoUnidad;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;

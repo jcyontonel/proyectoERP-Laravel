@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\CompraController;
-use App\Http\Controllers\OrdenCompraController;
-use App\Http\Controllers\ProveedorController;
+use App\Modulos\Erp\Http\Controllers\CompraController;
+use App\Modulos\Erp\Http\Controllers\OrdenCompraController;
+use App\Modulos\Erp\Http\Controllers\ProveedorController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Compras ───── */

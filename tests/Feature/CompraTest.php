@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\AlmacenProducto;
-use App\Models\Compra;
-use App\Models\Empresa;
-use App\Models\Proveedor;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Erp\Models\Compra;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Proveedor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;

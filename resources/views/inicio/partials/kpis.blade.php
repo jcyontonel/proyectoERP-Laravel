@@ -52,7 +52,7 @@
 
     @if ($widgets['lotes'] && ! $widgets['ventas'])
         <x-stat-card title="Lotes por vencer" icon="calendar-clock" tone="amber" :value="number_format($porVencer->count())">
-            <span>en los próximos {{ \App\Services\NotificacionService::DIAS_POR_VENCER }} días</span>
+            <span>en los próximos {{ \App\Modulos\Erp\Services\NotificacionService::DIAS_POR_VENCER }} días</span>
         </x-stat-card>
     @endif
 </section>

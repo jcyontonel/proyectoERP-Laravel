@@ -71,7 +71,7 @@
         <div class="fila"><span>IGV</span><span>S/ {{ $dinero($nota->total_impuestos) }}</span></div>
         <div class="fila b grande"><span>TOTAL</span><span>S/ {{ $dinero($nota->total) }}</span></div>
         <hr>
-        <p class="chico">SON: {{ \App\Support\NumeroALetras::moneda($nota->total, config('ventas.moneda_nombre', 'SOLES')) }}</p>
+        <p class="chico">SON: {{ \App\Modulos\Nucleo\Support\NumeroALetras::moneda($nota->total, config('ventas.moneda_nombre', 'SOLES')) }}</p>
         @if ($nota->usuario)<p class="chico">Emitió: {{ $nota->usuario->name }}</p>@endif
     </div>
 

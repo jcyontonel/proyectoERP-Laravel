@@ -1,11 +1,11 @@
 {{-- Transferencia: $transferencia (origen, destino, usuario, receptor, detalles.producto, detalles.lote) --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @php
     $t = $transferencia;
-    $enTransito = $t->estado === \App\Models\TransferenciaAlmacen::EN_TRANSITO;
+    $enTransito = $t->estado === \App\Modulos\Erp\Models\TransferenciaAlmacen::EN_TRANSITO;
 @endphp
 
 @section('title', 'Transferencia ' . $t->numero_completo)

@@ -1,4 +1,4 @@
-{{-- $item: clave, label, icon, url, activo, pronto, contador (App\Support\Menu) --}}
+{{-- $item: clave, label, icon, url, activo, pronto, contador (App\Modulos\Nucleo\Support\Menu) --}}
 <li>
     <a href="{{ $item->url }}" title="{{ $item->label }}{{ $item->pronto ? ' (próximamente)' : '' }}" @if ($item->activo) aria-current="page" @endif
         @class([

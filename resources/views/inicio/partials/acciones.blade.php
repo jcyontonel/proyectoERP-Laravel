@@ -8,7 +8,7 @@
     @can('gestionar-caja')
         <a href="{{ route('caja.index') }}" class="btn btn-secondary"><x-icon name="wallet" class="text-brand-600" /> {{ ($caja['abierta'] ?? false) ? 'Cerrar caja' : 'Abrir caja' }}</a>
     @endcan
-    @can('create', App\Models\Cliente::class)
+    @can('create', App\Modulos\Erp\Models\Cliente::class)
         @ruta('clientes.create')
             <a href="{{ route('clientes.create') }}" class="btn btn-secondary"><x-icon name="user" class="text-brand-600" /> Registrar cliente</a>
         @endruta
@@ -18,7 +18,7 @@
             <a href="{{ route('compras.create') }}" class="btn btn-secondary"><x-icon name="truck" class="text-brand-600" /> Registrar compra</a>
         @endruta
     @endcan
-    @can('create', App\Models\Producto::class)
+    @can('create', App\Modulos\Catalogo\Models\Producto::class)
         @ruta('productos.create')
             <a href="{{ route('productos.create') }}" class="btn btn-secondary"><x-icon name="package" class="text-brand-600" /> Nuevo producto</a>
         @endruta

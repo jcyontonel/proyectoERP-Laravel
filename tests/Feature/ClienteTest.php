@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Almacen;
-use App\Models\Cliente;
-use App\Models\Empresa;
-use App\Models\TipoDocumento;
-use App\Models\Venta;
+use App\Modulos\Erp\Models\Almacen;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\TipoDocumento;
+use App\Modulos\Erp\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;

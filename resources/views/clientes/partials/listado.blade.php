@@ -10,7 +10,7 @@
 
     @if ($clientes->isEmpty())
         <x-empty-state class="border-t border-slate-200" icon="users" title="No se encontraron clientes" description="Registra el primero o prueba con otros filtros.">
-            @can('create', App\Models\Cliente::class)
+            @can('create', App\Modulos\Erp\Models\Cliente::class)
                 <a href="{{ route('clientes.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nuevo cliente</a>
             @endcan
         </x-empty-state>

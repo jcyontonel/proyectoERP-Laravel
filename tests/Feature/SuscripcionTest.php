@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Oferta;
-use App\Models\PagoSuscripcion;
-use App\Models\Plan;
-use App\Models\Suscripcion;
-use App\Models\Venta;
-use App\Services\SuscripcionService;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Suscripciones\Models\Oferta;
+use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -205,7 +205,7 @@ class SuscripcionTest extends TestCase
         // Plan Total (todos los módulos): así solo se prueba el efecto de la suspensión
         $s = $this->servicio()->asignar($this->empresa, Plan::where('codigo', 'total')->first(), ['periodicidad' => 'mensual', 'pagado' => true]);
         $admin = $this->usuarioCon('Administrador', $this->empresa);
-        $cajaId = \App\Models\Caja::where('empresa_id', $this->empresa->id)->value('id');
+        $cajaId = \App\Modulos\Erp\Models\Caja::where('empresa_id', $this->empresa->id)->value('id');
 
         // Con el turno abierto antes de la suspensión
         $this->actingAs($admin)->post(route('caja.abrir'), ['caja_id' => $cajaId, 'monto_apertura' => 50])->assertSessionHasNoErrors();
@@ -219,7 +219,7 @@ class SuscripcionTest extends TestCase
         $this->actingAs($admin)->post(route('caja.movimientos.store'), ['tipo' => 'egreso', 'concepto' => 'X', 'metodo_pago' => 'efectivo', 'monto' => 5])->assertSessionHas('error');
         $this->actingAs($admin)->post(route('categorias.store'), ['nombre' => 'Nueva'])->assertSessionHas('error');
         $this->actingAs($admin)->put(route('config.empresa.update'), ['ruc' => $this->empresa->ruc, 'razon_social' => 'X'])->assertSessionHas('error');
-        $this->assertSame(0, \App\Models\MovimientoCaja::count());
+        $this->assertSame(0, \App\Modulos\Erp\Models\MovimientoCaja::count());
         $this->assertDatabaseMissing('categorias', ['nombre' => 'Nueva']);
         $this->actingAs($admin)->getJson(route('clientes.documento', '12345678'))->assertForbidden();
 

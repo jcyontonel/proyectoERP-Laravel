@@ -13,7 +13,7 @@
     <x-page-header title="Clientes" :migas="['Ventas' => null, 'Clientes' => null]"
         subtitle="Las personas y empresas a las que vendes, con su historial de compras en tu empresa.">
         <x-slot:acciones>
-            @can('create', App\Models\Cliente::class)
+            @can('create', App\Modulos\Erp\Models\Cliente::class)
                 <a href="{{ route('clientes.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nuevo cliente</a>
             @endcan
         </x-slot:acciones>

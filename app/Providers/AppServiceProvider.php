@@ -2,11 +2,19 @@
 
 namespace App\Providers;
 
-use App\Models\Nota;
-use App\Models\PagoSuscripcion;
-use App\Models\User;
-use App\Models\Venta;
+use App\Modulos\Erp\Models\Nota;
+use App\Modulos\Suscripciones\Models\PagoSuscripcion;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Catalogo\Policies\ProductoPolicy;
+use App\Modulos\Erp\Models\CajaSesion;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Erp\Policies\CajaSesionPolicy;
+use App\Modulos\Erp\Policies\ClientePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -35,6 +43,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Relation::morphMap(self::MORPH_MAP);
+
+        // Los modelos viven en app/Modulos/*/Models: la factory se busca por el nombre corto (database/factories)
+        Factory::guessFactoryNamesUsing(fn (string $modelo) => 'Database\\Factories\\' . class_basename($modelo) . 'Factory');
+
+        // Policies de los módulos (Laravel solo las adivina en app/Policies)
+        Gate::policy(Producto::class, ProductoPolicy::class);
+        Gate::policy(Cliente::class, ClientePolicy::class);
+        Gate::policy(CajaSesion::class, CajaSesionPolicy::class);
 
         // Define el rate limiter 'api' que usan las rutas con 'throttle:api'
         RateLimiter::for('api', function (Request $request) {

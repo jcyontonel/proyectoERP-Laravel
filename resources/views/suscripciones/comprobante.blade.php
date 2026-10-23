@@ -4,7 +4,7 @@
     $tipo = ['01' => 'FACTURA ELECTRÓNICA', '03' => 'BOLETA DE VENTA ELECTRÓNICA'][$c->tipo] ?? 'COMPROBANTE';
     $incluye = (bool) config('suscripciones.facturacion.precios_incluyen_igv');
     $igvPct = (float) ($emisor->igv ?: 18);
-    [$base, $igv, $total] = \App\Support\Montos::desglosar((float) $pago->monto, $igvPct, $incluye);
+    [$base, $igv, $total] = \App\Modulos\Erp\Support\Montos::desglosar((float) $pago->monto, $igvPct, $incluye);
     $cli = $pago->empresa;
     $periodo = config('suscripciones.periodicidades.' . $pago->suscripcion?->periodicidad . '.0', '');
 @endphp

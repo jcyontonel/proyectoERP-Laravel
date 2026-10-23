@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\EmpresaActualController;
-use App\Http\Controllers\InicioController;
-use App\Http\Controllers\PerfilController;
-use App\Http\Controllers\ProntoController;
+use App\Modulos\Nucleo\Http\Controllers\AuthController;
+use App\Modulos\Nucleo\Http\Controllers\EmpresaActualController;
+use App\Modulos\Erp\Http\Controllers\InicioController;
+use App\Modulos\Nucleo\Http\Controllers\PerfilController;
+use App\Modulos\Nucleo\Http\Controllers\ProntoController;
 use Illuminate\Support\Facades\Route;
 
 /*

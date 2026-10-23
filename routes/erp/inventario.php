@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\Inventario\AjusteInventarioController;
-use App\Http\Controllers\Inventario\CategoriaController;
-use App\Http\Controllers\Inventario\FraccionamientoController;
-use App\Http\Controllers\Inventario\KardexController;
-use App\Http\Controllers\Inventario\LoteController;
-use App\Http\Controllers\Inventario\ReglaFraccionamientoController;
-use App\Http\Controllers\Inventario\TransferenciaController;
-use App\Http\Controllers\ProductoController;
+use App\Modulos\Erp\Http\Controllers\Inventario\AjusteInventarioController;
+use App\Modulos\Catalogo\Http\Controllers\Inventario\CategoriaController;
+use App\Modulos\Erp\Http\Controllers\Inventario\FraccionamientoController;
+use App\Modulos\Erp\Http\Controllers\Inventario\KardexController;
+use App\Modulos\Erp\Http\Controllers\Inventario\LoteController;
+use App\Modulos\Erp\Http\Controllers\Inventario\ReglaFraccionamientoController;
+use App\Modulos\Erp\Http\Controllers\Inventario\TransferenciaController;
+use App\Modulos\Catalogo\Http\Controllers\ProductoController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Productos (consulta: cualquier usuario; cambios: ProductoPolicy) ───── */

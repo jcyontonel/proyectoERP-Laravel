@@ -2,8 +2,8 @@
 @extends('layouts.app')
 
 @php
-    use App\Models\ComprobanteSunat;
-    use App\Models\Nota;
+    use App\Modulos\Facturacion\Models\ComprobanteSunat;
+    use App\Modulos\Erp\Models\Nota;
     $titulo = $bajas ? 'Resúmenes y bajas' : 'Envíos a SUNAT';
     $ruta = $bajas ? 'sunat.resumenes' : 'sunat.index';
     $tipos = ['01' => 'Factura', '03' => 'Boleta', '07' => 'Nota de crédito', '08' => 'Nota de débito'];
@@ -68,7 +68,7 @@
                             $doc = $c->comprobante;
                             $url = match (true) {
                                 $doc instanceof Nota => route('notas.show', $doc),
-                                $doc instanceof \App\Models\Venta => route('ventas.show', $doc),
+                                $doc instanceof \App\Modulos\Erp\Models\Venta => route('ventas.show', $doc),
                                 default => null,   // pago de suscripción: se gestiona en el panel admin
                             };
                         @endphp
@@ -76,7 +76,7 @@
                             <td class="py-3 pl-5 pr-3">
                                 @if ($url)<a href="{{ $url }}" class="font-semibold text-brand-600 hover:text-brand-700">{{ $c->numeroCompleto() }}</a>@else<span class="font-semibold">{{ $c->numeroCompleto() }}</span>@endif
                                 <p class="text-xs text-slate-500">{{ $tipos[$c->tipo] ?? $c->tipo }} · {{ $c->created_at->format('d/m/Y H:i') }}</p>
-                                @if ($doc instanceof \App\Models\PagoSuscripcion)
+                                @if ($doc instanceof \App\Modulos\Suscripciones\Models\PagoSuscripcion)
                                     <p class="text-xs text-slate-500">Suscripción de {{ $doc->empresa?->razon_social }}</p>
                                 @endif
                             </td>

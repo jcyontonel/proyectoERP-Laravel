@@ -2,14 +2,14 @@
 
 namespace Tests\Concerns;
 
-use App\Models\Almacen;
-use App\Models\AlmacenProducto;
-use App\Models\Caja;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Producto;
-use App\Models\User;
-use App\Support\EmpresaActual;
+use App\Modulos\Erp\Models\Almacen;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Erp\Models\Caja;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Nucleo\Support\EmpresaActual;
 use Database\Seeders\ImpuestoSeeder;
 use Database\Seeders\MonedaSeeder;
 use Database\Seeders\RolesYPermisosSeeder;

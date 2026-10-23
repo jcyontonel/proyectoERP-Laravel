@@ -7,7 +7,7 @@
 --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', $cliente->nombre_completo)
 

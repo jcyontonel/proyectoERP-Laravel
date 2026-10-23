@@ -135,7 +135,7 @@
                                             @if ($a->es_principal)<x-badge tone="info" class="ml-1">Principal</x-badge>@endif
                                         </td>
                                         @if ($editando)
-                                            <td class="px-3 py-2.5 text-right text-slate-600">{{ \App\Support\Unidades::cantidad($stocks[$a->id]->stock ?? 0) }}</td>
+                                            <td class="px-3 py-2.5 text-right text-slate-600">{{ \App\Modulos\Catalogo\Support\Unidades::cantidad($stocks[$a->id]->stock ?? 0) }}</td>
                                         @endif
                                         <td class="px-3 py-2.5">
                                             <input type="number" name="almacenes[{{ $i }}][stock_minimo]" step="0.0001" min="0" aria-label="Stock mínimo en {{ $a->nombre }}"

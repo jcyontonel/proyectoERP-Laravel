@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Categoria;
-use App\Models\Empresa;
-use App\Models\Producto;
-use App\Models\TipoUnidad;
+use App\Modulos\Catalogo\Models\Categoria;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Catalogo\Models\TipoUnidad;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

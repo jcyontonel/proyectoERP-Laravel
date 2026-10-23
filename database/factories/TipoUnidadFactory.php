@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\TipoUnidad;
+use App\Modulos\Catalogo\Models\TipoUnidad;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

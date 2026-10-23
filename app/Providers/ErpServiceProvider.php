@@ -2,16 +2,16 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use App\Services\AuditoriaService;
-use App\Services\Dashboard\DashboardService;
-use App\Services\NotificacionService;
-use App\Services\SuscripcionService;
-use App\Support\EmpresaActual;
-use App\Support\Modulos;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Nucleo\Services\AuditoriaService;
+use App\Modulos\Erp\Services\Dashboard\DashboardService;
+use App\Modulos\Erp\Services\NotificacionService;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Nucleo\Support\EmpresaActual;
+use App\Modulos\Suscripciones\Support\Modulos;
 use Illuminate\Support\Facades\Blade;
-use App\View\Composers\EmpresaComposer;
-use App\View\Composers\LayoutComposer;
+use App\Modulos\Nucleo\View\Composers\EmpresaComposer;
+use App\Modulos\Nucleo\View\Composers\LayoutComposer;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;

@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\AjusteInventario;
-use App\Models\Almacen;
-use App\Models\AlmacenProducto;
-use App\Models\Empresa;
-use App\Models\Kardex;
-use App\Models\MotivoAjuste;
-use App\Models\TransferenciaAlmacen;
+use App\Modulos\Erp\Models\AjusteInventario;
+use App\Modulos\Erp\Models\Almacen;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Kardex;
+use App\Modulos\Erp\Models\MotivoAjuste;
+use App\Modulos\Erp\Models\TransferenciaAlmacen;
 use Database\Seeders\MotivoAjusteSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;

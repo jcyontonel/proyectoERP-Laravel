@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\Cliente;
-use App\Models\Compra;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Pago;
-use App\Models\Proveedor;
-use App\Models\Venta;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Erp\Models\Compra;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Pago;
+use App\Modulos\Erp\Models\Proveedor;
+use App\Modulos\Erp\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Empresa;
-use App\Models\Proveedor;
-use App\Models\TipoDocumento;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Proveedor;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

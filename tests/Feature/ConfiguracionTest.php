@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\User;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;

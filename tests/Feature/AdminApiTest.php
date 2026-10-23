@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Almacen;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Plan;
-use App\Models\Suscripcion;
-use App\Models\User;
+use App\Modulos\Erp\Models\Almacen;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\Suscripcion;
+use App\Modulos\Nucleo\Models\User;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;

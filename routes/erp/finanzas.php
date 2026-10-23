@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\Finanzas\CuentasCobrarController;
-use App\Http\Controllers\Finanzas\CuentasPagarController;
-use App\Http\Controllers\Finanzas\MovimientoFinanzasController;
+use App\Modulos\Erp\Http\Controllers\Finanzas\CuentasCobrarController;
+use App\Modulos\Erp\Http\Controllers\Finanzas\CuentasPagarController;
+use App\Modulos\Erp\Http\Controllers\Finanzas\MovimientoFinanzasController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Finanzas: cuentas por cobrar y por pagar ───── */

@@ -4,7 +4,7 @@
 @php
     $c = $cotizacion;
     $efectivo = $c->estadoEfectivo();
-    [$etiqueta, $tono] = \App\Models\Cotizacion::ESTADOS[$efectivo];
+    [$etiqueta, $tono] = \App\Modulos\Erp\Models\Cotizacion::ESTADOS[$efectivo];
     $acciones = [
         'aceptada'  => $c->estado === 'emitida',
         'rechazada' => in_array($c->estado, ['emitida', 'aceptada'], true),

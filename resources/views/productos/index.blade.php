@@ -17,7 +17,7 @@
             @can('gestionar-compras')
                 <a href="{{ route('compras.create') }}" class="btn btn-secondary"><x-icon name="truck" class="text-brand-600" /> Nueva compra</a>
             @endcan
-            @can('create', App\Models\Producto::class)
+            @can('create', App\Modulos\Catalogo\Models\Producto::class)
                 <a href="{{ route('productos.create') }}" class="btn btn-primary"><x-icon name="plus" /> Nuevo producto</a>
             @endcan
         </x-slot:acciones>

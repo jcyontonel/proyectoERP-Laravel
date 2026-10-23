@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\Api\Admin\EmpresaController;
-use App\Http\Controllers\Api\Admin\OfertaController;
-use App\Http\Controllers\Api\Admin\PagoController;
-use App\Http\Controllers\Api\Admin\PlanController;
-use App\Http\Controllers\Api\Admin\ResumenController;
-use App\Http\Controllers\Api\Admin\SuscripcionController;
-use App\Http\Controllers\Api\Admin\UsuarioEmpresaController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\VentaController;
-use App\Http\Middleware\TokenAdministracion;
+use App\Modulos\Plataforma\Http\Controllers\Api\EmpresaController;
+use App\Modulos\Plataforma\Http\Controllers\Api\OfertaController;
+use App\Modulos\Plataforma\Http\Controllers\Api\PagoController;
+use App\Modulos\Plataforma\Http\Controllers\Api\PlanController;
+use App\Modulos\Plataforma\Http\Controllers\Api\ResumenController;
+use App\Modulos\Plataforma\Http\Controllers\Api\SuscripcionController;
+use App\Modulos\Plataforma\Http\Controllers\Api\UsuarioEmpresaController;
+use App\Modulos\Nucleo\Http\Controllers\AuthController;
+use App\Modulos\Erp\Http\Controllers\VentaController;
+use App\Modulos\Plataforma\Http\Middleware\TokenAdministracion;
 use Illuminate\Support\Facades\Route;
 
 // AuthController@login responde JSON (con token Sanctum) cuando la petición lo pide
@@ -68,5 +68,5 @@ Route::prefix('admin')->name('api.admin.')->middleware([TokenAdministracion::cla
 | Avisos del facturador electrónico (ricopet/facturacion): cambios de estado en SUNAT.
 | Sin sesión: se valida la firma HMAC con FACTURADOR_WEBHOOK_SECRETO.
 */
-Route::post('facturador/webhook', \App\Http\Controllers\Api\FacturadorWebhookController::class)
+Route::post('facturador/webhook', \App\Modulos\Facturacion\Http\Controllers\Api\FacturadorWebhookController::class)
     ->middleware('throttle:600,1')->name('api.facturador.webhook');

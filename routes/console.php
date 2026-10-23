@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\SuscripcionService;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -20,7 +20,7 @@ Schedule::command('suscripciones:procesar')->dailyAt('06:00');
 
 // Facturación electrónica: envía al facturador lo que no llegó (sin conexión), pide bajas pendientes
 // y refresca estados por si se perdió un aviso. Requiere "php artisan schedule:work" (o la tarea de Windows).
-Artisan::command('facturacion:sincronizar', function (\App\Services\Facturacion\FacturacionElectronicaService $facturacion) {
+Artisan::command('facturacion:sincronizar', function (\App\Modulos\Facturacion\Services\FacturacionElectronicaService $facturacion) {
     if (! $facturacion->activo()) {
         $this->warn('Facturación electrónica apagada: falta FACTURADOR_URL o FACTURADOR_TOKEN en .env.');
 

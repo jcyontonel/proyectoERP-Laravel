@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Cliente;
-use App\Models\TipoDocumento;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Nucleo\Models\TipoDocumento;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

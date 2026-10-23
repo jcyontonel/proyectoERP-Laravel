@@ -24,7 +24,7 @@
         <x-input name="q" label="N.º u observación" :value="request('q')" />
         <x-select name="estado" label="Estado">
             <option value="">Todos</option>
-            @foreach (\App\Models\TransferenciaAlmacen::ESTADOS as $v => $e)<option value="{{ $v }}" @selected(request('estado') === $v)>{{ $e }}</option>@endforeach
+            @foreach (\App\Modulos\Erp\Models\TransferenciaAlmacen::ESTADOS as $v => $e)<option value="{{ $v }}" @selected(request('estado') === $v)>{{ $e }}</option>@endforeach
         </x-select>
         <x-select name="almacen_id" label="Almacén (origen o destino)">
             <option value="">Todos</option>

@@ -1,7 +1,7 @@
 {{-- Ajuste de inventario: $ajuste (almacen, motivo, usuario, aprobador, detalles.producto, detalles.lote) --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', 'Ajuste ' . $ajuste->numero_completo)
 

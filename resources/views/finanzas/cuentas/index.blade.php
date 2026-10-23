@@ -16,7 +16,7 @@
     $ruta = fn (string $accion, $p = []) => route($c['prefijo'] . '.' . $accion, $p);
     $hayFiltros = request()->hasAny(['q', 'estado', 'tramo']);
     $coloresTramo = ['al_dia' => 'bg-emerald-500', '1_30' => 'bg-amber-400', '31_60' => 'bg-orange-500', '61_90' => 'bg-red-500', 'mas_90' => 'bg-red-700'];
-    $esCobro = $c['modo'] === \App\Services\CuentasService::COBRAR;
+    $esCobro = $c['modo'] === \App\Modulos\Erp\Services\CuentasService::COBRAR;
 @endphp
 
 @section('content')

@@ -1,13 +1,13 @@
 <?php
 
 /*
- * Menú principal del ERP. Lo arma App\Support\Menu para el usuario actual.
+ * Menú principal del ERP. Lo arma App\Modulos\Nucleo\Support\Menu para el usuario actual.
  *
  *  clave       identificador único (también es la URL de /modulos/{clave} mientras no exista el módulo)
  *  route       nombre de ruta; si la ruta aún no existe, el ítem se muestra como "Pronto"
  *  activo      patrones de nombre de ruta que marcan el ítem como actual (por defecto: route)
  *  permiso     permiso de Spatie necesario (null = cualquier usuario de la empresa)
- *  contador    clave de App\Services\NotificacionService::contadores() para la burbuja
+ *  contador    clave de App\Modulos\Erp\Services\NotificacionService::contadores() para la burbuja
  *  descripcion texto de la página "Próximamente"
  */
 

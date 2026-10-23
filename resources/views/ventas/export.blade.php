@@ -1,7 +1,7 @@
 {{-- Reporte imprimible. Variables: $ventas, $empresa, $filtros --}}
 @php
     $metodos    = config('ventas.metodos_pago');
-    $completas  = $ventas->where('estado', \App\Models\Venta::COMPLETADA);
+    $completas  = $ventas->where('estado', \App\Modulos\Erp\Models\Venta::COMPLETADA);
     $totalVendido = $completas->sum('total');
     $etiquetas  = collect([
         'q'      => 'Búsqueda',

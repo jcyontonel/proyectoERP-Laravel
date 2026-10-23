@@ -1,5 +1,5 @@
 {{-- $porVencer: producto_id, producto, lote, vence, dias, cantidad --}}
-<x-card title="Lotes por vencer" icon="calendar-clock" :subtitle="'Próximos ' . \App\Services\NotificacionService::DIAS_POR_VENCER . ' días, con stock'">
+<x-card title="Lotes por vencer" icon="calendar-clock" :subtitle="'Próximos ' . \App\Modulos\Erp\Services\NotificacionService::DIAS_POR_VENCER . ' días, con stock'">
     @forelse ($porVencer as $l)
         <div class="flex items-center justify-between gap-3 border-b border-slate-100 py-2.5 text-sm last:border-0">
             <div class="min-w-0">

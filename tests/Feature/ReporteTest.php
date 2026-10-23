@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Empresa;
-use App\Models\Venta;
-use App\Services\Reportes\ReporteService;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Erp\Services\Reportes\ReporteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;
@@ -28,10 +28,10 @@ class ReporteTest extends TestCase
     {
         $admin = $this->usuarioCon('Administrador', $this->empresa);
         $p = $this->productoConStock($this->empresa, 20, ['nombre' => 'Producto reportado', 'precio_unitario' => 59, 'costo_unitario' => 30]);
-        \App\Models\AlmacenProducto::where('producto_id', $p->id)->update(['stock_minimo' => 25]);
+        \App\Modulos\Erp\Models\AlmacenProducto::where('producto_id', $p->id)->update(['stock_minimo' => 25]);
 
         $this->actingAs($admin)->post(route('ventas.store'), [
-            'accion' => 'registrar', 'correlativo_id' => \App\Models\Correlativo::value('id'), 'almacen_id' => $this->almacen($this->empresa)->id,
+            'accion' => 'registrar', 'correlativo_id' => \App\Modulos\Erp\Models\Correlativo::value('id'), 'almacen_id' => $this->almacen($this->empresa)->id,
             'fecha_emision' => now()->toDateString(), 'metodo_pago' => 'yape', 'productos' => [['id' => $p->id, 'cantidad' => 2]],
         ])->assertSessionHasNoErrors();
         $this->assertSame(1, Venta::count());

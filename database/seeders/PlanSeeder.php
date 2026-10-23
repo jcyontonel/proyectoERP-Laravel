@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Plan;
-use App\Models\PlanPrecio;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Suscripciones\Models\PlanPrecio;
 use Illuminate\Database\Seeder;
 
 /** Planes: Básico, Pro y Total (en ese orden), con sus módulos y precio mensual, trimestral y anual */

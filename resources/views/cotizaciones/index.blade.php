@@ -30,7 +30,7 @@
         </div>
         <x-select name="estado" label="Estado">
             <option value="">Todos</option>
-            @foreach (\App\Models\Cotizacion::ESTADOS as $valor => [$etiqueta])
+            @foreach (\App\Modulos\Erp\Models\Cotizacion::ESTADOS as $valor => [$etiqueta])
                 <option value="{{ $valor }}" @selected(request('estado') === $valor)>{{ $etiqueta }}</option>
             @endforeach
         </x-select>
@@ -49,7 +49,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($cotizaciones as $c)
-                        @php [$etiqueta, $tono] = \App\Models\Cotizacion::ESTADOS[$c->estadoEfectivo()]; @endphp
+                        @php [$etiqueta, $tono] = \App\Modulos\Erp\Models\Cotizacion::ESTADOS[$c->estadoEfectivo()]; @endphp
                         <tr class="hover:bg-slate-50/60">
                             <td class="py-3 pl-5 pr-3"><a href="{{ route('cotizaciones.show', $c) }}" class="font-semibold text-brand-600 hover:text-brand-700">{{ $c->numero_completo }}</a></td>
                             <td class="px-3 py-3">{{ $c->cliente?->nombre_completo ?? 'Sin cliente' }}</td>

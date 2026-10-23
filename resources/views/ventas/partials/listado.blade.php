@@ -1,6 +1,6 @@
 @php
     // Acciones por fila: solo las completadas se pueden anular
-    $puedeAnular = fn ($v) => $v->estado === \App\Models\Venta::COMPLETADA;
+    $puedeAnular = fn ($v) => $v->estado === \App\Modulos\Erp\Models\Venta::COMPLETADA;
 @endphp
 
 <section class="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm" aria-labelledby="titulo-listado">

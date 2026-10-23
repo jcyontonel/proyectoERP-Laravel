@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\Caja;
-use App\Models\Cliente;
-use App\Models\ComprobanteSunat;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Nota;
-use App\Models\TipoDocumento;
-use App\Models\User;
-use App\Models\Venta;
-use App\Services\EmpresaService;
+use App\Modulos\Erp\Models\Caja;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Nota;
+use App\Modulos\Nucleo\Models\TipoDocumento;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Erp\Services\EmpresaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;
@@ -85,8 +85,8 @@ class FacturadorRealTest extends TestCase
         $this->seed(\Database\Seeders\PlanSeeder::class);
         $cliente = $this->crearEmpresa(['ruc' => '20100070970', 'razon_social' => 'SUPERMERCADOS PERUANOS SOCIEDAD ANONIMA', 'direccion' => 'CAL. MORELLI 181']);
         config(['suscripciones.facturacion.emisor_empresa_id' => $this->empresa->id, 'services.admin.token' => 'token-e2e']);
-        $servicio = app(\App\Services\SuscripcionService::class);
-        $s = $servicio->asignar($cliente, \App\Models\Plan::where('codigo', 'basico')->firstOrFail(), ['periodicidad' => 'mensual']);
+        $servicio = app(\App\Modulos\Suscripciones\Services\SuscripcionService::class);
+        $s = $servicio->asignar($cliente, \App\Modulos\Suscripciones\Models\Plan::where('codigo', 'basico')->firstOrFail(), ['periodicidad' => 'mensual']);
 
         $pago = $servicio->registrarPago($s, ['metodo' => 'yape', 'referencia' => 'E2E-1']);
         $reg = $pago->comprobante()->first();

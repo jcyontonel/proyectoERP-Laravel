@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Caja\MovimientoCajaController;
-use App\Http\Controllers\Caja\TurnoCajaController;
+use App\Modulos\Erp\Http\Controllers\Caja\MovimientoCajaController;
+use App\Modulos\Erp\Http\Controllers\Caja\TurnoCajaController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Caja: turno actual, apertura, cierre, movimientos e historial ───── */

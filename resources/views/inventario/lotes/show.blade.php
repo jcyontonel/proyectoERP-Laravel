@@ -1,7 +1,7 @@
 {{-- LoteController@show: $lote (producto, existencias.almacen), $movimientos (kardex del lote) --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @php $d = $lote->fecha_vencimiento ? (int) today()->diffInDays($lote->fecha_vencimiento, false) : null; @endphp
 

@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Models\AlmacenProducto;
-use App\Models\Cliente;
-use App\Models\Correlativo;
-use App\Models\Devolucion;
-use App\Models\Empresa;
-use App\Models\Kardex;
-use App\Models\MovimientoCaja;
-use App\Models\Nota;
-use App\Models\Plan;
-use App\Models\User;
-use App\Models\Venta;
-use App\Services\EmpresaService;
-use App\Services\SuscripcionService;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Erp\Models\Devolucion;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Kardex;
+use App\Modulos\Erp\Models\MovimientoCaja;
+use App\Modulos\Erp\Models\Nota;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Erp\Services\EmpresaService;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
@@ -37,7 +37,7 @@ class NotaTest extends TestCase
         app(EmpresaService::class)->series($this->empresa);   // B001, BC01, BD01, DV01…
         $this->crearCaja($this->empresa);
         $this->admin = $this->usuarioCon('Administrador', $this->empresa);
-        $this->actingAs($this->admin)->post(route('caja.abrir'), ['caja_id' => \App\Models\Caja::where('empresa_id', $this->empresa->id)->value('id'), 'monto_apertura' => 100]);
+        $this->actingAs($this->admin)->post(route('caja.abrir'), ['caja_id' => \App\Modulos\Erp\Models\Caja::where('empresa_id', $this->empresa->id)->value('id'), 'monto_apertura' => 100]);
     }
 
     public function test_devolucion_por_item_reingresa_stock_y_devuelve_efectivo(): void
@@ -142,7 +142,7 @@ class NotaTest extends TestCase
 
     /* ───────────────────────── Auxiliares ───────────────────────── */
 
-    /** @return array{0: Venta, 1: \App\Models\Producto} */
+    /** @return array{0: Venta, 1: \App\Modulos\Catalogo\Models\Producto} */
     private function vender(float $cantidad, float $precio, array $extra = [], string $serie = 'B001'): array
     {
         $this->app->forgetScopedInstances();

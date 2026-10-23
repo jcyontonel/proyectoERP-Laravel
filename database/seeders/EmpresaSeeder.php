@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Empresa;
+use App\Modulos\Nucleo\Models\Empresa;
 use Illuminate\Database\Seeder;
 
 /** Empresas demo para probar el aislamiento multiempresa */

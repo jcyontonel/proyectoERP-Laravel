@@ -2,21 +2,21 @@
 
 namespace Database\Seeders\Negocios;
 
-use App\Models\AlmacenProducto;
-use App\Models\Categoria;
-use App\Models\Cliente;
-use App\Models\Empresa;
-use App\Models\Plan;
-use App\Models\Producto;
-use App\Models\Proveedor;
-use App\Models\TipoDocumento;
-use App\Models\TipoUnidad;
-use App\Models\UnidadConversion;
-use App\Models\User;
-use App\Services\EmpresaService;
-use App\Services\InventarioService;
-use App\Services\LoteService;
-use App\Services\SuscripcionService;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Catalogo\Models\Categoria;
+use App\Modulos\Erp\Models\Cliente;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Erp\Models\Proveedor;
+use App\Modulos\Nucleo\Models\TipoDocumento;
+use App\Modulos\Catalogo\Models\TipoUnidad;
+use App\Modulos\Catalogo\Models\UnidadConversion;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Erp\Services\EmpresaService;
+use App\Modulos\Erp\Services\InventarioService;
+use App\Modulos\Erp\Services\LoteService;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;

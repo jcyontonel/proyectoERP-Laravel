@@ -3,7 +3,7 @@
     <x-card title="SUNAT" icon="upload-cloud">
         @if (! $sunat)
             <p class="text-sm text-slate-500">
-                @if (app(\App\Services\Facturacion\FacturacionElectronicaService::class)->activo())
+                @if (app(\App\Modulos\Facturacion\Services\FacturacionElectronicaService::class)->activo())
                     Aún no se envió al facturador electrónico.
                 @else
                     Facturación electrónica apagada: configura <code>FACTURADOR_URL</code> y <code>FACTURADOR_TOKEN</code>.

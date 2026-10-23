@@ -7,7 +7,7 @@
 @extends('layouts.app')
 
 @php
-    $esCredito = $tipo === \App\Models\Nota::CREDITO;
+    $esCredito = $tipo === \App\Modulos\Erp\Models\Nota::CREDITO;
     $titulo = $esCredito ? 'Nota de crédito' : 'Nota de débito';
     $motivoActual = old('motivo_codigo', $esCredito ? ($conCredito ? '07' : '01') : '01');
     $cant = fn ($x) => rtrim(rtrim(number_format((float) $x, 4, '.', ''), '0'), '.');

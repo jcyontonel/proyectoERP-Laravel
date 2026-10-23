@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\ClienteController;
-use App\Http\Controllers\CotizacionController;
-use App\Http\Controllers\NotaController;
-use App\Http\Controllers\VentaController;
+use App\Modulos\Erp\Http\Controllers\ClienteController;
+use App\Modulos\Erp\Http\Controllers\CotizacionController;
+use App\Modulos\Erp\Http\Controllers\NotaController;
+use App\Modulos\Erp\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Ventas ───── */

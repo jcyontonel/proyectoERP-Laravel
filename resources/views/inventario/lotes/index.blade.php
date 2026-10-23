@@ -1,7 +1,7 @@
 {{-- LoteController@index: $lotes (cantidad, existencias.almacen), $almacenes, $dias, $resumen [vencidos, por_vencer, con_stock] --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', 'Lotes y vencimientos')
 

@@ -97,7 +97,7 @@
         <div class="fila b grande"><span>TOTAL</span><span>S/ {{ $dinero($venta->total) }}</span></div>
 
         <hr>
-        <p class="chico">SON: {{ \App\Support\NumeroALetras::moneda($venta->total, config('ventas.moneda_nombre', 'SOLES')) }}</p>
+        <p class="chico">SON: {{ \App\Modulos\Nucleo\Support\NumeroALetras::moneda($venta->total, config('ventas.moneda_nombre', 'SOLES')) }}</p>
         <p class="chico">Pago: {{ $venta->metodo_label }}</p>
         @if ($venta->observaciones) <p class="chico">Obs.: {{ $venta->observaciones }}</p> @endif
 

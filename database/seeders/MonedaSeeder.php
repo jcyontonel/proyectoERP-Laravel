@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Moneda;
+use App\Modulos\Nucleo\Models\Moneda;
 use Illuminate\Database\Seeder;
 
 class MonedaSeeder extends Seeder

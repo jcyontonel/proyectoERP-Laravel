@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Empresa;
-use App\Models\Plan;
-use App\Models\User;
-use App\Services\SuscripcionService;
-use App\Support\Menu;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Suscripciones\Models\Plan;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Nucleo\Support\Menu;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;

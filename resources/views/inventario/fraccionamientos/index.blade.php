@@ -1,7 +1,7 @@
 {{-- FraccionamientoController@index: $fraccionamientos, $almacenes, $reglas (cantidad de reglas activas) --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', 'Fraccionamientos')
 

@@ -25,7 +25,7 @@
         <x-input name="q" label="N.º u observación" :value="request('q')" />
         <x-select name="tipo" label="Tipo">
             <option value="">Todos</option>
-            @foreach (\App\Models\AjusteInventario::TIPOS as $v => $e)<option value="{{ $v }}" @selected(request('tipo') === $v)>{{ $e }}</option>@endforeach
+            @foreach (\App\Modulos\Erp\Models\AjusteInventario::TIPOS as $v => $e)<option value="{{ $v }}" @selected(request('tipo') === $v)>{{ $e }}</option>@endforeach
         </x-select>
         <x-select name="estado" label="Estado">
             <option value="">Todos</option>

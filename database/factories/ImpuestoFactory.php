@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Impuesto;
+use App\Modulos\Nucleo\Models\Impuesto;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

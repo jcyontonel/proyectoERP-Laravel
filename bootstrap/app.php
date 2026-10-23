@@ -28,13 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Roles y permisos según la empresa actual (Spatie teams)
         // y suscripción suspendida o cancelada = solo lectura
         $middleware->web(append: [
-            \App\Http\Middleware\EstablecerEmpresaActual::class,
-            \App\Http\Middleware\VerificarSuscripcion::class,
+            \App\Modulos\Nucleo\Http\Middleware\EstablecerEmpresaActual::class,
+            \App\Modulos\Suscripciones\Http\Middleware\VerificarSuscripcion::class,
         ]);
 
         // aliases para usar en rutas ->middleware('role:admin') etc.
         $middleware->alias([
-            'auth' => \App\Http\Middleware\Authenticate::class,
+            'auth' => \App\Modulos\Nucleo\Http\Middleware\Authenticate::class,
             'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

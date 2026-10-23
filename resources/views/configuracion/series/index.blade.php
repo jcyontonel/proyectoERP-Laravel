@@ -47,7 +47,7 @@
                                     <tr @class(['hover:bg-slate-50/60', 'text-slate-400' => ! $s->activo])>
                                         <td class="py-3 pl-5 pr-3 font-mono font-semibold">{{ $s->serie }}</td>
                                         <td class="px-3 py-3">{{ $s->destipo }} <span class="text-xs text-slate-400">({{ $s->tipo }})</span></td>
-                                        <td class="px-3 py-3 text-right font-mono">{{ $s->sinUso() ? '—' : \App\Models\Correlativo::formatear($s->numero) }}</td>
+                                        <td class="px-3 py-3 text-right font-mono">{{ $s->sinUso() ? '—' : \App\Modulos\Erp\Models\Correlativo::formatear($s->numero) }}</td>
                                         <td class="px-3 py-3 font-mono text-slate-600">{{ $s->serie }}-{{ $s->siguiente() }}</td>
                                         <td class="px-3 py-3">
                                             @if ($s->activo)<x-badge tone="success" dot>Activa</x-badge>@else<x-badge tone="neutral" dot>Inactiva</x-badge>@endif

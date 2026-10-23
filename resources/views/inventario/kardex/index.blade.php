@@ -1,7 +1,7 @@
 {{-- KardexController@index: $movimientos, $totales {entradas, salidas, valor}, $producto (filtrado), $productos, $almacenes, $tipos --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', 'Kardex')
 

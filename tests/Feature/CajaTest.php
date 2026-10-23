@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\CajaSesion;
-use App\Models\Empresa;
-use App\Models\Pago;
-use App\Models\Venta;
+use App\Modulos\Erp\Models\CajaSesion;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Pago;
+use App\Modulos\Erp\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;
@@ -126,14 +126,14 @@ class CajaTest extends TestCase
 
     private function cajaId(): int
     {
-        return \App\Models\Caja::where('empresa_id', $this->empresa->id)->value('id');
+        return \App\Modulos\Erp\Models\Caja::where('empresa_id', $this->empresa->id)->value('id');
     }
 
     private function venta($producto, int $cantidad, string $accion = 'registrar'): array
     {
         return [
             'accion'         => $accion,
-            'correlativo_id' => \App\Models\Correlativo::where('empresa_id', $this->empresa->id)->value('id'),
+            'correlativo_id' => \App\Modulos\Erp\Models\Correlativo::where('empresa_id', $this->empresa->id)->value('id'),
             'almacen_id'     => $this->almacen($this->empresa)->id,
             'fecha_emision'  => now()->toDateString(),
             'metodo_pago'    => 'efectivo',

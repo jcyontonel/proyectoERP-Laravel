@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\Caja;
-use App\Models\ComprobanteSunat;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\User;
-use App\Models\Venta;
-use App\Services\EmpresaService;
+use App\Modulos\Erp\Models\Caja;
+use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\User;
+use App\Modulos\Erp\Models\Venta;
+use App\Modulos\Erp\Services\EmpresaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;

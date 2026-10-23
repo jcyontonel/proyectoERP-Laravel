@@ -1,7 +1,7 @@
 {{-- FraccionamientoController@show: $f (productoOrigen, productoDestino, almacen, usuario, lotes, venta) --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @section('title', 'Fraccionamiento ' . $f->numero_completo)
 
@@ -44,7 +44,7 @@
             @if ($f->venta)
                 <x-dato label="Venta que lo originó"><a href="{{ route('ventas.show', $f->venta_id) }}" class="text-brand-600 hover:text-brand-700">{{ $f->venta->numero_completo }}</a></x-dato>
             @endif
-            <x-dato label="Kardex"><a href="{{ route('kardex.index', ['tipo' => 'fraccionamiento', 'q' => \App\Models\Correlativo::formatear($f->numero)]) }}" class="text-brand-600 hover:text-brand-700">Ver movimientos</a></x-dato>
+            <x-dato label="Kardex"><a href="{{ route('kardex.index', ['tipo' => 'fraccionamiento', 'q' => \App\Modulos\Erp\Models\Correlativo::formatear($f->numero)]) }}" class="text-brand-600 hover:text-brand-700">Ver movimientos</a></x-dato>
         </dl>
         @if ($f->observacion)
             <p class="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-600">{{ $f->observacion }}</p>

@@ -12,7 +12,7 @@
 @php
     $ruta = fn (string $accion, $p = []) => route($c['prefijo'] . '.' . $accion, $p);
     $nombre = ($c['nombre'])($tercero);
-    $esCobro = $c['modo'] === \App\Services\CuentasService::COBRAR;
+    $esCobro = $c['modo'] === \App\Modulos\Erp\Services\CuentasService::COBRAR;
     $metodos = config('ventas.metodos_pago') + config('compras.metodos_pago');
 
     // Libro del período: cargos (documentos) y abonos (pagos), del más antiguo al más reciente, con saldo acumulado

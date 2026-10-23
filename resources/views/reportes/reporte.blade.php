@@ -6,7 +6,7 @@
 --}}
 @extends('layouts.app')
 
-@use('App\Support\Unidades')
+@use('App\Modulos\Catalogo\Support\Unidades')
 
 @php
     $tonos = ['brand' => 'brand', 'emerald' => 'emerald', 'amber' => 'amber', 'red' => 'red', 'slate' => 'slate'];

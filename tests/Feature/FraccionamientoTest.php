@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\AlmacenProducto;
-use App\Models\Caja;
-use App\Models\Correlativo;
-use App\Models\Empresa;
-use App\Models\Fraccionamiento;
-use App\Models\Kardex;
-use App\Models\Producto;
-use App\Models\TipoUnidad;
-use App\Models\UnidadConversion;
-use App\Models\Venta;
+use App\Modulos\Erp\Models\AlmacenProducto;
+use App\Modulos\Erp\Models\Caja;
+use App\Modulos\Erp\Models\Correlativo;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\Fraccionamiento;
+use App\Modulos\Erp\Models\Kardex;
+use App\Modulos\Catalogo\Models\Producto;
+use App\Modulos\Catalogo\Models\TipoUnidad;
+use App\Modulos\Catalogo\Models\UnidadConversion;
+use App\Modulos\Erp\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ConEmpresa;
 use Tests\TestCase;

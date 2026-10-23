@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ReporteController;
-use App\Services\Reportes\ReporteService;
+use App\Modulos\Erp\Http\Controllers\ReporteController;
+use App\Modulos\Erp\Services\Reportes\ReporteService;
 use Illuminate\Support\Facades\Route;
 
 /* ───── Reportes: una ruta con nombre por reporte (reportes.ventas, reportes.utilidad…) ───── */

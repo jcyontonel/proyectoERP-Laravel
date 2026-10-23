@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Empresa;
-use App\Models\MotivoAjuste;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Erp\Models\MotivoAjuste;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
