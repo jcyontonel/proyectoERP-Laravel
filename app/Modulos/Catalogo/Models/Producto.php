@@ -28,6 +28,7 @@ class Producto extends Model
     protected $fillable = [
         'empresa_id', 'categoria_id', 'tipo_unidad_id', 'impuesto_id', 'codigo', 'nombre', 'descripcion',
         'precio_unitario', 'costo_unitario', 'es_servicio', 'maneja_lotes', 'activo',
+        'publicar_web', 'destacado_web', 'imagen_path',   // página web: solo lo publicado explícitamente
     ];
 
     protected function casts(): array
@@ -37,6 +38,8 @@ class Producto extends Model
             'costo_unitario'  => 'float',
             'es_servicio'     => 'boolean',
             'maneja_lotes'    => 'boolean',
+            'publicar_web'    => 'boolean',
+            'destacado_web'   => 'boolean',
             'activo'          => 'boolean',
         ];
     }

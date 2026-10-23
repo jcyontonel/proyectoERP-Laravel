@@ -34,6 +34,22 @@ return [
         ],
 
         [
+            // Producto "Página web": sin suscripción web no aparece (módulos web_catalogo y web_tienda)
+            'titulo' => 'Página web',
+            'items'  => [
+                ['clave' => 'web-tienda', 'label' => 'Mi tienda', 'icon' => 'globe', 'route' => 'web.tienda.edit', 'activo' => ['web.tienda.*'], 'permiso' => 'gestionar-empresas',
+                    'descripcion' => 'Dirección, textos, contacto, entrega y pagos de tu página web.'],
+                ['clave' => 'web-productos', 'label' => 'Productos publicados', 'icon' => 'image', 'route' => 'web.productos.index', 'activo' => ['web.productos.*'], 'permiso' => 'gestionar-productos',
+                    'descripcion' => 'Elige qué productos se ven en tu página, con foto y destacados.'],
+                ['clave' => 'web-pedidos', 'label' => 'Pedidos', 'icon' => 'shopping-cart', 'route' => 'web.pedidos.index', 'activo' => ['web.pedidos.*'], 'permiso' => 'emitir-ventas', 'contador' => 'pedidos_web',
+                    'descripcion' => 'Pedidos de tu tienda en línea: confírmalos y conviértelos en venta.'],
+                ['clave' => 'web-zonas', 'label' => 'Zonas de envío', 'icon' => 'truck', 'route' => 'web.zonas.index', 'activo' => ['web.zonas.*'], 'permiso' => 'gestionar-empresas',
+                    'descripcion' => 'Dónde repartes, el costo y el tiempo de entrega.'],
+                ['clave' => 'web-ver', 'label' => 'Ver mi tienda', 'icon' => 'external-link', 'route' => 'web.tienda.ver', 'activo' => [], 'permiso' => 'gestionar-empresas'],
+            ],
+        ],
+
+        [
             'titulo' => 'Caja',
             'items'  => [
                 ['clave' => 'caja', 'label' => 'Apertura y cierre', 'icon' => 'wallet', 'route' => 'caja.index', 'activo' => ['caja.index', 'caja.cierre'], 'permiso' => 'gestionar-caja',

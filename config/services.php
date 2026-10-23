@@ -51,4 +51,17 @@ return [
         'ca_bundle' => env('APIPERU_CA_BUNDLE'),
     ],
 
+    /*
+    | Culqi (pagos con tarjeta en las tiendas). Cada tienda configura sus propias llaves (el dinero es de la
+    | empresa) y elige modo prueba o producción. Estas son las llaves DE PRUEBA de la plataforma (pk_test_/sk_test_)
+    | que usan las tiendas en modo prueba mientras no carguen las suyas.
+    */
+    'culqi' => [
+        'llave_publica' => env('CULQI_LLAVE_PUBLICA'),
+        'llave_secreta' => env('CULQI_LLAVE_SECRETA'),
+        'url'           => env('CULQI_URL', 'https://api.culqi.com/v2'),
+        'timeout'       => (int) env('CULQI_TIMEOUT', 25),
+        'ca_bundle'     => env('CULQI_CA_BUNDLE', env('APIPERU_CA_BUNDLE')),
+    ],
+
 ];

@@ -139,5 +139,11 @@ class TiendaVariedadesSeeder extends Seeder
         ]);
 
         $this->suscripcion('basico', 'mensual', pagado: false);   // en periodo de prueba
+
+        // Página web con el plan Catálogo: muestrario y pedidos por WhatsApp
+        $this->paginaWeb('catalogo', [
+            'slug' => 'la-esquina', 'lema' => 'Tu bodega de confianza', 'whatsapp' => '51964300100', 'color' => '#b45309',
+        ], ['Aceite vegetal botella 1 L', 'Arroz superior saco 50 kg', 'Fideos spaghetti bolsa 500 g', 'Atún en trozos lata 170 g',
+            'Avena en hojuelas bolsa 900 g', 'Gaseosa sabor cola botella 3 L', 'Lentejas bolsa 500 g'], destacados: 2);
     }
 }

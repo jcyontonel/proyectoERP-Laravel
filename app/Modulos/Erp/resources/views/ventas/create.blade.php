@@ -109,6 +109,13 @@
         </x-alert>
     @endif
 
+    @if (! $editando && old('pedido_id'))
+        <x-alert tone="info" class="mt-4">
+            Venta desde el pedido web <a href="{{ route('web.pedidos.show', old('pedido_id')) }}" class="font-semibold underline">{{ old('pedido_ref', 'de origen') }}</a>:
+            cliente y productos ya están cargados con los precios vigentes. Al registrarla, el pedido quedará con su comprobante.
+        </x-alert>
+    @endif
+
     @if (collect($correlativos)->isNotEmpty() && ! collect($correlativos)->whereIn('tipo', ['01', '03'])->count()
         && app(\App\Modulos\Facturacion\Services\FacturacionElectronicaService::class)->activo())
         <x-alert tone="warning" class="mt-4">
@@ -170,6 +177,11 @@
             {{-- Venta desde una cotización: al registrarla, la cotización queda convertida --}}
             <input type="hidden" name="cotizacion_id" value="{{ old('cotizacion_id') }}">
             <input type="hidden" name="cotizacion_ref" value="{{ old('cotizacion_ref') }}">
+        @endif
+        @if (! $editando && old('pedido_id'))
+            {{-- Venta desde un pedido web: al registrarla, el pedido queda con su venta --}}
+            <input type="hidden" name="pedido_id" value="{{ old('pedido_id') }}">
+            <input type="hidden" name="pedido_ref" value="{{ old('pedido_ref') }}">
         @endif
 
         @include('ventas.partials.cliente',   ['class' => 'lg:col-start-1 lg:row-start-1'])

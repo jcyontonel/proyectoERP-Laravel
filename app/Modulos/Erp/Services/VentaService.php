@@ -4,6 +4,7 @@ namespace App\Modulos\Erp\Services;
 
 use App\Modulos\Suscripciones\Services\SuscripcionService;
 
+use App\Modulos\Erp\Events\VentaGuardada;
 use App\Modulos\Erp\Models\AlmacenProducto;
 use App\Modulos\Erp\Models\Cliente;
 use App\Modulos\Erp\Models\Correlativo;
@@ -252,6 +253,9 @@ class VentaService
             if (filled($d['cotizacion_id'] ?? null)) {
                 app(CotizacionService::class)->marcarConvertida((int) $d['cotizacion_id'], $venta);
             }
+
+            // Otros módulos (p. ej. el pedido web de origen) reaccionan a la venta guardada
+            VentaGuardada::dispatch($venta, $d);
 
             /* 8b) Cobro al contado (o adelanto del crédito): queda en el turno de caja (arqueo y resumen por método de pago) */
             if ($credito && $adelanto >= $venta->total) {

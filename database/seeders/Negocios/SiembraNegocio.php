@@ -17,6 +17,8 @@ use App\Modulos\Erp\Services\EmpresaService;
 use App\Modulos\Erp\Services\InventarioService;
 use App\Modulos\Erp\Services\LoteService;
 use App\Modulos\Suscripciones\Services\SuscripcionService;
+use App\Modulos\Web\Models\Tienda;
+use App\Modulos\Web\Models\ZonaEnvio;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
@@ -201,6 +203,32 @@ trait SiembraNegocio
             'periodicidad' => $periodicidad, 'prueba' => ! $pagado, 'pagado' => $pagado,
             'metodo' => 'transferencia', 'referencia' => 'SEED', 'comprobante' => 'ninguno',
         ], 'Seeder');
+    }
+
+    /**
+     * Página web de demostración: plan web en prueba, tienda publicada, productos publicados (los primeros
+     * destacados) y zonas de envío. Solo a empresas que crea este seeder (a una existente no se le publica nada).
+     *
+     * @param  array<int, string>  $publicar  nombres de productos; los $destacados primeros se destacan
+     * @param  array<int, array{0: string, 1: float, 2: string}>  $zonas  [nombre, costo, tiempo]
+     */
+    protected function paginaWeb(string $plan, array $tienda, array $publicar, int $destacados = 4, array $zonas = []): void
+    {
+        if (! $this->empresaNueva) {
+            return;
+        }
+        $servicio = app(SuscripcionService::class);
+        if (! $servicio->vigente($this->empresa->id, 'web')) {
+            $servicio->asignar($this->empresa, Plan::where('codigo', $plan)->firstOrFail(), ['periodicidad' => 'mensual', 'prueba' => true], 'Seeder');
+        }
+
+        Tienda::deEmpresa($this->empresa)->update($tienda + ['publicada' => true, 'metodos_pago' => ['contra_entrega', 'transferencia', 'yape', 'tarjeta']]);
+        foreach (array_values($publicar) as $i => $nombre) {
+            $this->producto($nombre)?->update(['publicar_web' => true, 'destacado_web' => $i < $destacados]);
+        }
+        foreach ($zonas as $orden => [$nombre, $costo, $tiempo]) {
+            ZonaEnvio::firstOrCreate(['empresa_id' => $this->empresa->id, 'nombre' => $nombre], ['costo' => $costo, 'tiempo_entrega' => $tiempo, 'orden' => $orden, 'activo' => true]);
+        }
     }
 
     protected function producto(string $nombre): ?Producto

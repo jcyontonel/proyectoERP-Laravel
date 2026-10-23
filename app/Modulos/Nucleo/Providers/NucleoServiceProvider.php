@@ -31,7 +31,7 @@ class NucleoServiceProvider extends ProveedorModulo
         'venta', 'cliente', 'compra', 'proveedor', 'producto', 'categoria', 'ajuste', 'transferencia',
         'lote', 'sesion', 'movimiento', 'almacen', 'caja', 'motivo', 'regla', 'fraccionamiento', 'pago',
         'usuario', 'rol', 'serie', 'impuesto', 'unidad',
-        'empresa', 'plan', 'oferta', 'suscripcion', 'nota', 'cotizacion', 'orden', 'comprobante',
+        'empresa', 'plan', 'oferta', 'suscripcion', 'nota', 'cotizacion', 'orden', 'comprobante', 'pedido', 'zona',
     ];
 
     public function register(): void

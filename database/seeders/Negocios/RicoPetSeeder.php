@@ -87,5 +87,17 @@ class RicoPetSeeder extends Seeder
         ]);
 
         $this->suscripcion('total', 'anual', pagado: true);
+
+        // Página web con el plan Tienda (en prueba): carrito, pedidos, envíos y pago con tarjeta en modo prueba
+        $this->paginaWeb('tienda', [
+            'slug' => 'ricopet', 'titulo' => 'RicoPet', 'lema' => 'Todo para tu mascota, con envío a domicilio',
+            'descripcion' => "Alimentos, snacks y juguetes para perros y gatos.\nPide en línea y te lo llevamos el mismo día en Barranca.",
+            'whatsapp' => '51987654321', 'color' => '#0f766e', 'recojo_en_tienda' => true, 'pedido_minimo' => 20,
+            'instrucciones_pago' => "Yape o Plin al 987 654 321 (RicoPet SAC).\nTransferencia BCP 191-0000000-0-00.",
+        ], [
+            'Alimento seco Ricocan Adulto Pollo 15kg', 'Alimento seco Pedigree Adulto Carne 3kg', 'Juguete pelota Kong Classic M', 'Snack Pedigree Dentastix Medianos 7 unidades',
+            'Alimento seco Ricocan Adulto Pollo 1kg', 'Alimento seco Dog Chow Adulto Medianos 1.5kg', 'Snack Dog Chow Huesitos 60g', 'Snack Ricocan Tiras de Carne 70g',
+            'Snack Nutrican Soft Bites 50g', 'Snack Kongo Huesos de Cuero 2 unidades', 'Juguete soga tecida 30cm', 'Juguete pelota con sonido 10cm', 'Juguete frisbee de goma 20cm',
+        ], zonas: [['Barranca centro', 5, 'El mismo día'], ['Paramonga y Supe', 10, '24 horas'], ['Huacho', 15, '24 a 48 horas']]);
     }
 }
