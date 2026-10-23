@@ -44,7 +44,7 @@ class NotificacionService
             'borradores'          => Venta::deEmpresa($empresaId)->where('estado', Venta::BORRADOR)->where('user_id', $user->id)->count(),
             'por_cobrar_vencidas' => $this->ventasCreditoVencidas($empresaId)->count(),
             'por_pagar_vencidas'  => $this->comprasCreditoVencidas($empresaId)->count(),
-            'sunat_pendientes'    => DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+            'sunat_pendientes'    => DB::table('documentos')->where('empresa_id', $empresaId)->whereIn('tipo', ['01', '03', '07', '08'])
                 ->whereIn('estado', ['pendiente', 'observado', 'rechazado', 'error'])->count(),
         ];
     }

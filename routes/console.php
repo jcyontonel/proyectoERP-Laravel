@@ -5,6 +5,12 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
+/*
+| Tareas programadas: requieren "php artisan schedule:work" (o schedule:run cada minuto desde el
+| Programador de tareas de Windows / cron). Las de cada módulo las registra su provider
+| (p. ej. facturacion:procesar en FacturacionServiceProvider).
+*/
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
@@ -18,16 +24,5 @@ Artisan::command('suscripciones:procesar', function (SuscripcionService $suscrip
 
 Schedule::command('suscripciones:procesar')->dailyAt('06:00');
 
-// Facturación electrónica: envía al facturador lo que no llegó (sin conexión), pide bajas pendientes
-// y refresca estados por si se perdió un aviso. Requiere "php artisan schedule:work" (o la tarea de Windows).
-Artisan::command('facturacion:sincronizar', function (\App\Modulos\Facturacion\Services\FacturacionElectronicaService $facturacion) {
-    if (! $facturacion->activo()) {
-        $this->warn('Facturación electrónica apagada: falta FACTURADOR_URL o FACTURADOR_TOKEN en .env.');
-
-        return;
-    }
-    $r = $facturacion->sincronizar();
-    $this->info("Enviados al facturador: {$r['enviados']} · estados refrescados: {$r['consultados']}.");
-})->purpose('Reintenta los comprobantes que no llegaron al facturador electrónico');
-
-Schedule::command('facturacion:sincronizar')->everyMinute()->withoutOverlapping(10);
+// Trabajos en cola (envíos a SUNAT, correos…): sin un worker aparte, el programador los atiende cada minuto
+Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=1')->everyMinute()->withoutOverlapping(5);

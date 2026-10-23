@@ -394,7 +394,7 @@ class DashboardService
 
     private function sunat(int $empresaId): array
     {
-        $porEstado = DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+        $porEstado = DB::table('documentos')->where('empresa_id', $empresaId)->whereIn('tipo', ['01', '03', '07', '08'])
             ->selectRaw('estado, COUNT(*) AS total')->groupBy('estado')->pluck('total', 'estado');
 
         return [

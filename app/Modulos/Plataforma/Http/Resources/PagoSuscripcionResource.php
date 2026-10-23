@@ -2,7 +2,7 @@
 
 namespace App\Modulos\Plataforma\Http\Resources;
 
-use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Facturacion\Models\Documento;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -38,7 +38,7 @@ class PagoSuscripcionResource extends JsonResource
         ];
     }
 
-    public static function comprobante(?ComprobanteSunat $c): ?array
+    public static function comprobante(?Documento $c): ?array
     {
         return $c ? [
             'tipo'          => $c->tipo,
@@ -48,13 +48,13 @@ class PagoSuscripcionResource extends JsonResource
             'estado_nombre' => $c->etiqueta(),
             'tono'          => $c->tono(),
             'aceptado'      => $c->fueAceptado(),
-            'codigo'        => $c->codigo_respuesta,
-            'mensaje'       => $c->mensaje_respuesta,
-            'observaciones' => $c->observaciones ?? [],
+            'codigo'        => $c->sunat_codigo,
+            'mensaje'       => $c->mensaje(),
+            'observaciones' => $c->sunat_observaciones ?? [],
             'hash'          => $c->hash,
             'baja_estado'   => $c->baja_estado,
-            'reenviable'    => $c->esReenviable() || $c->baja_estado === 'por_pedir',
-            'tiene_archivos' => (bool) $c->facturador_id,
+            'reenviable'    => $c->esReenviable(),
+            'tiene_archivos' => $c->tieneArchivos(),
             'intentos'      => $c->intentos,
             'emitido'       => $c->created_at?->toIso8601String(),
         ] : null;

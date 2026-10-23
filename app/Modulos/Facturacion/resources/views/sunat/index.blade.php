@@ -2,7 +2,7 @@
 @extends('layouts.app')
 
 @php
-    use App\Modulos\Facturacion\Models\ComprobanteSunat;
+    use App\Modulos\Facturacion\Models\Documento;
     use App\Modulos\Erp\Models\Nota;
     $titulo = $bajas ? 'Resúmenes y bajas' : 'Envíos a SUNAT';
     $ruta = $bajas ? 'sunat.resumenes' : 'sunat.index';
@@ -16,12 +16,12 @@
     <x-page-header :title="$titulo" :migas="['SUNAT' => null, $titulo => null]"
         :subtitle="$bajas
             ? 'Anulaciones enviadas a SUNAT: comunicación de baja (facturas) y resumen diario (boletas). El resultado llega solo.'
-            : 'Cada factura, boleta y nota pasa por el facturador electrónico. Si no hay internet queda pendiente y se reenvía automáticamente.'" />
+            : 'Cada factura, boleta y nota se firma y se envía a SUNAT en segundo plano. Si no hay internet queda pendiente y se reenvía automáticamente.'" />
 
     <x-flash />
 
     @unless ($activo)
-        <x-alert tone="warning" class="mt-4">La facturación electrónica está apagada: falta <code>FACTURADOR_URL</code> o <code>FACTURADOR_TOKEN</code> en el <code>.env</code> del ERP.</x-alert>
+        <x-alert tone="warning" class="mt-4">La facturación electrónica está apagada (<code>FACTURACION_ACTIVA=false</code> en el <code>.env</code>).</x-alert>
     @endunless
 
     @unless ($bajas)
@@ -47,7 +47,7 @@
         </x-select>
         <x-select name="estado" label="Estado">
             <option value="">Todos</option>
-            @foreach (ComprobanteSunat::ESTADOS as $v => [$t])<option value="{{ $v }}" @selected(request('estado') === $v)>{{ $t }}</option>@endforeach
+            @foreach (Documento::ESTADOS as $v => [$t])<option value="{{ $v }}" @selected(request('estado') === $v)>{{ $t }}</option>@endforeach
         </x-select>
         <x-input name="desde" label="Desde" type="date" :value="request('desde')" />
         <x-input name="hasta" label="Hasta" type="date" :value="request('hasta')" />
@@ -75,30 +75,30 @@
                         <tr class="align-top hover:bg-slate-50/60">
                             <td class="py-3 pl-5 pr-3">
                                 @if ($url)<a href="{{ $url }}" class="font-semibold text-brand-600 hover:text-brand-700">{{ $c->numeroCompleto() }}</a>@else<span class="font-semibold">{{ $c->numeroCompleto() }}</span>@endif
-                                <p class="text-xs text-slate-500">{{ $tipos[$c->tipo] ?? $c->tipo }} · {{ $c->created_at->format('d/m/Y H:i') }}</p>
+                                <p class="text-xs text-slate-500">{{ $tipos[$c->tipo] ?? $c->tipo }} · {{ ($c->fecha_emision ?? $c->created_at)->format('d/m/Y H:i') }}</p>
                                 @if ($doc instanceof \App\Modulos\Suscripciones\Models\PagoSuscripcion)
                                     <p class="text-xs text-slate-500">Suscripción de {{ $doc->empresa?->razon_social }}</p>
                                 @endif
                             </td>
                             <td class="px-3 py-3"><x-badge :tone="$c->tono()" dot>{{ $c->etiqueta() }}</x-badge></td>
                             <td class="max-w-md px-3 py-3 text-xs text-slate-600">
-                                @if ($c->codigo_respuesta !== null)<span class="font-medium">[{{ $c->codigo_respuesta }}]</span>@endif
-                                {{ \Illuminate\Support\Str::limit($c->mensaje_respuesta, 180) }}
+                                @if ($c->sunat_codigo !== null)<span class="font-medium">[{{ $c->sunat_codigo }}]</span>@endif
+                                {{ \Illuminate\Support\Str::limit($c->mensaje(), 180) }}
                             </td>
                             @if ($bajas)
-                                <td class="px-3 py-3 text-xs">{{ $c->baja_estado }}@if ($c->ticket)<br><span class="text-slate-400">ticket {{ $c->ticket }}</span>@endif</td>
+                                <td class="px-3 py-3 text-xs">{{ $c->baja?->numeroCompleto() }} · {{ $c->baja_estado }}@if ($c->baja?->ticket)<br><span class="text-slate-400">ticket {{ $c->baja->ticket }}</span>@endif</td>
                             @endif
                             <td class="px-3 py-3 text-xs text-slate-500">{{ $c->intentos }}</td>
                             <td class="whitespace-nowrap py-3 pl-3 pr-5 text-right">
-                                @if ($c->esReenviable() || $c->baja_estado === 'por_pedir')
+                                @if ($c->esReenviable())
                                     <form method="POST" action="{{ route('sunat.reenviar', $c) }}" class="inline">
                                         @csrf
                                         <button type="submit" class="text-xs font-semibold text-brand-600 hover:underline">Reenviar</button>
                                     </form>
                                 @endif
-                                @if ($c->facturador_id)
+                                @if ($c->tieneArchivos())
                                     <a href="{{ route('sunat.archivo', [$c, 'xml']) }}" class="ml-2 text-xs font-semibold text-slate-600 hover:underline">XML</a>
-                                    @if ($c->respondido_at && $c->estado !== 'pendiente' && $c->estado !== 'error')
+                                    @if ($c->cdr_path)
                                         <a href="{{ route('sunat.archivo', [$c, 'cdr']) }}" class="ml-2 text-xs font-semibold text-slate-600 hover:underline">CDR</a>
                                     @endif
                                 @endif

@@ -173,15 +173,16 @@ class VentaController extends Controller
             return back()->with('error', collect($e->errors())->flatten()->first());
         }
 
-        // En SUNAT: comunicación de baja (facturas) o resumen diario (boletas); el resultado llega por webhook
+        // En SUNAT: comunicación de baja (facturas) o resumen diario (boletas); el ticket se consulta solo
         $baja = '';
         try {
             $reg = app(FacturacionElectronicaService::class)->anular($venta);
             $baja = match (true) {
                 ! $reg => '',
                 in_array($reg->baja_estado, ['enviado', 'aceptado'], true) => ' Se pidió la baja a SUNAT.',
-                $reg->baja_estado === 'por_pedir' => ' La baja en SUNAT se pedirá cuando vuelva la conexión.',
-                $reg->baja_estado === 'error' => ' SUNAT no aceptó la baja: ' . $reg->mensaje_respuesta,
+                $reg->baja_estado === 'pendiente' => ' La baja se enviará a SUNAT en segundo plano (o cuando vuelva la conexión).',
+                in_array($reg->baja_estado, ['rechazado', 'error'], true) => ' SUNAT no aceptó la baja: ' . $reg->baja->mensaje(),
+                $reg->fueAceptado() => ' ' . $reg->ultimo_error,
                 default => ' Aún no estaba aceptado en SUNAT: la baja se pedirá al aceptarse.',
             };
         } catch (\Throwable $e) {

@@ -2,7 +2,7 @@
 
 namespace App\Modulos\Erp\Models;
 
-use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Nucleo\Models\User;
 
@@ -91,10 +91,10 @@ class Venta extends Model
         return $this->hasMany(Nota::class);
     }
 
-    /** Estado en SUNAT (facturador electrónico) */
+    /** Comprobante electrónico y su estado en SUNAT */
     public function sunat(): MorphOne
     {
-        return $this->morphOne(ComprobanteSunat::class, 'comprobante');
+        return $this->morphOne(Documento::class, 'comprobante');
     }
 
     /** Solo facturas y boletas admiten notas (no los tickets) */

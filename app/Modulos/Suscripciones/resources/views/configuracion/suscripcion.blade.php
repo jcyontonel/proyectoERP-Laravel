@@ -79,9 +79,9 @@
                                             @if ($c = $p->comprobante)
                                                 <a href="{{ route('config.suscripcion.comprobante', [$p, 'impreso']) }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ $c->numeroCompleto() }}</a>
                                                 <x-badge :tone="$c->tono()" shape="box">{{ $c->fueAceptado() ? 'SUNAT ✓' : $c->etiqueta() }}</x-badge>
-                                                @if ($c->facturador_id)
+                                                @if ($c->tieneArchivos())
                                                     <a href="{{ route('config.suscripcion.comprobante', [$p, 'xml']) }}" class="ml-1 text-xs text-slate-500 hover:underline">XML</a>
-                                                    @if ($c->fueAceptado())<a href="{{ route('config.suscripcion.comprobante', [$p, 'cdr']) }}" class="ml-1 text-xs text-slate-500 hover:underline">CDR</a>@endif
+                                                    @if ($c->cdr_path)<a href="{{ route('config.suscripcion.comprobante', [$p, 'cdr']) }}" class="ml-1 text-xs text-slate-500 hover:underline">CDR</a>@endif
                                                 @endif
                                             @else
                                                 <span class="text-slate-400">—</span>

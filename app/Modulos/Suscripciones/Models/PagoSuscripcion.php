@@ -3,7 +3,7 @@
 namespace App\Modulos\Suscripciones\Models;
 
 use App\Modulos\Erp\Models\Nota;
-use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Nucleo\Models\Empresa;
 
 use App\Modulos\Nucleo\Models\Concerns\Auditable;
@@ -53,13 +53,13 @@ class PagoSuscripcion extends Model
     /** Factura o boleta electrónica del pago (la emite la empresa dueña de la plataforma) */
     public function comprobante(): MorphOne
     {
-        return $this->morphOne(ComprobanteSunat::class, 'comprobante')->whereIn('tipo', ['01', '03']);
+        return $this->morphOne(Documento::class, 'comprobante')->whereIn('tipo', [Documento::FACTURA, Documento::BOLETA]);
     }
 
     /** Nota de crédito, si el pago se anuló fuera del plazo de baja */
     public function notaCredito(): MorphOne
     {
-        return $this->morphOne(ComprobanteSunat::class, 'comprobante')->where('tipo', '07');
+        return $this->morphOne(Documento::class, 'comprobante')->where('tipo', Documento::NOTA_CREDITO);
     }
 
     public function esPagado(): bool

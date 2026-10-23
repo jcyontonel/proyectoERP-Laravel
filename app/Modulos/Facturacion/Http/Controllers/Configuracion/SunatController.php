@@ -7,8 +7,7 @@ use App\Modulos\Nucleo\Http\Controllers\Controller;
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Facturacion\Services\CertificadoService;
-use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
-use App\Modulos\Facturacion\Services\FacturadorNoDisponible;
+use App\Modulos\Facturacion\Support\Emisor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -105,19 +104,12 @@ class SunatController extends Controller
 
         $empresa->save();
 
-        // El facturador electrónico recibe los mismos datos (modo, SOL y certificado)
-        $facturador = '';
-        $facturacion = app(FacturacionElectronicaService::class);
-        if ($facturacion->activo()) {
-            try {
-                $r = $facturacion->sincronizarEmisor($empresa->refresh());
-                $facturador = $r['ok'] ? ' El facturador electrónico quedó actualizado.' : ' El facturador no aceptó los datos: ' . $r['mensaje'];
-            } catch (FacturadorNoDisponible $e) {
-                $facturador = ' No se pudo actualizar el facturador (se hará al emitir el próximo comprobante): ' . $e->getMessage();
-            }
-        }
+        // Los comprobantes se firman con estos mismos datos: en producción se avisa lo que aún falta
+        $faltan = $empresa->sunat_modo === 'produccion' ? (new Emisor($empresa->refresh()))->faltantesProduccion() : [];
 
-        return redirect()->route('config.sunat')->with('status', 'Configuración de SUNAT guardada' . ($empresa->sunat_modo === 'produccion' ? ' (modo producción).' : ' (modo beta: los comprobantes no tienen validez tributaria).') . $facturador);
+        return redirect()->route('config.sunat')->with('status', 'Configuración de SUNAT guardada'
+            . ($empresa->sunat_modo === 'produccion' ? ' (modo producción).' : ' (modo beta: los comprobantes no tienen validez tributaria).')
+            . ($faltan ? ' Para emitir aún falta: ' . implode(', ', $faltan) . '.' : ''));
     }
 
     /* ───────────────────────── Privado ───────────────────────── */

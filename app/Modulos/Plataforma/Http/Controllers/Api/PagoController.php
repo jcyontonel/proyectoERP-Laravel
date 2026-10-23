@@ -6,8 +6,8 @@ use App\Modulos\Plataforma\Http\Resources\PagoSuscripcionResource;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Suscripciones\Models\PagoSuscripcion;
 use App\Modulos\Suscripciones\Services\ComprobanteSuscripcionService;
+use App\Modulos\Facturacion\Http\Controllers\ComprobanteSunatController;
 use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
-use App\Modulos\Facturacion\Services\FacturadorNoDisponible;
 use App\Modulos\Suscripciones\Services\SuscripcionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -88,14 +88,14 @@ class PagoController extends AdminController
     public function comprobante(Request $request, PagoSuscripcion $pago, ComprobanteSuscripcionService $comprobantes, FacturacionElectronicaService $facturacion)
     {
         $d = $request->validate(['tipo' => ['nullable', Rule::in(['factura', 'boleta'])]]);
-        abort_unless($comprobantes->activo(), 422, 'La facturación de suscripciones no está configurada: falta el facturador (FACTURADOR_URL/TOKEN) o la empresa emisora (SUSCRIPCIONES_EMISOR_EMPRESA_ID).');
+        abort_unless($comprobantes->activo(), 422, 'La facturación de suscripciones no está configurada: falta la empresa emisora (SUSCRIPCIONES_EMISOR_RUC) o la facturación electrónica está apagada (FACTURACION_ACTIVA).');
         abort_unless($pago->esPagado(), 422, 'Solo los pagos registrados llevan comprobante.');
 
         $reg = $pago->comprobante()->first();
         $nota = $pago->notaCredito()->first();
         match (true) {
             $nota && $nota->esReenviable() => $facturacion->reenviar($nota),
-            $reg && ($reg->esReenviable() || $reg->baja_estado === 'por_pedir') => $reg->baja_estado === 'por_pedir' ? $facturacion->anularRegistro($reg) : $facturacion->reenviar($reg),
+            $reg && $reg->esReenviable() => $facturacion->reenviar($reg),
             ! $reg => $comprobantes->emitir($pago, $d['tipo'] ?? null),
             default => null,
         };
@@ -113,17 +113,10 @@ class PagoController extends AdminController
         $tipo = $nota ? substr($cual, 5) : $cual;
         abort_unless($reg, 404, 'El pago no tiene ese comprobante.');
 
-        try {
-            $resp = $facturacion->archivo($reg, $tipo);
-        } catch (FacturadorNoDisponible $e) {
-            abort(503, $e->getMessage());
-        }
-        abort_unless($resp, 404, $tipo === 'cdr' ? 'SUNAT aún no devolvió la constancia (CDR).' : 'El XML aún no está disponible.');
+        $contenido = $facturacion->archivo($reg, $tipo);
+        abort_if($contenido === null, 404, $tipo === 'cdr' ? 'SUNAT aún no devolvió la constancia (CDR).' : 'El XML aún no está disponible.');
 
-        return response($resp->body(), 200, [
-            'Content-Type'        => $tipo === 'cdr' ? 'application/zip' : 'application/xml',
-            'Content-Disposition' => 'attachment; filename="' . ($tipo === 'cdr' ? 'R-' : '') . ($reg->nombre_archivo ?: $reg->numeroCompleto()) . ($tipo === 'cdr' ? '.zip' : '.xml') . '"',
-        ]);
+        return ComprobanteSunatController::descarga($reg, $tipo, $contenido);
     }
 
     /** Representación impresa (HTML A4) del comprobante del pago */

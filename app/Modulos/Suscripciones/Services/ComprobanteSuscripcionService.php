@@ -4,7 +4,7 @@ namespace App\Modulos\Suscripciones\Services;
 
 use App\Modulos\Facturacion\Services\FacturacionElectronicaService;
 
-use App\Modulos\Facturacion\Models\ComprobanteSunat;
+use App\Modulos\Facturacion\Models\Documento;
 use App\Modulos\Erp\Models\Correlativo;
 use App\Modulos\Nucleo\Models\Empresa;
 use App\Modulos\Suscripciones\Models\PagoSuscripcion;
@@ -17,7 +17,7 @@ use Throwable;
  *    con sus series F900 / B900 (módulo "suscripcion") y su configuración SUNAT.
  *  - Cliente: la empresa que paga (factura a su RUC, o boleta si se pide).
  *  - Anular el pago: baja si el comprobante tiene hasta 7 días; si no, nota de crédito (FC01 / BC01).
- * El envío y los reintentos los hace FacturacionElectronicaService (registro en comprobantes_sunat).
+ * El envío y los reintentos los hace FacturacionElectronicaService (documento en la tabla documentos).
  */
 class ComprobanteSuscripcionService
 {
@@ -48,7 +48,7 @@ class ComprobanteSuscripcionService
     }
 
     /** Emite (o reintenta) el comprobante de un pago registrado. $tipo: factura | boleta | ninguno */
-    public function emitir(PagoSuscripcion $pago, ?string $tipo = null): ?ComprobanteSunat
+    public function emitir(PagoSuscripcion $pago, ?string $tipo = null): ?Documento
     {
         if ($tipo === self::NINGUNO || ! $this->activo() || ! $pago->esPagado() || $pago->monto <= 0) {
             return null;
@@ -60,9 +60,9 @@ class ComprobanteSuscripcionService
             $reg = DB::transaction(function () use ($pago, $codigo) {
                 [$serie, $numero] = $this->numerar('suscripcion', $codigo, fn (Correlativo $c) => true);
 
-                return ComprobanteSunat::create([
+                return Documento::create([
                     'empresa_id' => $this->emisor()->id, 'comprobante_type' => $pago->getMorphClass(), 'comprobante_id' => $pago->id,
-                    'tipo' => $codigo, 'serie' => $serie, 'numero' => $numero, 'estado' => ComprobanteSunat::PENDIENTE,
+                    'tipo' => $codigo, 'serie' => $serie, 'numero' => $numero, 'estado' => Documento::PENDIENTE, 'fecha_emision' => now(),
                 ]);
             });
         }
@@ -71,7 +71,7 @@ class ComprobanteSuscripcionService
     }
 
     /** Nunca interrumpe el registro del pago */
-    public function emitirSeguro(PagoSuscripcion $pago, ?string $tipo = null): ?ComprobanteSunat
+    public function emitirSeguro(PagoSuscripcion $pago, ?string $tipo = null): ?Documento
     {
         try {
             return $this->emitir($pago, $tipo);
@@ -82,7 +82,7 @@ class ComprobanteSuscripcionService
         }
     }
 
-    public function reintentar(ComprobanteSunat $reg): ComprobanteSunat
+    public function reintentar(Documento $reg): Documento
     {
         $pago = $reg->comprobante;
 
@@ -90,7 +90,7 @@ class ComprobanteSuscripcionService
     }
 
     /** El pago se anuló: baja del comprobante (hasta 7 días) o nota de crédito (después) */
-    public function anular(PagoSuscripcion $pago): ?ComprobanteSunat
+    public function anular(PagoSuscripcion $pago): ?Documento
     {
         $reg = $pago->comprobante()->first();
         if (! $reg || ! $this->facturacion->activo()) {
@@ -101,12 +101,12 @@ class ComprobanteSuscripcionService
         }
 
         if (! $reg->fueAceptado()) {
-            if (! $reg->facturador_id && $reg->estado !== ComprobanteSunat::ANULADO) {
-                // Nunca llegó al facturador: ya no se envía (el número queda sin usar)
-                $reg->update(['estado' => ComprobanteSunat::ANULADO, 'mensaje_respuesta' => 'No se envió a SUNAT: el pago se anuló antes.', 'proximo_intento_at' => null]);
+            if (! $reg->enviado_at && $reg->estado !== Documento::ANULADO) {
+                // Nunca se envió a SUNAT: ya no se envía (el número queda sin usar)
+                $reg->update(['estado' => Documento::ANULADO, 'ultimo_error' => 'No se envió a SUNAT: el pago se anuló antes.', 'proximo_intento_at' => null]);
             }
 
-            return $reg;   // si está en el facturador, al aceptarse se pedirá la baja (FacturacionElectronicaService::aplicar)
+            return $reg;   // si ya está en SUNAT, al aceptarse se pedirá la baja (FacturacionElectronicaService::alCambiarEstado)
         }
 
         $dias = $reg->created_at->copy()->startOfDay()->diffInDays(today());
@@ -119,9 +119,9 @@ class ComprobanteSuscripcionService
         $nota = DB::transaction(function () use ($pago, $letra) {
             [$serie, $numero] = $this->numerar('nota', '07', fn (Correlativo $c) => str_starts_with($c->serie, $letra), $letra . 'C01');
 
-            return ComprobanteSunat::create([
+            return Documento::create([
                 'empresa_id' => $this->emisor()->id, 'comprobante_type' => $pago->getMorphClass(), 'comprobante_id' => $pago->id,
-                'tipo' => '07', 'serie' => $serie, 'numero' => $numero, 'estado' => ComprobanteSunat::PENDIENTE,
+                'tipo' => '07', 'serie' => $serie, 'numero' => $numero, 'estado' => Documento::PENDIENTE, 'fecha_emision' => now(),
             ]);
         });
 
@@ -150,14 +150,13 @@ class ComprobanteSuscripcionService
         return [$corr->serie, (int) $corr->numero];
     }
 
-    private function datos(PagoSuscripcion $pago, ComprobanteSunat $reg): array
+    private function datos(PagoSuscripcion $pago, Documento $reg): array
     {
         $pago->loadMissing('empresa', 'suscripcion.plan', 'oferta');
         $emisor = Empresa::findOrFail($reg->empresa_id);
         $periodo = config('suscripciones.periodicidades.' . $pago->suscripcion?->periodicidad . '.0', '');
 
         return [
-            'emisor'               => $emisor->ruc,
             'tipo'                 => $reg->tipo,
             'serie'                => $reg->serie,
             'numero'               => (int) $reg->numero,
@@ -182,7 +181,7 @@ class ComprobanteSuscripcionService
         ];
     }
 
-    private function datosNota(PagoSuscripcion $pago, ComprobanteSunat $nota): array
+    private function datosNota(PagoSuscripcion $pago, Documento $nota): array
     {
         $original = $pago->comprobante()->firstOrFail();
         $d = $this->datos($pago, $original);

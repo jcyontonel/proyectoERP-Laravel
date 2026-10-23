@@ -3,25 +3,24 @@
 namespace Tests\Feature;
 
 use App\Modulos\Erp\Models\Caja;
-use App\Modulos\Facturacion\Models\ComprobanteSunat;
 use App\Modulos\Erp\Models\Correlativo;
-use App\Modulos\Nucleo\Models\Empresa;
-use App\Modulos\Nucleo\Models\User;
 use App\Modulos\Erp\Models\Venta;
 use App\Modulos\Erp\Services\EmpresaService;
+use App\Modulos\Facturacion\Jobs\EnviarDocumento;
+use App\Modulos\Facturacion\Models\Documento;
+use App\Modulos\Facturacion\Sunat\RespuestaSunat;
+use App\Modulos\Nucleo\Models\Empresa;
+use App\Modulos\Nucleo\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\Concerns\ConEmpresa;
+use Tests\Fakes\PasarelaFalsa;
 use Tests\TestCase;
 
-/** ERP ↔ facturador electrónico: envío, sin conexión, reintento, webhook y baja */
+/** ERP → facturación electrónica de la plataforma: firma, envío en cola, sin conexión, reintento y baja */
 class FacturacionElectronicaTest extends TestCase
 {
     use ConEmpresa, RefreshDatabase;
-
-    private const URL = 'https://facturador.test/api/v1';
 
     private Empresa $empresa;
 
@@ -30,7 +29,6 @@ class FacturacionElectronicaTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['facturador.url' => self::URL, 'facturador.token' => 'fct_prueba', 'facturador.webhook_secreto' => 'whs_secreto']);
         $this->sembrarCatalogos();
         $this->empresa = $this->crearEmpresa(['ruc' => '20123456789', 'igv' => 18, 'precios_incluyen_igv' => true]);
         app(EmpresaService::class)->series($this->empresa);
@@ -39,113 +37,133 @@ class FacturacionElectronicaTest extends TestCase
         $this->actingAs($this->admin)->post(route('caja.abrir'), ['caja_id' => Caja::where('empresa_id', $this->empresa->id)->value('id'), 'monto_apertura' => 100]);
     }
 
-    public function test_la_boleta_se_envia_al_facturador_y_queda_aceptada(): void
+    public function test_la_boleta_se_firma_se_envia_y_queda_aceptada(): void
     {
-        Http::fake([self::URL . '/comprobantes' => Http::response($this->respuesta('aceptado'), 201)]);
-
-        $venta = $this->vender()->assertSessionHas('status', fn ($m) => str_contains($m, 'SUNAT: aceptado'));
+        $this->vender()->assertSessionHas('status', fn ($m) => str_contains($m, 'SUNAT: aceptado'));
         $venta = Venta::latest('id')->firstOrFail();
 
-        Http::assertSent(function (Request $r) use ($venta) {
-            $item = $r['items'][0];
+        $this->assertCount(1, $this->sunat->llamadas);
+        $llamada = $this->sunat->llamadas[0];
+        $this->assertSame("20123456789-03-B001-{$venta->numero}", $llamada['nombre']);
+        $this->assertStringContainsString('<ds:SignatureValue>', $llamada['xml']);
+        $this->assertStringContainsString('VEINTITRÉS CON 60/100 SOLES', $llamada['xml']);   // 2 × 11.80
 
-            return $r->url() === self::URL . '/comprobantes' && $r->hasHeader('Authorization', 'Bearer fct_prueba')
-                && $r['emisor'] === '20123456789' && $r['tipo'] === '03' && $r['serie'] === 'B001' && $r['numero'] === (int) $venta->numero
-                && $r['cliente']['tipo_doc'] === '0' && $r['referencia'] === "venta:{$venta->id}"
-                && $item['cantidad'] == 2 && $item['precio_unitario'] == 11.8 && $item['valor_venta'] == 20.0 && $item['igv'] == 3.6;
-        });
-
-        $reg = $venta->sunat;
-        $this->assertSame('aceptado', $reg->estado);
-        $this->assertSame('uuid-1', $reg->facturador_id);
-        $this->assertSame('0', $reg->codigo_respuesta);
+        $doc = $venta->sunat;
+        $this->assertSame('aceptado', $doc->estado);
+        $this->assertSame('0', $doc->sunat_codigo);
+        $this->assertSame("venta:{$venta->id}", $doc->referencia);
+        $this->assertEquals(23.6, $doc->total);
+        $this->assertEquals(3.6, $doc->datos['totales']['igv']);
         $this->actingAs($this->admin)->get(route('ventas.show', $venta))->assertOk()->assertSee('Aceptado por SUNAT');
         $this->actingAs($this->admin)->get(route('sunat.index'))->assertOk()->assertSee($venta->numero_completo);
+        $this->actingAs($this->admin)->get(route('sunat.archivo', [$doc, 'xml']))->assertOk()->assertHeader('Content-Type', 'application/xml');
+        $this->actingAs($this->admin)->get(route('sunat.archivo', [$doc, 'cdr']))->assertOk();
+    }
+
+    public function test_en_cola_la_venta_no_espera_a_sunat(): void
+    {
+        Queue::fake();
+
+        $this->vender()->assertSessionHas('status', fn ($m) => str_contains($m, 'se envía en segundo plano'));
+
+        $doc = Documento::firstOrFail();
+        $this->assertSame('pendiente', $doc->estado);
+        $this->assertNotNull($doc->xml_path);   // ya firmado
+        $this->assertSame([], $this->sunat->llamadas);
+        Queue::assertPushed(EnviarDocumento::class, fn ($job) => $job->documentoId === $doc->id);
     }
 
     public function test_sin_conexion_queda_pendiente_y_el_timer_la_envia(): void
     {
-        Http::fake(fn () => throw new ConnectionException('Connection refused'));
+        $this->sunat->encolar(PasarelaFalsa::sinConexion());
         $this->vender()->assertSessionHas('status', fn ($m) => str_contains($m, 'pendiente de envío'));
 
-        $reg = ComprobanteSunat::firstOrFail();
-        $this->assertSame('pendiente', $reg->estado);
-        $this->assertNull($reg->facturador_id);
-        $this->assertNotNull($reg->proximo_intento_at);
+        $doc = Documento::firstOrFail();
+        $this->assertSame('pendiente', $doc->estado);
+        $this->assertSame('[HTTP] Could not connect to host', $doc->ultimo_error);
         $this->assertSame(1, Venta::count());   // la venta se registró igual
 
-        // Volvió la conexión
-        Http::swap(new \Illuminate\Http\Client\Factory());
-        Http::fake([self::URL . '/comprobantes' => Http::response($this->respuesta('aceptado'), 201)]);
+        // Aún no toca reintentar; pasado el minuto vuelve la conexión
+        $this->artisan('facturacion:procesar')->assertSuccessful();
+        $this->assertCount(1, $this->sunat->llamadas);
         $this->travel(2)->minutes();
-        $this->artisan('facturacion:sincronizar')->assertSuccessful();
+        $this->artisan('facturacion:procesar')->expectsOutputToContain('aceptados: 1');
 
-        $this->assertSame('aceptado', $reg->refresh()->estado);
-        $this->assertSame(2, $reg->intentos);
+        $this->assertSame('aceptado', $doc->refresh()->estado);
+        $this->assertSame(2, $doc->intentos);
     }
 
-    public function test_si_la_empresa_no_esta_en_el_facturador_la_registra_y_reintenta(): void
+    public function test_un_rechazo_se_corrige_y_se_reenvia_con_el_mismo_numero(): void
     {
-        Http::fake([
-            self::URL . '/emisores/*' => Http::response(['ruc' => '20123456789'], 201),
-            self::URL . '/comprobantes' => Http::sequence()
-                ->push(['message' => 'x', 'errors' => ['emisor' => ['El RUC 20123456789 no está registrado']]], 422)
-                ->push($this->respuesta('aceptado'), 201),
-        ]);
-
+        $this->sunat->encolar(new RespuestaSunat(RespuestaSunat::RECHAZADO, '2017', 'El numero de documento de identidad del receptor debe ser RUC'));
         $this->vender();
+        $doc = Documento::firstOrFail();
+        $this->assertSame('rechazado', $doc->estado);
 
-        $this->assertSame('aceptado', ComprobanteSunat::firstOrFail()->estado);
-        Http::assertSent(fn (Request $r) => $r->method() === 'PUT' && str_ends_with($r->url(), '/emisores/20123456789') && $r['modo'] === 'beta');
+        $this->actingAs($this->admin)->post(route('sunat.reenviar', $doc))->assertSessionHas('status', fn ($m) => str_contains($m, 'aceptado'));
+        $this->assertSame('aceptado', $doc->refresh()->estado);
+        $this->assertSame(1, Documento::count());
+        $this->assertSame([$this->sunat->llamadas[0]['nombre']], array_unique(array_column($this->sunat->llamadas, 'nombre')));
     }
 
-    public function test_webhook_firmado_actualiza_el_estado(): void
+    public function test_anular_la_venta_pide_la_baja_y_el_ticket_la_confirma(): void
     {
-        Http::fake([self::URL . '/comprobantes' => Http::response($this->respuesta('pendiente'), 201)]);
-        $this->vender();
-        $reg = ComprobanteSunat::firstOrFail();
-        $this->assertSame('pendiente', $reg->estado);
-        $this->assertSame('uuid-1', $reg->facturador_id);   // ya está en el facturador: él reintenta
-
-        $cuerpo = json_encode(['evento' => 'comprobante.actualizado', 'comprobante' => $this->respuesta('aceptado')]);
-        $t = time();
-        $this->call('POST', '/api/facturador/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_FACTURADOR_FIRMA' => "t={$t},v1=" . hash_hmac('sha256', "{$t}.{$cuerpo}", 'whs_secreto')], $cuerpo)
-            ->assertNoContent();
-        $this->assertSame('aceptado', $reg->refresh()->estado);
-
-        // Firma inválida o vencida
-        $this->call('POST', '/api/facturador/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_FACTURADOR_FIRMA' => "t={$t},v1=falsa"], $cuerpo)->assertUnauthorized();
-        $viejo = $t - 3600;
-        $this->call('POST', '/api/facturador/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_FACTURADOR_FIRMA' => "t={$viejo},v1=" . hash_hmac('sha256', "{$viejo}.{$cuerpo}", 'whs_secreto')], $cuerpo)->assertUnauthorized();
-    }
-
-    public function test_anular_la_venta_pide_la_baja_en_sunat(): void
-    {
-        Http::fake([
-            self::URL . '/comprobantes' => Http::response($this->respuesta('aceptado'), 201),
-            self::URL . '/comprobantes/uuid-1/anular' => Http::response($this->respuesta('aceptado', ['baja' => ['estado' => 'enviado', 'ticket' => '170000']]), 202),
-        ]);
         $this->vender();
         $venta = Venta::latest('id')->firstOrFail();
 
         $this->actingAs($this->admin)->patch(route('ventas.anular', $venta))->assertSessionHas('status', fn ($m) => str_contains($m, 'Se pidió la baja a SUNAT'));
 
-        $reg = $venta->sunat;
-        $this->assertSame('enviado', $reg->baja_estado);
-        $this->assertSame('170000', $reg->ticket);
-        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/anular') && $r['motivo'] === 'ANULACION DE LA OPERACION');
+        $doc = $venta->sunat;
+        $this->assertSame('enviado', $doc->baja_estado);
+        $this->assertSame('RC', $doc->baja->tipo);   // boleta: resumen diario
+        $this->assertStringContainsString('<cbc:ConditionCode>3</cbc:ConditionCode>', $this->sunat->llamadas[1]['xml']);
         $this->actingAs($this->admin)->get(route('sunat.resumenes'))->assertOk()->assertSee($venta->numero_completo);
+
+        $this->travel(2)->minutes();
+        $this->artisan('facturacion:procesar');
+        $this->assertSame('anulado', $doc->refresh()->estado);
+        $this->assertSame('aceptado', $doc->baja_estado);
     }
 
-    public function test_sin_configuracion_no_se_envia_nada(): void
+    public function test_anulada_antes_de_que_sunat_la_acepte_pide_la_baja_al_aceptarse(): void
     {
-        config(['facturador.url' => null]);
-        Http::fake();
+        $this->sunat->encolar(PasarelaFalsa::sinConexion());
+        $this->vender();
+        $venta = Venta::latest('id')->firstOrFail();
+
+        $this->actingAs($this->admin)->patch(route('ventas.anular', $venta))->assertSessionHas('status', fn ($m) => str_contains($m, 'la baja se pedirá al aceptarse'));
+        $this->assertNull($venta->sunat->baja_id);
+
+        $this->travel(2)->minutes();
+        $this->artisan('facturacion:procesar');
+
+        $doc = $venta->sunat()->first();
+        $this->assertSame('aceptado', $doc->estado);
+        $this->assertSame('RC', $doc->baja?->tipo);
+        $this->assertSame(['sendBill', 'sendBill', 'sendSummary'], $this->sunat->metodos());
+    }
+
+    public function test_apagada_no_se_emite_nada(): void
+    {
+        config(['facturacion.activa' => false]);
 
         $this->vender()->assertSessionHas('status', fn ($m) => ! str_contains($m, 'SUNAT'));
 
-        Http::assertNothingSent();
-        $this->assertSame(0, ComprobanteSunat::count());
+        $this->assertSame([], $this->sunat->llamadas);
+        $this->assertSame(0, Documento::count());
+    }
+
+    public function test_en_produccion_sin_sol_ni_certificado_queda_en_error_sin_frenar_la_venta(): void
+    {
+        $this->empresa->update(['sunat_modo' => 'produccion']);
+
+        $this->vender()->assertSessionHas('status', fn ($m) => str_contains($m, 'error de envío'));
+
+        $doc = Documento::firstOrFail();
+        $this->assertSame('error', $doc->estado);
+        $this->assertStringContainsString('usuario y clave SOL', $doc->ultimo_error);
+        $this->assertSame(1, Venta::count());
+        $this->assertSame([], $this->sunat->llamadas);
     }
 
     private function vender()
@@ -158,15 +176,5 @@ class FacturacionElectronicaTest extends TestCase
             'almacen_id' => $this->almacen($this->empresa)->id, 'fecha_emision' => now()->toDateString(), 'metodo_pago' => 'efectivo',
             'productos' => [['id' => $producto->id, 'cantidad' => 2]],
         ])->assertSessionHasNoErrors();
-    }
-
-    private function respuesta(string $estado, array $extra = []): array
-    {
-        return array_replace_recursive([
-            'id' => 'uuid-1', 'estado' => $estado, 'aceptado' => $estado === 'aceptado', 'hash' => 'abc123=', 'nombre_archivo' => '20123456789-03-B001-1',
-            'sunat' => ['codigo' => $estado === 'aceptado' ? '0' : null, 'descripcion' => $estado === 'aceptado' ? 'La Boleta numero B001-1, ha sido aceptada' : null, 'observaciones' => [], 'ticket' => null],
-            'envio' => ['intentos' => 1, 'ultimo_error' => $estado === 'pendiente' ? '[HTTP] Could not connect to host' : null],
-            'baja' => null,
-        ], $extra);
     }
 }
