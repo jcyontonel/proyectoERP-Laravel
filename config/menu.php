@@ -135,6 +135,14 @@ return [
         ],
 
         [
+            'titulo' => 'Plataforma',
+            'items'  => [
+                ['clave' => 'plataforma', 'label' => 'Administrar plataforma', 'icon' => 'shield', 'route' => 'plataforma.inicio', 'activo' => ['plataforma.*'], 'permiso' => 'administrar-plataforma',
+                    'descripcion' => 'Empresas, planes, ofertas, suscripciones y pagos de todas las empresas.'],
+            ],
+        ],
+
+        [
             'titulo' => 'Mi cuenta',
             'oculta' => true, // no va en la barra lateral: se usa en el menú de usuario y la ayuda
             'items'  => [

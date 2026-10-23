@@ -22,10 +22,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class VerificarSuscripcion
 {
-    /** Rutas permitidas aun suspendida */
+    /** Rutas permitidas aun suspendida (Plataforma es la administración global: no depende de la empresa actual) */
     private const PERMITIDAS = [
         'logout', 'login', 'login.post', 'empresa.cambiar', 'perfil.*', 'config.suscripcion',
-        'caja.cierre', 'caja.cerrar',
+        'caja.cierre', 'caja.cerrar', 'plataforma.*',
     ];
 
     /** Consultas GET que además escriben */

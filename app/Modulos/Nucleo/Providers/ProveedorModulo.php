@@ -22,15 +22,17 @@ abstract class ProveedorModulo extends ServiceProvider
         return dirname((new ReflectionClass(static::class))->getFileName(), 2) . ($ruta ? '/' . ltrim($ruta, '/') : '');
     }
 
-    /** Migraciones y vistas del módulo */
-    protected function cargarRecursos(string $alias): void
+    /** Migraciones y vistas del módulo. $global: sus vistas también sin namespace ('ventas.index') */
+    protected function cargarRecursos(string $alias, bool $global = true): void
     {
         if (is_dir($m = $this->carpeta('database/migrations'))) {
             $this->loadMigrationsFrom($m);
         }
         if (is_dir($v = $this->carpeta('resources/views'))) {
             $this->loadViewsFrom($v, $alias);
-            View::addLocation($v);
+            if ($global) {
+                View::addLocation($v);
+            }
         }
     }
 

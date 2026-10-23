@@ -42,6 +42,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'activo'            => 'boolean',
+            'administra_plataforma' => 'boolean',   // permiso global; no es asignable en masa (plataforma:asignar-admin)
         ];
     }
 
