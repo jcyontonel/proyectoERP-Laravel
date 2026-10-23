@@ -68,9 +68,12 @@ class ApiAdmin
         $uri = $this->base() . ltrim($ruta, '/');
         $sinCuerpo = $metodo === 'GET';
 
-        // Sin cookies ni referer: la petición interna no toca la sesión del usuario
-        $interna = Request::create($sinCuerpo ? $uri : $uri, $metodo, $sinCuerpo ? $datos : [], [], [], [
+        // Sin cookies ni referer: la petición interna no toca la sesión del usuario.
+        // SCRIPT_NAME/SCRIPT_FILENAME de la petición real: si la app vive en una subcarpeta
+        // (localhost/proyectoERP-Laravel/public) el router debe ver /api/admin/…, no la ruta completa.
+        $interna = Request::create($uri, $metodo, $sinCuerpo ? $datos : [], [], [], [
             'HTTP_ACCEPT' => $accept, 'CONTENT_TYPE' => 'application/json', 'REMOTE_ADDR' => $original->ip(),
+            'SCRIPT_NAME' => $original->server->get('SCRIPT_NAME', ''), 'SCRIPT_FILENAME' => $original->server->get('SCRIPT_FILENAME', ''),
         ], $sinCuerpo ? null : json_encode($datos));
         $interna->headers->set('X-Admin-Usuario', (string) auth()->user()?->name);   // queda en el pago (registrado_por)
         $interna->attributes->set(TokenAdministracion::INTERNA, true);

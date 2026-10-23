@@ -81,6 +81,15 @@ class PlataformaPanelTest extends TestCase
         $this->actingAs($this->admin)->get(route('plataforma.planes.edit', Plan::where('codigo', 'basico')->value('id')))->assertOk();
     }
 
+    /** Como en Apache: localhost/proyectoERP-Laravel/public/plataforma (la API interna debe resolver /api/admin/…) */
+    public function test_funciona_con_la_aplicacion_en_una_subcarpeta(): void
+    {
+        $this->actingAs($this->admin)
+            ->withServerVariables(['SCRIPT_NAME' => '/proyectoERP-Laravel/public/index.php', 'SCRIPT_FILENAME' => base_path('public/index.php')])
+            ->get('http://localhost/proyectoERP-Laravel/public/plataforma')
+            ->assertOk()->assertSee('Plataforma');
+    }
+
     public function test_la_api_externa_sigue_exigiendo_su_token(): void
     {
         $this->actingAs($this->admin)->getJson('/api/admin/resumen')->assertStatus(503);   // sin token configurado: cerrada
