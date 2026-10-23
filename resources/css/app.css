@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @source "../views/**/*.blade.php";
+@source "../../app/Modulos/*/resources/views/**/*.blade.php";
 
 /* Barra lateral colapsada (solo escritorio): <html class="sidebar-mini">. Uso: lg:mini:hidden */
 @custom-variant mini (&:where(.sidebar-mini, .sidebar-mini *));

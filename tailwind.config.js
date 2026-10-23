@@ -2,6 +2,7 @@
 export default {
   content: [
     "./resources/**/*.blade.php",   // tus vistas Blade
+    "./app/Modulos/*/resources/views/**/*.blade.php", // vistas de cada módulo
     "./resources/**/*.js",          // si usas JS propio
     "./resources/**/*.vue",         // opcional, si usas Vue
     "./node_modules/flowbite/**/*.js" // Flowbite
