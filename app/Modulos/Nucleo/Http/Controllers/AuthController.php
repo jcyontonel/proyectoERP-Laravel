@@ -13,7 +13,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (auth()->check()) {
-            return redirect('/');
+            return redirect()->route('inicio');
         }
 
         return view('auth.login');
@@ -50,7 +50,7 @@ class AuthController extends Controller
         }
 
         // Para web: redirigir al dashboard
-        return redirect()->intended('/');
+        return redirect()->intended(route('inicio'));
     }
 
     public function user(Request $request)

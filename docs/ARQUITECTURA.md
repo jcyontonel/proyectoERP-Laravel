@@ -27,9 +27,10 @@ y, si hace falta, su contexto en `config/modulos.php`.
 
 | Contexto | Desarrollo | Producción |
 |---|---|---|
-| `erp` | `/` | `erp.ricopet.com` (`ERP_DOMINIO`) |
+| `web` (pública) | `/` (directorio) y `/{slug}` (cada tienda) | `ricopet.com` y `ricopet.com/{slug}` (`WEB_DOMINIO`) |
+| `erp` | `/erp` (login en `/erp/login`) | `erp.ricopet.com` (`ERP_DOMINIO`, `ERP_PREFIJO=`) |
 | `plataforma` | `/plataforma` | `admin.ricopet.com` (`PLATAFORMA_DOMINIO`, `PLATAFORMA_PREFIJO=`) |
-| `web` (tiendas) | `/tienda/{slug}` | `ricopet.com/{slug}` (`WEB_DOMINIO`, `WEB_PREFIJO=`) |
+| `suscripciones` | `/suscripciones` (portal) | `subs.ricopet.com` (`SUSCRIPCIONES_DOMINIO`, `SUSCRIPCIONES_PREFIJO=`) |
 | `api` | `/api` | `API_DOMINIO` o `/api` |
 
 Con subdominios, `SESSION_DOMAIN=.ricopet.com` para compartir la sesión entre ERP y Plataforma.

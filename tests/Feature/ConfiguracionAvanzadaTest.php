@@ -164,7 +164,7 @@ class ConfiguracionAvanzadaTest extends TestCase
         // Login fallido y exitoso quedan registrados
         auth()->logout();
         $this->post(route('login.post'), ['email' => $this->admin->email, 'password' => 'mal']);
-        $this->post(route('login.post'), ['email' => $this->admin->email, 'password' => 'nueva-clave-1'])->assertRedirect('/');
+        $this->post(route('login.post'), ['email' => $this->admin->email, 'password' => 'nueva-clave-1'])->assertRedirect(route('inicio'));
         $this->assertTrue(AuditoriaEvento::where('accion', 'acceso fallido')->exists());
         $this->assertTrue(AuditoriaEvento::where('accion', 'inicio de sesión')->where('user_id', $this->admin->id)->exists());
 

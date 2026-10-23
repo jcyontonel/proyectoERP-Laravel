@@ -50,9 +50,9 @@ class EntradasModulosTest extends TestCase
             ->assertSee('Pro')->assertSee('Tienda')->assertSee('No contratada');
 
         // Cambiar de empresa y llegar a su «Mi suscripción»
-        $this->actingAs($this->admin)->post(self::BASE . '/empresa-actual', ['empresa_id' => $otra->id, 'ir' => 'config.suscripcion'])
+        $this->actingAs($this->admin)->post(self::BASE . '/erp/empresa-actual', ['empresa_id' => $otra->id, 'ir' => 'config.suscripcion'])
             ->assertRedirect(route('config.suscripcion'));
-        $this->actingAs($this->admin)->post(self::BASE . '/empresa-actual', ['empresa_id' => $otra->id, 'ir' => 'https://otro.sitio'])
+        $this->actingAs($this->admin)->post(self::BASE . '/erp/empresa-actual', ['empresa_id' => $otra->id, 'ir' => 'https://otro.sitio'])
             ->assertSessionHasErrors('ir');
 
         // Un vendedor no administra: no ve empresas
@@ -65,18 +65,39 @@ class EntradasModulosTest extends TestCase
         $this->get(self::BASE . '/suscripciones')->assertRedirect(route('login'));
     }
 
-    public function test_atajo_web_y_directorio_de_tiendas(): void
+    public function test_atajo_web_y_tienda_en_su_direccion(): void
     {
         // Sin plan web: el aviso de que no lo incluye; con plan: al bloque Página web
-        $this->actingAs($this->admin)->get(self::BASE . '/web')->assertRedirect(route('config.suscripcion'));
+        $this->actingAs($this->admin)->get(self::BASE . '/erp/web')->assertRedirect(route('config.suscripcion'));
+        $this->contratarWeb();
+        $this->actingAs($this->admin)->get(self::BASE . '/erp/web')->assertRedirect(route('web.tienda.edit'));
 
-        $this->get(self::BASE . '/tienda')->assertOk()->assertSee('Aún no hay tiendas publicadas');
+        $this->get(self::BASE . '/masnorte')->assertOk();
+        $this->get(self::BASE . '/tienda/masnorte')->assertRedirect(self::BASE . '/masnorte');   // enlace antiguo
+        $this->actingAs($this->admin)->put(route('web.tienda.update'), ['slug' => 'erp', 'color' => '#000000', 'culqi_modo' => 'prueba'])
+            ->assertSessionHasErrors('slug');   // la dirección de otro módulo no puede ser una tienda
+    }
+
+    /** La raíz es la web pública (sin subcarpeta: el cliente de pruebas quita la barra final de …/public/) */
+    public function test_la_raiz_es_la_web_publica_y_no_tapa_a_los_otros_modulos(): void
+    {
+        $this->withServerVariables([]);
+        $this->get('http://localhost')->assertOk()->assertSee('Aún no hay tiendas publicadas');
+        $this->contratarWeb();
+        $this->get('http://localhost')->assertOk()->assertSee('MasNorte')->assertSee('/masnorte');
+
+        $this->get('/erp')->assertRedirect(route('login'));
+        $this->get('/plataforma')->assertRedirect(route('login'));
+        $this->get('/suscripciones')->assertRedirect(route('login'));
+        $this->getJson('/api')->assertOk();
+        $this->get('/up')->assertOk();
+    }
+
+    private function contratarWeb(): void
+    {
         app(SuscripcionService::class)->asignar($this->empresa, Plan::where('codigo', 'catalogo')->firstOrFail(), ['periodicidad' => 'mensual', 'prueba' => true]);
         $this->app->forgetScopedInstances();
-        $this->actingAs($this->admin)->get(self::BASE . '/web')->assertRedirect(route('web.tienda.edit'));
         Tienda::deEmpresa($this->empresa)->update(['publicada' => true, 'slug' => 'masnorte']);
-        $this->get(self::BASE . '/tienda')->assertOk()->assertSee('MasNorte')->assertSee(self::BASE . '/tienda/masnorte');
-        $this->get(self::BASE . '/tienda/masnorte')->assertOk();
     }
 
     public function test_indices_de_las_apis(): void

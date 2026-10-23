@@ -20,8 +20,11 @@ class Tienda extends Model
         'tarjeta'        => 'Tarjeta (Culqi)',
     ];
 
-    /** Direcciones que no pueden ser de una tienda (rutas propias de la web pública) */
-    public const RESERVADOS = ['api', 'admin', 'erp', 'plataforma', 'login', 'tienda', 'www', 'static', 'build', 'assets'];
+    /** Direcciones que no pueden ser de una tienda: en la raíz conviven con los otros módulos (/erp, /plataforma, /api…) */
+    public const RESERVADOS = [
+        'erp', 'plataforma', 'suscripciones', 'api', 'admin', 'login', 'tienda', 'web', 'www',
+        'up', 'static', 'build', 'assets', 'storage', 'sanctum',
+    ];
 
     protected $table = 'tiendas';
 

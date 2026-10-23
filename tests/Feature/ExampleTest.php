@@ -8,6 +8,6 @@ class ExampleTest extends TestCase
 {
     public function test_un_invitado_es_enviado_al_login(): void
     {
-        $this->get('/')->assertRedirect(route('login'));
+        $this->get(route('inicio'))->assertRedirect(route('login'));   // el ERP (/erp); la raíz es la web pública
     }
 }

@@ -60,7 +60,7 @@ class AdminApiTest extends TestCase
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
 
         // La administradora puede entrar al ERP de inmediato
-        $this->post(route('login.post'), ['email' => 'lucia@masnorte.pe', 'password' => 'clave1234'])->assertRedirect('/');
+        $this->post(route('login.post'), ['email' => 'lucia@masnorte.pe', 'password' => 'clave1234'])->assertRedirect(route('inicio'));
 
         // RUC repetido y sin contraseña para un usuario nuevo
         $this->api('post', 'empresas', ['ruc' => '20601234567', 'razon_social' => 'X', 'admin' => ['name' => 'X', 'email' => 'x@x.pe']])->assertJsonValidationErrors('ruc');

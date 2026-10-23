@@ -96,7 +96,7 @@ class ConfiguracionTest extends TestCase
         $this->actingAs($this->admin)->get(route('usuarios.index'))->assertOk()->assertSee('Ana Ríos')->assertSee('Vendedor');
 
         auth()->logout();
-        $this->post(route('login.post'), ['email' => 'ana@ricopet.pe', 'password' => 'clave1234'])->assertRedirect('/');
+        $this->post(route('login.post'), ['email' => 'ana@ricopet.pe', 'password' => 'clave1234'])->assertRedirect(route('inicio'));
     }
 
     public function test_un_correo_existente_recibe_acceso_sin_cambiar_su_cuenta(): void
