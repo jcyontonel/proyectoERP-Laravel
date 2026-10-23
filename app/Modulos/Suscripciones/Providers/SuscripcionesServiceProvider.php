@@ -23,5 +23,6 @@ class SuscripcionesServiceProvider extends ProveedorModulo
 
         $this->cargarRecursos('suscripciones');
         $this->rutasWeb('web.php');
+        $this->rutasWeb('portal.php', 'suscripciones');
     }
 }

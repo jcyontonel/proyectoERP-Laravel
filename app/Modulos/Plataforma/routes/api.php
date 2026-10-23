@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 | planes, ofertas, suscripciones y sus pagos. Token en ERP_ADMIN_TOKEN (Bearer).
 */
 Route::prefix('admin')->name('api.admin.')->middleware([TokenAdministracion::class, 'throttle:240,1'])->group(function () {
+    // Con token válido: qué hay en esta API (sin token responde 401, no 404)
+    Route::get('/', fn () => response()->json(['api' => 'Administración de la plataforma', 'recursos' => [
+        'resumen', 'catalogos', 'empresas', 'planes', 'ofertas', 'suscripciones', 'pagos',
+    ]]))->name('indice');
     Route::get('resumen', ResumenController::class)->name('resumen');
     Route::get('catalogos', [ResumenController::class, 'catalogos'])->name('catalogos');
     Route::get('consulta-ruc/{ruc}', [EmpresaController::class, 'consultaRuc'])->name('consulta-ruc')->where('ruc', '\d{11}');

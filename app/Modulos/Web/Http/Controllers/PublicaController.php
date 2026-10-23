@@ -20,6 +20,15 @@ class PublicaController extends Controller
     {
     }
 
+    /** Directorio de tiendas publicadas y con su plan web al día */
+    public function directorio()
+    {
+        $tiendas = Tienda::query()->with('empresa')->where('publicada', true)->orderBy('titulo')->get()
+            ->filter(fn (Tienda $t) => $this->tiendas->disponible($t->slug))->values();
+
+        return view('web::directorio', ['tiendas' => $tiendas]);
+    }
+
     /** La página (cascarón de la app Vue) */
     public function pagina(string $slug)
     {

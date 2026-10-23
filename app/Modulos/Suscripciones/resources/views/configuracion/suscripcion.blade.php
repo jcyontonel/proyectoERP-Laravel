@@ -22,6 +22,9 @@
     <x-page-header title="Mi suscripción" :migas="['Configuración' => null, 'Mi suscripción' => null]"
         subtitle="Tu plan, hasta cuándo está pagado y cuánto has usado de cada límite. Para cambiar de plan o registrar un pago, comunícate con soporte.">
         <x-slot:badge><x-badge :tone="$tono" dot>{{ $etiqueta }}</x-badge></x-slot:badge>
+        <x-slot:acciones>
+            <a href="{{ route('suscripciones.portal') }}" class="btn btn-secondary"><x-icon name="layers" class="text-brand-600" /> Todas mis suscripciones</a>
+        </x-slot:acciones>
     </x-page-header>
 
     <x-flash />

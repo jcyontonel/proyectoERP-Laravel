@@ -3,6 +3,7 @@
 /* Tienda pública (app Vue): solo escanea sus componentes, así su CSS es pequeño y no depende del ERP */
 @source "../js/tienda/**/*.{vue,js}";
 @source "../../app/Modulos/Web/resources/views/publica.blade.php";
+@source "../../app/Modulos/Web/resources/views/directorio.blade.php";
 
 /* Color de la marca de cada tienda: style="--marca: #1773ab" en el body */
 @theme {
