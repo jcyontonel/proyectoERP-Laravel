@@ -9,4 +9,5 @@ return [
     App\Modulos\Facturacion\Providers\FacturacionServiceProvider::class,
     App\Modulos\Suscripciones\Providers\SuscripcionesServiceProvider::class,
     App\Modulos\Plataforma\Providers\PlataformaServiceProvider::class,
+    App\Modulos\Web\Providers\WebServiceProvider::class,
 ];
