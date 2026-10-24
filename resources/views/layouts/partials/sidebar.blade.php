@@ -7,8 +7,8 @@
     {{-- Marca --}}
     <div class="flex h-16 shrink-0 items-center gap-2.5 border-b border-slate-200 px-4 lg:mini:justify-center lg:mini:px-0">
         <a href="{{ route('inicio') }}" class="flex min-w-0 items-center gap-2.5">
-            <img src="{{ asset('images/logo.png') }}" alt="" class="h-9 w-auto shrink-0">
-            <span class="truncate text-lg font-bold tracking-tight lg:mini:hidden">{{ str($empresaActual?->nombre_comercial ?? config('app.name'))->upper() }}</span>
+            <img src="{{ asset('images/caralix.png') }}" alt="" class="h-9 w-auto shrink-0">
+            <span class="truncate text-lg font-bold tracking-tight lg:mini:hidden">{{ str(config('app.name'))->upper() }}</span>
         </a>
         <button type="button" data-sidebar-cerrar aria-label="Cerrar menú" class="btn-icon ml-auto lg:hidden"><x-icon name="x" class="size-5" /></button>
     </div>

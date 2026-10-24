@@ -31,6 +31,8 @@ class TipoUnidadSeeder extends Seeder
             ['codigo' => 'FRS', 'codigo_sunat' => 'JR',  'descripcion' => 'Frasco'],
             ['codigo' => 'BLT', 'codigo_sunat' => 'NIU', 'descripcion' => 'Blíster'],
             ['codigo' => 'SRV', 'codigo_sunat' => 'ZZ',  'descripcion' => 'Servicio'],
+            ['codigo' => 'PIP', 'codigo_sunat' => 'NIU', 'descripcion' => 'Pipeta'],
+            ['codigo' => 'PAS', 'codigo_sunat' => 'NIU', 'descripcion' => 'Pastilla'],
         ];
 
         foreach ($unidades as $unidad) {
